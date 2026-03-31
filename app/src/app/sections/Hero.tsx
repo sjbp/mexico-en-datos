@@ -1,20 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import NavTabs from '@/components/ui/NavTabs';
+import Link from 'next/link';
 
 const tabs = [
-  { id: 'overview', label: 'Panorama' },
-  { id: 'economia', label: 'Econom\u00eda' },
-  { id: 'empleo', label: 'Empleo' },
-  { id: 'salud', label: 'Salud' },
-  { id: 'seguridad', label: 'Seguridad' },
-  { id: 'poblacion', label: 'Poblaci\u00f3n' },
+  { id: 'overview', label: 'Panorama', href: '/' },
+  { id: 'economia', label: 'Economía', href: '/explorador?topic=prices' },
+  { id: 'empleo', label: 'Empleo', href: '/empleo' },
+  { id: 'salud', label: 'Salud', href: '/salud' },
+  { id: 'seguridad', label: 'Seguridad', href: '/seguridad' },
+  { id: 'poblacion', label: 'Población', href: '/calendario' },
 ];
 
 export default function Hero() {
-  const [activeTab, setActiveTab] = useState('overview');
-
   return (
     <>
       <div className="pt-12 px-[var(--pad-page)] mb-8">
@@ -35,7 +32,21 @@ export default function Hero() {
           <a href="https://www.coneval.org.mx" className="text-[var(--text-muted)] underline decoration-white/15 underline-offset-[2.5px] hover:text-[var(--accent)] hover:decoration-[var(--accent)] transition-colors">CONEVAL</a>
         </p>
       </div>
-      <NavTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <div className="flex gap-[3px] px-[var(--pad-page)] mb-8 flex-wrap">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.id}
+            href={tab.href}
+            className={`px-[18px] py-2 text-[13px] font-medium border rounded-md transition-all duration-150 no-underline ${
+              tab.id === 'overview'
+                ? 'bg-[var(--accent)] text-black border-[var(--accent)] font-semibold'
+                : 'bg-transparent text-[var(--text-muted)] border-[var(--border)] hover:bg-white/[0.04] hover:text-[var(--text-secondary)]'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
     </>
   );
 }
