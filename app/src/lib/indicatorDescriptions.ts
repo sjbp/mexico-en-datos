@@ -74,6 +74,18 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
   "127601": {
     summary: "Valor total de las mercancias compradas del exterior, en millones de dolares.",
     context: "Incluye bienes intermedios para manufactura, bienes de consumo y bienes de capital. El deficit o superavit comercial se calcula contra las exportaciones."
+  },
+  "736941": {
+    summary: "Indice mensual de actividades primarias: agricultura, ganaderia, pesca y aprovechamiento forestal.",
+    context: "El sector primario es altamente estacional y volatil, dependiente del clima y ciclos de cosecha. Representa ~4% del PIB pero emplea al 12% de la poblacion."
+  },
+  "736895": {
+    summary: "Indice mensual de actividades terciarias: comercio, servicios financieros, transporte, educacion, salud y gobierno.",
+    context: "El sector terciario es el mas grande de la economia mexicana (~63% del PIB). Su crecimiento refleja la urbanizacion y modernizacion economica del pais."
+  },
+  "454168": {
+    summary: "Indice compuesto que mide la percepcion de los consumidores sobre la situacion economica actual y futura del pais y del hogar.",
+    context: "Basado en la Encuesta Nacional sobre Confianza del Consumidor (ENCO). Valores por encima de 50 indican optimismo. Es un indicador adelantado del consumo privado."
   }
 };
 

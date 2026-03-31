@@ -324,7 +324,7 @@ export async function getLeadingCausesOfDeath(
 
 // ── Headlines ───────────────────────────────────────────────────────────
 
-const HEADLINE_INDICATOR_IDS = ['628194', '444614', '735904', '444793', '444894'];
+const HEADLINE_INDICATOR_IDS = ['628194', '444614', '735904', '736939', '444793', '444894'];
 
 export async function getHeadlineIndicators(): Promise<
   Array<{

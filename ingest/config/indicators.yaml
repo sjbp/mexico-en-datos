@@ -98,7 +98,7 @@ topics:
         source: "BIE-BISE"
         geo_levels: [national]
 
-      # --- IGAE monthly (serie original) ---
+      # --- IGAE monthly ---
       - id: "736939"
         name_es: "IGAE Total (índice, mensual)"
         name_en: "IGAE Total (index, monthly)"
@@ -120,6 +120,24 @@ topics:
       - id: "736883"
         name_es: "IGAE Actividades Secundarias (índice, mensual)"
         name_en: "IGAE Secondary activities (index, monthly)"
+        subtopic: "igae"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "736941"
+        name_es: "IGAE Actividades Primarias (índice, mensual)"
+        name_en: "IGAE Primary activities (index, monthly)"
+        subtopic: "igae"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "736895"
+        name_es: "IGAE Actividades Terciarias (índice, mensual)"
+        name_en: "IGAE Tertiary activities (index, monthly)"
         subtopic: "igae"
         unit: "index"
         frequency: "monthly"
@@ -186,6 +204,17 @@ topics:
         source: "BIE-BISE"
         geo_levels: [national]
 
+  confidence:
+    name_es: "Confianza"
+    indicators:
+      - id: "454168"
+        name_es: "Indicador de Confianza del Consumidor (ICC)"
+        name_en: "Consumer Confidence Index (ICC)"
+        subtopic: "icc"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
   # TODO: find correct IDs for:
   # - Balanza comercial (saldo) — can derive from exports - imports
-  # - Confianza del consumidor — old ID 132944 no longer works
