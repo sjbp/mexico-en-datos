@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>México en Datos — Estadísticas públicas de México, accesibles para todos</title>
+<meta name="description" content="Explora datos de INEGI, Secretaría de Salud, IMSS, CONAPO y más. Indicadores económicos, empleo, salud, seguridad y demografía de México en un solo lugar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="med.css">
+<style>
+/* ── Page-specific layout (not reusable components) ── */
+.hero { padding: 48px var(--pad-page) 0; margin-bottom: 32px; }
+.hero .subtitle { max-width: 680px; margin-bottom: 16px; }
+
+.nav-tabs { padding: 0 var(--pad-page); margin-bottom: 32px; }
+
+.headlines { padding: 0 var(--pad-page); margin-bottom: 40px; }
+
+.chart-row { padding: 0 var(--pad-page); margin-bottom: 48px; }
+
+.topics { padding: 0 var(--pad-page); margin-bottom: 48px; }
+</style>
+</head>
+
+<body>
+<div class="med-page">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <h1 class="med-h1">M&eacute;xico en Datos</h1>
+    <p class="med-body subtitle">Estadísticas públicas de México, accesibles para todos. Economía, empleo, salud, seguridad y demografía &mdash; visualizadas, actualizadas y consultables.</p>
+    <p class="med-caption">Fuentes: <a href="https://www.inegi.org.mx" class="med-link">INEGI</a>, <a href="https://www.gob.mx/salud" class="med-link">Secretaría de Salud</a>, <a href="https://www.imss.gob.mx" class="med-link">IMSS</a>, <a href="https://www.gob.mx/conapo" class="med-link">CONAPO</a>, <a href="https://www.coneval.org.mx" class="med-link">CONEVAL</a></p>
+  </div>
+
+  <!-- ── Section Tabs ── -->
+  <div class="med-btn-group nav-tabs" id="navTabs">
+    <button class="med-btn active" data-section="overview">Panorama</button>
+    <button class="med-btn" data-section="economia">Economía</button>
+    <button class="med-btn" data-section="empleo">Empleo</button>
+    <button class="med-btn" data-section="salud">Salud</button>
+    <button class="med-btn" data-section="seguridad">Seguridad</button>
+    <button class="med-btn" data-section="poblacion">Población</button>
+  </div>
+
+  <!-- ── Headline Indicators ── -->
+  <div class="med-grid med-grid--headlines headlines" id="headlineGrid"></div>
+
+  <!-- ── Inflation Chart ── -->
+  <div class="med-section-header">
+    <h2 class="med-h2">Inflación</h2>
+    <a href="#" class="med-link med-link-arrow">Explorar indicador</a>
+  </div>
+  <div class="chart-row">
+    <div class="med-chart">
+      <div class="med-chart__header">
+        <div>
+          <div class="med-chart__title">Índice Nacional de Precios al Consumidor (INPC)</div>
+          <div class="med-chart__subtitle">Variación % anual · Ene 2020 – Mar 2026</div>
+        </div>
+        <div class="med-btn-group" id="inflationToggle">
+          <button class="med-btn med-btn--sm active" data-series="general">General</button>
+          <button class="med-btn med-btn--sm" data-series="alimentos">Alimentos</button>
+          <button class="med-btn med-btn--sm" data-series="subyacente">Subyacente</button>
+        </div>
+      </div>
+      <div class="med-chart__canvas">
+        <canvas id="inflationChart"></canvas>
+      </div>
+      <div class="med-source">Fuente: INEGI, Índice Nacional de Precios al Consumidor</div>
+    </div>
+  </div>
+
+  <!-- ── Causes of Death ── -->
+  <div class="med-section-header">
+    <h2 class="med-h2">Principales causas de muerte</h2>
+    <a href="#" class="med-link med-link-arrow">Explorar salud</a>
+  </div>
+  <div class="chart-row">
+    <div class="med-chart">
+      <div class="med-chart__header">
+        <div>
+          <div class="med-chart__title">Defunciones por causa, 2023</div>
+          <div class="med-chart__subtitle">Tasa por 100,000 habitantes · Fuente: INEGI, Estadísticas de Mortalidad; CONAPO, Proyecciones de Población</div>
+        </div>
+      </div>
+      <div class="med-hbar" id="mortalityBars"></div>
+    </div>
+  </div>
+
+  <!-- ── Explore Topics ── -->
+  <div class="med-section-header" style="margin-top: 8px;">
+    <h2 class="med-h2">Explora por tema</h2>
+  </div>
+  <div class="med-grid med-grid--topics topics" id="topicsGrid"></div>
+
+  <!-- ── Footer ── -->
+  <div class="med-footer">
+    <div class="med-footer__content">
+      <p class="med-footer__text">México en Datos es un proyecto de datos abiertos. Toda la información proviene de fuentes oficiales del gobierno de México. Los datos se actualizan conforme se publican nuevas cifras.</p>
+      <div class="med-footer__links">
+        <a href="#" class="med-link">GitHub</a>
+        <a href="#" class="med-link">API</a>
+        <a href="#" class="med-link">Metodología</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Tooltip ── -->
+<div class="med-tooltip" id="tooltip">
+  <div class="med-tooltip__title"></div>
+  <div class="med-tooltip__value"></div>
+  <div class="med-tooltip__detail"></div>
+</div>
+
+<script src="med.js"></script>
+<script>
+// ── Mock Data ──
+
+const headlines = [
+  { label: "Inflación anual", value: "4.02%", change: -0.19, changePeriod: "vs mes anterior", sub: "INPC · Mar 2026", isGoodDown: true, sparkValues: [3.76, 3.98, 4.21, 4.42, 4.65, 4.88, 5.06, 4.98, 4.78, 4.55, 4.32, 4.21, 4.02] },
+  { label: "Desempleo", value: "2.5%", change: -0.3, changePeriod: "vs año anterior", sub: "ENOE · 2026 T1", isGoodDown: true, sparkValues: [3.5, 3.4, 3.2, 3.1, 3.0, 2.9, 2.8, 2.8, 2.7, 2.7, 2.6, 2.5, 2.5] },
+  { label: "PIB trimestral", value: "+0.8%", change: 0.2, changePeriod: "vs trimestre anterior", sub: "IGAE · 2025 T4", isGoodDown: false, sparkValues: [1.1, 0.9, 0.8, 0.6, 0.5, 0.4, 0.3, 0.5, 0.6, 0.7, 0.8, 0.8, 0.8] },
+  { label: "Informalidad", value: "54.3%", change: -0.8, changePeriod: "vs año anterior", sub: "ENOE · 2026 T1", isGoodDown: true, sparkValues: [56.2, 56.0, 55.8, 55.6, 55.4, 55.2, 55.0, 54.9, 54.8, 54.7, 54.5, 54.4, 54.3] },
+  { label: "Sin acceso a salud", value: "39.1%", change: 2.3, changePeriod: "vs 2022", sub: "CONEVAL · 2024", isGoodDown: true, sparkValues: [16.2, 16.8, 28.2, 39.1, 38.5, 36.8, 39.1] },
+  { label: "Percepción inseguridad", value: "63.8%", change: -1.2, changePeriod: "vs trimestre anterior", sub: "ENSU · 2026 T1", isGoodDown: true, sparkValues: [73.6, 72.9, 71.3, 70.4, 68.1, 66.4, 65.2, 65.8, 65.0, 64.5, 64.2, 63.8] },
+];
+
+const inflationSeries = {
+  general:    { label: "General", color: "#FF9F43", values: [3.24, 3.76, 3.25, 2.83, 2.84, 3.33, 3.62, 3.99, 4.01, 3.85, 3.33, 3.15, 3.54, 3.76, 4.12, 4.67, 5.19, 5.75, 5.81, 5.59, 6.00, 6.12, 7.36, 7.35, 7.07, 7.28, 7.65, 7.99, 8.15, 8.70, 8.62, 8.77, 8.70, 8.41, 7.82, 7.36, 7.62, 7.88, 7.12, 6.85, 6.24, 5.76, 5.06, 4.88, 4.64, 4.26, 4.58, 4.66, 4.40, 4.98, 4.69, 4.38, 3.98, 4.17, 4.76, 5.57, 4.66, 4.99, 5.12, 4.66, 4.21, 4.44, 3.80, 3.69, 3.33, 3.59, 3.69, 3.55, 3.98, 3.77, 3.89, 3.68, 3.81, 4.02] },
+  alimentos:  { label: "Alimentos", color: "#EF4444", values: [4.70, 5.26, 4.85, 4.52, 4.33, 5.01, 5.28, 5.74, 5.60, 5.50, 4.96, 4.82, 5.62, 5.91, 6.38, 7.28, 8.01, 8.68, 8.42, 8.10, 8.80, 9.05, 11.58, 11.46, 10.94, 11.28, 12.06, 12.65, 13.03, 14.10, 14.28, 14.48, 13.97, 13.32, 12.19, 11.14, 11.59, 12.12, 10.73, 10.25, 9.25, 8.28, 7.02, 6.50, 6.10, 5.41, 5.83, 5.98, 5.62, 6.41, 6.00, 5.58, 5.10, 5.39, 6.22, 7.38, 5.98, 6.50, 6.74, 5.98, 5.41, 5.75, 4.82, 4.62, 4.06, 4.41, 4.62, 4.38, 5.02, 4.72, 4.88, 4.56, 4.78, 5.14] },
+  subyacente: { label: "Subyacente", color: "#A592D5", values: [3.73, 3.73, 3.60, 3.36, 3.40, 3.75, 3.98, 4.13, 4.08, 4.01, 3.66, 3.55, 3.83, 4.12, 4.37, 4.78, 5.27, 5.81, 5.95, 5.82, 6.11, 6.21, 7.65, 7.80, 7.52, 7.59, 7.79, 7.97, 8.05, 8.27, 8.24, 8.38, 8.39, 8.14, 7.69, 7.30, 7.47, 7.56, 6.87, 6.63, 6.15, 5.68, 5.10, 4.94, 4.77, 4.43, 4.61, 4.54, 4.25, 4.73, 4.41, 4.13, 3.78, 3.95, 4.36, 5.02, 4.28, 4.55, 4.68, 4.28, 3.88, 4.05, 3.52, 3.42, 3.12, 3.31, 3.38, 3.28, 3.58, 3.42, 3.52, 3.36, 3.48, 3.62] },
+};
+
+const inflationLabels = [];
+for (let y = 2020; y <= 2026; y++) {
+  const maxM = y === 2026 ? 3 : 12;
+  for (let m = 1; m <= maxM; m++) {
+    inflationLabels.push(m === 1 ? String(y) : '');
+  }
+}
+
+const mortalityData = [
+  { label: "Enfermedades del corazón", value: 156.5 },
+  { label: "Diabetes mellitus", value: 101.8 },
+  { label: "Tumores malignos", value: 73.4 },
+  { label: "Enf. hígado (alcohol)", value: 40.7 },
+  { label: "Enf. cerebrovasculares", value: 33.1 },
+  { label: "Agresiones (homicidios)", value: 25.2, color: "#EF4444" },
+  { label: "Influenza y neumonía", value: 18.6 },
+  { label: "Accidentes de tránsito", value: 14.5, color: "#EF4444" },
+  { label: "Insuficiencia renal", value: 14.2 },
+  { label: "COVID-19", value: 8.3, color: "#A592D5" },
+];
+
+const topics = [
+  { icon: "📈", name: "Economía", desc: "PIB, inflación, actividad económica, confianza empresarial y del consumidor, balanza comercial.", stats: [{ value: "300+", label: "series" }, { value: "Quincenal", label: "actualización" }] },
+  { icon: "💼", name: "Empleo", desc: "Ocupación, desempleo, informalidad, salarios, sectores, calidad del empleo por estado y ocupación.", stats: [{ value: "457", label: "ocupaciones" }, { value: "Trimestral", label: "ENOE" }] },
+  { icon: "🏥", name: "Salud", desc: "Mortalidad, cobertura de salud, infraestructura hospitalaria, gasto en salud, causas de muerte.", stats: [{ value: "6", label: "fuentes" }, { value: "20+", label: "años de datos" }] },
+  { icon: "🔒", name: "Seguridad", desc: "Victimización, cifra negra, percepción de inseguridad, tipos de delito por estado y ciudad.", stats: [{ value: "32", label: "estados" }, { value: "Trimestral", label: "ENSU" }] },
+  { icon: "💰", name: "Ingresos y pobreza", desc: "Distribución del ingreso, gasto de los hogares, pobreza multidimensional, desigualdad.", stats: [{ value: "9", label: "ediciones ENIGH" }, { value: "Bienal", label: "actualización" }] },
+  { icon: "👥", name: "Población", desc: "Demografía, migración, vivienda, pirámides de edad, estructura poblacional por municipio.", stats: [{ value: "2,469", label: "municipios" }, { value: "126M", label: "habitantes" }] },
+];
+
+// ── Render: Headlines ──
+
+function renderHeadlines() {
+  const grid = document.getElementById('headlineGrid');
+  grid.innerHTML = '';
+  headlines.forEach(h => grid.appendChild(MED.renderStatCard(h)));
+}
+
+// ── Render: Inflation ──
+
+let currentSeries = 'general';
+const tooltip = document.getElementById('tooltip');
+
+function renderInflation() {
+  const s = inflationSeries[currentSeries];
+  const canvas = document.getElementById('inflationChart');
+
+  const geo = MED.drawTimeSeries(canvas, {
+    series: [{ values: s.values, color: s.color, label: s.label }],
+    labels: inflationLabels,
+    labelStep: 12,
+    refBand: { min: 2, max: 4, target: 3, label: 'Meta Banxico 3%±1' },
+    yUnit: '%',
+    valueDecimals: 2,
+  });
+
+  // Tooltip on hover
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const idx = Math.round(((mx - geo.padL) / geo.cw) * (geo.n - 1));
+    if (idx >= 0 && idx < geo.n) {
+      const month = [];
+      let mi = 0;
+      for (let y = 2020; y <= 2026; y++) {
+        const maxM = y === 2026 ? 3 : 12;
+        for (let m = 1; m <= maxM; m++) {
+          if (mi === idx) month.push(y + '-' + String(m).padStart(2, '0'));
+          mi++;
+        }
+      }
+      MED.showTooltip(tooltip, e.clientX, e.clientY, {
+        title: month[0] || '',
+        value: s.values[idx].toFixed(2) + '%',
+        detail: s.label + ' · Variación anual',
+      });
+    }
+  };
+  canvas.onmouseleave = () => MED.hideTooltip(tooltip);
+}
+
+document.getElementById('inflationToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('.med-btn');
+  if (!btn) return;
+  document.querySelectorAll('#inflationToggle .med-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSeries = btn.dataset.series;
+  renderInflation();
+});
+
+// ── Render: Mortality ──
+
+function renderMortality() {
+  MED.renderHBars(document.getElementById('mortalityBars'), mortalityData);
+}
+
+// ── Render: Topics ──
+
+function renderTopics() {
+  const grid = document.getElementById('topicsGrid');
+  grid.innerHTML = topics.map(t => `
+    <a class="med-card med-card--interactive med-topic-card" href="#" data-interactive>
+      <div class="med-topic-card__icon">${t.icon}</div>
+      <div class="med-topic-card__name">${t.name}</div>
+      <div class="med-topic-card__desc">${t.desc}</div>
+      <div class="med-topic-card__stats">
+        ${t.stats.map(s => `
+          <div>
+            <div class="med-topic-card__stat-value">${s.value}</div>
+            <div class="med-topic-card__stat-label">${s.label}</div>
+          </div>
+        `).join('')}
+      </div>
+    </a>
+  `).join('');
+}
+
+// ── Nav Tabs (visual only for prototype) ──
+document.getElementById('navTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.med-btn');
+  if (!tab) return;
+  document.querySelectorAll('#navTabs .med-btn').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+});
+
+// ── Init ──
+
+renderHeadlines();
+renderInflation();
+renderMortality();
+renderTopics();
+
+window.addEventListener('resize', () => {
+  renderHeadlines();
+  renderInflation();
+});
+</script>
+</body>
+</html>

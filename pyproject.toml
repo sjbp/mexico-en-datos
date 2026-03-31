@@ -1,0 +1,17 @@
+[project]
+name = "mexico-en-datos-ingest"
+version = "0.1.0"
+description = "Data ingestion pipeline for México en Datos"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.31",
+    "psycopg2-binary>=2.9",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "inegipy>=2.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.4",
+]

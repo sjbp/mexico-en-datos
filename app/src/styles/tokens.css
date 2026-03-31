@@ -1,0 +1,31 @@
+:root {
+  --bg: #000000;
+  --surface: #141414;
+  --surface-hover: #1a1a1a;
+  --accent: #FF9F43;
+  --accent-glow: rgba(255, 159, 67, 0.35);
+  --accent-dim: rgba(255, 159, 67, 0.12);
+  --positive: #22C55E;
+  --negative: #EF4444;
+  --series-1: #FF9F43;
+  --series-2: #EF4444;
+  --series-3: #A592D5;
+  --series-4: #2DD4BF;
+  --series-5: #60A5FA;
+  --series-6: #F472B6;
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-muted: rgba(255, 255, 255, 0.48);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --pad-page: 28px;
+  --max-width: 1400px;
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+}
+
+@media (max-width: 600px) {
+  :root { --pad-page: 16px; }
+}

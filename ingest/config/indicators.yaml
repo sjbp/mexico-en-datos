@@ -1,0 +1,191 @@
+topics:
+  prices:
+    name_es: "Precios"
+    indicators:
+      # --- INPC biweekly (quincenal) ---
+      - id: "628194"
+        name_es: "INPC General (variación % anual, quincenal)"
+        name_en: "Headline CPI (annual % change, biweekly)"
+        subtopic: "inpc"
+        unit: "percent"
+        frequency: "biweekly"
+        source: "BIE-BISE"
+        geo_levels: [national, state]
+
+      - id: "628229"
+        name_es: "INPC Subyacente (variación % anual, quincenal)"
+        name_en: "Core CPI (annual % change, biweekly)"
+        subtopic: "inpc"
+        unit: "percent"
+        frequency: "biweekly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      # --- INPC monthly (índice) ---
+      - id: "444612"
+        name_es: "INPC General (índice, mensual)"
+        name_en: "Headline CPI (index, monthly)"
+        subtopic: "inpc"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national, state]
+
+      - id: "444613"
+        name_es: "INPC Subyacente (índice, mensual)"
+        name_en: "Core CPI (index, monthly)"
+        subtopic: "inpc"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "444616"
+        name_es: "INPC Alimentos, bebidas y tabaco (índice, mensual)"
+        name_en: "Food, beverages & tobacco CPI (index, monthly)"
+        subtopic: "inpc_components"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "444620"
+        name_es: "INPC Vivienda (índice, mensual)"
+        name_en: "Housing CPI (index, monthly)"
+        subtopic: "inpc_components"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "444621"
+        name_es: "INPC Educación (índice, mensual)"
+        name_en: "Education CPI (index, monthly)"
+        subtopic: "inpc_components"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "444618"
+        name_es: "INPC Transporte (índice, mensual)"
+        name_en: "Transportation CPI (index, monthly)"
+        subtopic: "inpc_components"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "444619"
+        name_es: "INPC Salud y cuidado personal (índice, mensual)"
+        name_en: "Health & personal care CPI (index, monthly)"
+        subtopic: "inpc_components"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+  economic_activity:
+    name_es: "Actividad Económica"
+    indicators:
+      # --- GDP quarterly ---
+      - id: "735904"
+        name_es: "PIB Total (millones de pesos, trimestral)"
+        name_en: "GDP Total (millions MXN, quarterly)"
+        subtopic: "pib"
+        unit: "millions_mxn"
+        frequency: "quarterly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      # --- IGAE monthly (serie original) ---
+      - id: "736939"
+        name_es: "IGAE Total (índice, mensual)"
+        name_en: "IGAE Total (index, monthly)"
+        subtopic: "igae"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "736940"
+        name_es: "IGAE Total (variación % anual, mensual)"
+        name_en: "IGAE Total (annual % change, monthly)"
+        subtopic: "igae"
+        unit: "percent"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "736883"
+        name_es: "IGAE Actividades Secundarias (índice, mensual)"
+        name_en: "IGAE Secondary activities (index, monthly)"
+        subtopic: "igae"
+        unit: "index"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+  employment:
+    name_es: "Empleo"
+    indicators:
+      - id: "444614"
+        name_es: "Tasa de desocupación (trimestral)"
+        name_en: "Unemployment rate (quarterly)"
+        subtopic: "enoe"
+        unit: "percent"
+        frequency: "quarterly"
+        source: "BIE-BISE"
+        geo_levels: [national, state]
+
+      - id: "444793"
+        name_es: "Tasa de informalidad laboral (trimestral)"
+        name_en: "Labor informality rate (quarterly)"
+        subtopic: "enoe"
+        unit: "percent"
+        frequency: "quarterly"
+        source: "BIE-BISE"
+        geo_levels: [national, state]
+
+      - id: "444894"
+        name_es: "Tasa de subocupación (trimestral)"
+        name_en: "Underemployment rate (quarterly)"
+        subtopic: "enoe"
+        unit: "percent"
+        frequency: "quarterly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "444609"
+        name_es: "Población económicamente activa (trimestral)"
+        name_en: "Economically active population (quarterly)"
+        subtopic: "enoe"
+        unit: "thousands"
+        frequency: "quarterly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+  trade:
+    name_es: "Comercio Exterior"
+    indicators:
+      - id: "127598"
+        name_es: "Exportaciones totales (mensual, millones USD)"
+        name_en: "Total exports (monthly, millions USD)"
+        subtopic: "balanza"
+        unit: "millions_usd"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "127601"
+        name_es: "Importaciones totales (mensual, millones USD)"
+        name_en: "Total imports (monthly, millions USD)"
+        subtopic: "balanza"
+        unit: "millions_usd"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+  # TODO: find correct IDs for:
+  # - Balanza comercial (saldo) — can derive from exports - imports
+  # - Confianza del consumidor — old ID 132944 no longer works
