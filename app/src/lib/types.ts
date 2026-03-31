@@ -29,3 +29,64 @@ export interface GeographicArea {
   lat: number | null;
   lng: number | null;
 }
+
+export interface EmploymentStat {
+  quarter: string;
+  quarter_date: string;
+  geo_code: string;
+  dimension: string;
+  dimension_value: string;
+  employed: number | null;
+  informal: number | null;
+  underemployed: number | null;
+  unemployment_rate: number | null;
+  informality_rate: number | null;
+  avg_hours_worked: number | null;
+  avg_monthly_income: number | null;
+}
+
+export interface EnvipeStat {
+  year: number;
+  geo_code: string;
+  crime_type: string;
+  prevalence_rate: number | null;
+  cifra_negra: number | null;
+  reported_rate: number | null;
+  trust_police: number | null;
+  trust_military: number | null;
+  trust_judges: number | null;
+  cost_per_victim: number | null;
+}
+
+export interface EnsuStat {
+  quarter: string;
+  quarter_date: string;
+  city_code: string;
+  city_name: string;
+  feels_unsafe_pct: number | null;
+  feels_unsafe_night_pct: number | null;
+  witnessed_crime_pct: number | null;
+  expects_crime_pct: number | null;
+}
+
+export interface MortalityStat {
+  year: number;
+  geo_code: string;
+  cause_group: string;
+  icd10_range: string | null;
+  age_group: string;
+  sex: string;
+  deaths: number;
+  rate_per_100k: number | null;
+}
+
+export interface HealthFacility {
+  clues_id: string;
+  name: string;
+  institution: string;
+  facility_type: string;
+  geo_code: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+}

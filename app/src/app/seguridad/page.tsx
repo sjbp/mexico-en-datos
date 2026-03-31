@@ -1,0 +1,196 @@
+import Link from 'next/link';
+import Breadcrumb from '@/components/ui/Breadcrumb';
+import Card from '@/components/ui/Card';
+import SectionHeader from '@/components/ui/SectionHeader';
+import Footer from '@/components/ui/Footer';
+import { getEnvipeStats, getCifraNegra } from '@/lib/data';
+
+export const metadata = {
+  title: 'Seguridad - Mexico en Datos',
+  description: 'Datos de criminalidad, cifra negra y percepcion de seguridad en Mexico. Fuente: ENVIPE y ENSU (INEGI).',
+};
+
+export default async function SeguridadPage() {
+  const [envipeNational, cifraNegra] = await Promise.all([
+    getEnvipeStats(undefined, '00', 'total'),
+    getCifraNegra(undefined, '00'),
+  ]);
+
+  const latestEnvipe = envipeNational[0] ?? null;
+  const latestCifraNegra = cifraNegra[0] ?? null;
+
+  return (
+    <>
+      <div className="pt-10 px-[var(--pad-page)]">
+        <Breadcrumb
+          items={[
+            { label: 'Inicio', href: '/' },
+            { label: 'Seguridad' },
+          ]}
+        />
+
+        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
+          Seguridad Publica
+        </h1>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-8 max-w-2xl">
+          Datos sobre criminalidad, victimizacion y percepcion de seguridad en Mexico.
+          Fuentes: ENVIPE (encuesta anual de victimizacion) y ENSU (percepcion trimestral en zonas urbanas).
+        </p>
+
+        {/* Headline stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          <Card large>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+              Cifra Negra Nacional
+            </div>
+            {latestCifraNegra?.cifra_negra != null ? (
+              <>
+                <div className="text-[36px] font-bold tabular-nums text-[var(--negative)] leading-none mb-1">
+                  {Number(latestCifraNegra.cifra_negra).toFixed(1)}%
+                </div>
+                <div className="text-xs text-[var(--text-muted)]">
+                  de los delitos no se denuncian ({latestCifraNegra.year})
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-[var(--text-muted)]">Datos detallados proximamente</div>
+            )}
+          </Card>
+
+          <Card large>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+              Tasa de Victimizacion
+            </div>
+            {latestEnvipe?.prevalence_rate != null ? (
+              <>
+                <div className="text-[36px] font-bold tabular-nums text-[var(--accent)] leading-none mb-1">
+                  {Number(latestEnvipe.prevalence_rate).toLocaleString('es-MX', { maximumFractionDigits: 0 })}
+                </div>
+                <div className="text-xs text-[var(--text-muted)]">
+                  victimas por cada 100 mil hab. 18+ ({latestEnvipe.year})
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-[var(--text-muted)]">Datos detallados proximamente</div>
+            )}
+          </Card>
+
+          <Card large>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+              Confianza en Policia
+            </div>
+            {latestEnvipe?.trust_police != null ? (
+              <>
+                <div className="text-[36px] font-bold tabular-nums text-white leading-none mb-1">
+                  {Number(latestEnvipe.trust_police).toFixed(1)}%
+                </div>
+                <div className="text-xs text-[var(--text-muted)]">
+                  de la poblacion confia en la policia ({latestEnvipe.year})
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-[var(--text-muted)]">Datos detallados proximamente</div>
+            )}
+          </Card>
+        </div>
+      </div>
+
+      {/* Cifra negra explainer */}
+      <div className="px-[var(--pad-page)] mb-10">
+        <Card large>
+          <div className="flex flex-col md:flex-row md:items-start gap-4">
+            <div className="flex-1">
+              <div className="text-base font-semibold text-white tracking-tight mb-2">
+                Que es la cifra negra?
+              </div>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">
+                La cifra negra representa el porcentaje de delitos cometidos que no fueron denunciados
+                ante el Ministerio Publico o que no derivaron en una carpeta de investigacion. Es
+                uno de los indicadores mas reveladores del sistema de justicia mexicano: la gran
+                mayoria de los delitos simplemente nunca se reportan.
+              </p>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-4">
+                Las razones principales incluyen desconfianza en la autoridad, considerarlo una
+                perdida de tiempo, miedo a represalias y falta de pruebas. Esto significa que las
+                estadisticas oficiales de incidencia delictiva solo capturan una fraccion de la
+                realidad.
+              </p>
+              <Link
+                href="/seguridad/cifra-negra"
+                className="text-sm text-[var(--accent)] hover:underline"
+              >
+                Explorar cifra negra por estado y tipo de delito &rarr;
+              </Link>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Crime type breakdown placeholder */}
+      <SectionHeader title="Delitos por tipo" linkText="Ver detalle" linkHref="/seguridad/cifra-negra" />
+      <div className="px-[var(--pad-page)] mb-10">
+        <Card large>
+          <div className="py-8 text-center">
+            <div className="text-sm text-[var(--text-muted)]">
+              Datos detallados proximamente
+            </div>
+            <p className="text-xs text-[var(--text-muted)] mt-2">
+              Desglose de victimizacion por tipo de delito: robo, extorsion, fraude, amenazas, lesiones y mas.
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Safety perception placeholder */}
+      <SectionHeader title="Percepcion de seguridad" linkText="Ver ciudades" linkHref="/seguridad/percepcion" />
+      <div className="px-[var(--pad-page)] mb-10">
+        <Card large>
+          <div className="py-8 text-center">
+            <div className="text-sm text-[var(--text-muted)]">
+              Datos detallados proximamente
+            </div>
+            <p className="text-xs text-[var(--text-muted)] mt-2">
+              Porcentaje de la poblacion que se siente insegura en su ciudad, por trimestre (ENSU).
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      {/* Sub-page links */}
+      <div className="px-[var(--pad-page)] mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link href="/seguridad/cifra-negra">
+            <Card interactive large>
+              <div className="text-base font-semibold text-white tracking-tight mb-1">
+                Cifra negra
+              </div>
+              <p className="text-sm text-[var(--text-muted)]">
+                Analisis de delitos no denunciados por estado y tipo de delito.
+              </p>
+            </Card>
+          </Link>
+          <Link href="/seguridad/percepcion">
+            <Card interactive large>
+              <div className="text-base font-semibold text-white tracking-tight mb-1">
+                Percepcion de seguridad
+              </div>
+              <p className="text-sm text-[var(--text-muted)]">
+                Como se siente la poblacion en las principales ciudades del pais (ENSU trimestral).
+              </p>
+            </Card>
+          </Link>
+        </div>
+      </div>
+
+      {/* Attribution */}
+      <div className="px-[var(--pad-page)] mb-6">
+        <p className="text-xs text-[var(--text-muted)]">
+          Fuente: INEGI, Encuesta Nacional de Victimizacion y Percepcion sobre Seguridad Publica (ENVIPE)
+          y Encuesta Nacional de Seguridad Publica Urbana (ENSU).
+        </p>
+      </div>
+
+      <Footer />
+    </>
+  );
+}
