@@ -1,4 +1,3 @@
-import Footer from '@/components/ui/Footer';
 
 export const metadata = {
   title: 'Calendario de Publicaciones — Mexico en Datos',
@@ -22,9 +21,6 @@ export default function CalendarioPage() {
             Esta seccion esta en desarrollo.
           </p>
         </div>
-      </div>
-      <div className="mt-12">
-        <Footer />
       </div>
     </>
   );

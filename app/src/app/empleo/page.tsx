@@ -1,24 +1,20 @@
 import Link from 'next/link';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Card from '@/components/ui/Card';
-import Footer from '@/components/ui/Footer';
 import Breadcrumb from '@/components/ui/Breadcrumb';
-import { getHeadlineIndicators, getEmploymentByDimension, getLatestEmploymentQuarter } from '@/lib/data';
+import { getLatestValue, getEmploymentByDimension, getLatestEmploymentQuarter } from '@/lib/data';
 import { fmtPct, fmtCompact } from '@/lib/format';
 import EmpleoClient from './EmpleoClient';
 
 export default async function EmpleoPage() {
-  const [headlines, sectorStats, latestQuarter] = await Promise.all([
-    getHeadlineIndicators(),
+  const [unemployment, informality, underemployment, pea, sectorStats, latestQuarter] = await Promise.all([
+    getLatestValue('444614'),
+    getLatestValue('444793'),
+    getLatestValue('444894'),
+    getLatestValue('444609'),
     getEmploymentByDimension('sector'),
     getLatestEmploymentQuarter(),
   ]);
-
-  // Extract employment-related headline indicators
-  const unemployment = headlines.find((h) => h.indicator.id === '444614');
-  const informality = headlines.find((h) => h.indicator.id === '444793');
-  const underemployment = headlines.find((h) => h.indicator.id === '444894');
-  const pea = headlines.find((h) => h.indicator.id === '444609');
 
   const hasMicrodata = sectorStats.length > 0;
 
@@ -182,7 +178,6 @@ export default async function EmpleoPage() {
         </div>
       </div>
 
-      <Footer />
     </>
   );
 }

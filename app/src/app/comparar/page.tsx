@@ -1,4 +1,3 @@
-import Footer from '@/components/ui/Footer';
 import CompararClient from './CompararClient';
 import { getIndicators } from '@/lib/data';
 
@@ -22,9 +21,6 @@ export default async function CompararPage() {
       </div>
       <div className="px-[var(--pad-page)]">
         <CompararClient indicators={indicators} />
-      </div>
-      <div className="mt-12">
-        <Footer />
       </div>
     </>
   );

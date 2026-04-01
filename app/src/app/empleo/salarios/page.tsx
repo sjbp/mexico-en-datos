@@ -1,6 +1,5 @@
 import SectionHeader from '@/components/ui/SectionHeader';
 import Card from '@/components/ui/Card';
-import Footer from '@/components/ui/Footer';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { getEmploymentByDimension } from '@/lib/data';
 import SalariosClient from './SalariosClient';
@@ -108,7 +107,6 @@ export default async function SalariosPage() {
         </>
       )}
 
-      <Footer />
     </>
   );
 }

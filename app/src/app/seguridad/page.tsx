@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
-import Footer from '@/components/ui/Footer';
 import { getEnvipeStats, getCifraNegra } from '@/lib/data';
 
 export const metadata = {
@@ -190,7 +189,6 @@ export default async function SeguridadPage() {
         </p>
       </div>
 
-      <Footer />
     </>
   );
 }

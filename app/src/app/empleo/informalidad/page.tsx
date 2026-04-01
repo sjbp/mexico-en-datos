@@ -1,20 +1,17 @@
 import SectionHeader from '@/components/ui/SectionHeader';
 import Card from '@/components/ui/Card';
-import Footer from '@/components/ui/Footer';
 import Breadcrumb from '@/components/ui/Breadcrumb';
-import { getHeadlineIndicators, getEmploymentByDimension } from '@/lib/data';
+import { getLatestValue, getEmploymentByDimension } from '@/lib/data';
 import { fmtPct } from '@/lib/format';
 import InformalidadClient from './InformalidadClient';
 
 export default async function InformalidadPage() {
-  const [headlines, sectorStats, ageStats, genderStats] = await Promise.all([
-    getHeadlineIndicators(),
+  const [informality, sectorStats, ageStats, genderStats] = await Promise.all([
+    getLatestValue('444793'),
     getEmploymentByDimension('sector'),
     getEmploymentByDimension('age_group'),
     getEmploymentByDimension('gender'),
   ]);
-
-  const informality = headlines.find((h) => h.indicator.id === '444793');
   const hasMicrodata = sectorStats.length > 0;
 
   // Prepare chart data
@@ -136,7 +133,6 @@ export default async function InformalidadPage() {
         </>
       )}
 
-      <Footer />
     </>
   );
 }

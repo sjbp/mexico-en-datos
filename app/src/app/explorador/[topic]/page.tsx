@@ -1,4 +1,3 @@
-import Footer from '@/components/ui/Footer';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import ExploradorClient from '../ExploradorClient';
 import { getIndicators, getTopicsWithCounts } from '@/lib/data';
@@ -48,9 +47,6 @@ export default async function TopicPage({
         </h1>
       </div>
       <ExploradorClient indicators={indicators} topics={topics} initialTopic={topic} />
-      <div className="mt-12">
-        <Footer />
-      </div>
     </>
   );
 }

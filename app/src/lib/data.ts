@@ -324,40 +324,149 @@ export async function getLeadingCausesOfDeath(
 
 // ── Headlines ───────────────────────────────────────────────────────────
 
-const HEADLINE_INDICATOR_IDS = ['628194', '444614', '735904', '736939', '444793', '444894'];
+import { SCORECARD, type ScorecardItem } from './scorecard';
 
-export async function getHeadlineIndicators(): Promise<
-  Array<{
-    indicator: Indicator;
-    latest: IndicatorValue | null;
-    previous: IndicatorValue | null;
-    sparkValues: number[];
-  }>
-> {
-  try {
-    const results = await Promise.all(
-      HEADLINE_INDICATOR_IDS.map(async (id) => {
-        const [indicator, { latest, previous }, recentValues] = await Promise.all([
-          getIndicator(id),
-          getLatestValue(id),
-          getIndicatorValues(id, '00', 15),
-        ]);
-        if (!indicator) return null;
-        return {
-          indicator,
-          latest,
-          previous,
-          sparkValues: recentValues
-            .map((v) => (v.value != null ? Number(v.value) : null))
-            .filter((v): v is number => v !== null),
-        };
-      })
-    );
-    return results.filter(
-      (r): r is NonNullable<typeof r> => r !== null
-    );
-  } catch (error) {
-    console.error('Error fetching headline indicators:', error);
-    return [];
+export interface HeadlineResult {
+  id: string;
+  label: string;
+  value: string;
+  change: number;
+  changePeriod: string;
+  sub: string;
+  sparkValues: number[];
+  isGoodDown: boolean;
+  href: string;
+}
+
+function formatScorecardValue(raw: number, format: string): string {
+  switch (format) {
+    case 'percent1':
+      return raw.toFixed(1) + '%';
+    case 'currency2':
+      return '$' + raw.toFixed(2);
+    case 'rate1':
+      return raw.toFixed(1);
+    case 'index1':
+      return raw.toFixed(1);
+    default:
+      return raw.toFixed(1);
   }
+}
+
+async function resolveInegi(item: ScorecardItem): Promise<HeadlineResult | null> {
+  const id = item.indicatorId!;
+  const [{ latest, previous }, recentValues] = await Promise.all([
+    getLatestValue(id),
+    getIndicatorValues(id, '00', 15),
+  ]);
+  if (!latest || latest.value == null) return null;
+  const latestVal = Number(latest.value);
+  const prevVal = previous?.value != null ? Number(previous.value) : null;
+  const change = prevVal != null ? latestVal - prevVal : 0;
+  return {
+    id: item.id,
+    label: item.label,
+    value: formatScorecardValue(latestVal, item.format),
+    change,
+    changePeriod: latest.period ? `· ${latest.period}` : '',
+    sub: item.context,
+    sparkValues: recentValues
+      .map((v) => (v.value != null ? Number(v.value) : null))
+      .filter((v): v is number => v !== null),
+    isGoodDown: item.isGoodDown,
+    href: item.href,
+  };
+}
+
+async function resolveDerived(item: ScorecardItem): Promise<HeadlineResult | null> {
+  const id = item.derivedFrom!;
+  const method = item.derivedMethod ?? 'yoy_growth';
+
+  // yoy_growth: quarterly data (4 periods = 1 year). Used for PIB.
+  // yoy_pct_change: monthly data (12 periods = 1 year). Used for inflation from INPC index.
+  const periodsPerYear = method === 'yoy_pct_change' ? 12 : 4;
+  const fetchCount = periodsPerYear * 2 + 4; // 2 years + buffer
+  const minNeeded = periodsPerYear + 1;
+
+  const values = await getIndicatorValues(id, '00', fetchCount);
+  if (values.length < minNeeded) return null;
+
+  const latest = values[values.length - 1];
+  const samePeriodLastYear = values[values.length - 1 - periodsPerYear];
+  if (latest.value == null || samePeriodLastYear?.value == null) return null;
+
+  const latestVal = Number(latest.value);
+  const prevYearVal = Number(samePeriodLastYear.value);
+  const growth = ((latestVal / prevYearVal) - 1) * 100;
+
+  // Previous period's YoY for change computation
+  let change = 0;
+  if (values.length >= minNeeded + 1) {
+    const prevPeriod = values[values.length - 2];
+    const prevPeriodLastYear = values[values.length - 2 - periodsPerYear];
+    if (prevPeriod?.value != null && prevPeriodLastYear?.value != null) {
+      const prevGrowth = ((Number(prevPeriod.value) / Number(prevPeriodLastYear.value)) - 1) * 100;
+      change = growth - prevGrowth;
+    }
+  }
+
+  // For sparklines: show computed YoY rates for last N periods (not raw index values)
+  const sparkCount = Math.min(15, values.length - periodsPerYear);
+  const sparkValues: number[] = [];
+  for (let i = values.length - sparkCount; i < values.length; i++) {
+    const cur = values[i]?.value != null ? Number(values[i].value) : null;
+    const prev = values[i - periodsPerYear]?.value != null ? Number(values[i - periodsPerYear].value) : null;
+    if (cur != null && prev != null && prev !== 0) {
+      sparkValues.push(((cur / prev) - 1) * 100);
+    }
+  }
+
+  return {
+    id: item.id,
+    label: item.label,
+    value: formatScorecardValue(growth, item.format),
+    change,
+    changePeriod: latest.period ? `· ${latest.period}` : '',
+    sub: item.context,
+    sparkValues,
+    isGoodDown: item.isGoodDown,
+    href: item.href,
+  };
+}
+
+function resolveStatic(item: ScorecardItem): HeadlineResult {
+  return {
+    id: item.id,
+    label: item.label,
+    value: formatScorecardValue(item.staticValue!, item.format),
+    change: 0,
+    changePeriod: '',
+    sub: item.staticPeriod ?? item.context,
+    sparkValues: [],
+    isGoodDown: item.isGoodDown,
+    href: item.href,
+  };
+}
+
+export async function getHeadlineIndicators(): Promise<HeadlineResult[]> {
+  const results = await Promise.all(
+    SCORECARD.map(async (item) => {
+      try {
+        switch (item.sourceType) {
+          case 'inegi':
+            return await resolveInegi(item);
+          case 'derived':
+            return await resolveDerived(item);
+          case 'static':
+            return resolveStatic(item);
+          default:
+            return null;
+        }
+      } catch (error) {
+        console.error(`Error resolving scorecard item ${item.id}:`, error);
+        return null;
+      }
+    })
+  );
+  return results.filter((r): r is HeadlineResult => r !== null);
 }

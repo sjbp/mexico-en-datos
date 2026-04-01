@@ -13,53 +13,63 @@ interface TopicConfig {
 const TOPICS: TopicConfig[] = [
   {
     icon: '\ud83d\udcc8',
-    name: 'Economía',
-    desc: 'PIB, inflación, actividad económica, confianza empresarial y del consumidor, balanza comercial.',
-    href: '/explorador?topic=prices',
-    stats: [{ value: '22', label: 'indicadores' }, { value: 'Quincenal', label: 'actualización' }],
+    name: 'Economia',
+    desc: 'PIB, inflacion, actividad economica, confianza, balanza comercial.',
+    href: '/explorador',
+    stats: [{ value: '22', label: 'indicadores' }, { value: 'Quincenal', label: 'actualizacion' }],
   },
   {
     icon: '\ud83d\udcbc',
     name: 'Empleo',
-    desc: 'Ocupación, desempleo, informalidad, salarios, sectores, calidad del empleo por estado y ocupación.',
+    desc: 'Desempleo, informalidad, salarios, sectores, calidad del empleo.',
     href: '/empleo',
     stats: [{ value: '457', label: 'ocupaciones' }, { value: 'Trimestral', label: 'ENOE' }],
   },
   {
     icon: '\ud83c\udfe5',
     name: 'Salud',
-    desc: 'Mortalidad, cobertura de salud, infraestructura hospitalaria, gasto en salud, causas de muerte.',
+    desc: 'Mortalidad, cobertura, infraestructura, causas de muerte.',
     href: '/salud',
-    stats: [{ value: '6', label: 'fuentes' }, { value: '20+', label: 'años de datos' }],
+    stats: [{ value: '6', label: 'fuentes' }, { value: '20+', label: 'anos de datos' }],
   },
   {
     icon: '\ud83d\udd12',
     name: 'Seguridad',
-    desc: 'Victimización, cifra negra, percepción de inseguridad, tipos de delito por estado y ciudad.',
+    desc: 'Victimizacion, cifra negra, percepcion de inseguridad.',
     href: '/seguridad',
     stats: [{ value: '32', label: 'estados' }, { value: 'Trimestral', label: 'ENSU' }],
   },
   {
+    icon: '\ud83c\udf93',
+    name: 'Educacion',
+    desc: 'Matricula, desercion, calidad educativa, cobertura.',
+    href: '/educacion',
+    stats: [{ value: '32', label: 'estados' }, { value: 'Proximamente', label: '' }],
+  },
+  {
     icon: '\ud83d\udcb0',
-    name: 'Ingresos y pobreza',
-    desc: 'Distribución del ingreso, gasto de los hogares, pobreza multidimensional, desigualdad.',
-    href: '/calendario',
-    stats: [{ value: '9', label: 'ediciones ENIGH' }, { value: 'Próximamente', label: '' }],
+    name: 'Ingresos y Pobreza',
+    desc: 'Distribucion del ingreso, pobreza, desigualdad.',
+    href: '/ingresos',
+    stats: [{ value: '9', label: 'ediciones ENIGH' }, { value: 'Proximamente', label: '' }],
+  },
+  {
+    icon: '\ud83c\udfed',
+    name: 'Comercio y Manufactura',
+    desc: 'Exportaciones, nearshoring, industria, IED.',
+    href: '/comercio',
+    stats: [{ value: 'Mensual', label: 'actualizacion' }, { value: 'Proximamente', label: '' }],
   },
   {
     icon: '\ud83d\udc65',
-    name: 'Población',
-    desc: 'Demografía, migración, vivienda, pirámides de edad, estructura poblacional por municipio.',
-    href: '/calendario',
-    stats: [{ value: '2,469', label: 'municipios' }, { value: 'Próximamente', label: '' }],
+    name: 'Poblacion',
+    desc: 'Demografia, censo, migracion, vivienda.',
+    href: '/poblacion',
+    stats: [{ value: '2,469', label: 'municipios' }, { value: 'Proximamente', label: '' }],
   },
 ];
 
-interface TopicsGridProps {
-  topics: { topic: string; count: number }[];
-}
-
-export default function TopicsGrid({ topics: _topics }: TopicsGridProps) {
+export default function TopicsGrid() {
   return (
     <>
       <SectionHeader title="Explora por tema" />

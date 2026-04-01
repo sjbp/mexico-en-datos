@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Badge from '@/components/ui/Badge';
-import Footer from '@/components/ui/Footer';
 import IndicadorClient from './IndicadorClient';
 import { getIndicator, getIndicatorValues, getLatestValue } from '@/lib/data';
 import { fmtNum } from '@/lib/format';
@@ -138,9 +137,6 @@ export default async function IndicadorPage({
         />
       </div>
 
-      <div className="mt-12">
-        <Footer />
-      </div>
     </>
   );
 }

@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
 import HBar from '@/components/charts/HBar';
-import Footer from '@/components/ui/Footer';
 
 export const metadata: Metadata = {
   title: 'Salud | M\u00e9xico en Datos',
@@ -140,7 +139,6 @@ export default function SaludPage() {
         </div>
       </div>
 
-      <Footer />
     </>
   );
 }

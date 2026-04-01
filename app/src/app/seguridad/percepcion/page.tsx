@@ -1,6 +1,5 @@
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
-import Footer from '@/components/ui/Footer';
 import { getEnsuStats } from '@/lib/data';
 
 export const metadata = {
@@ -124,7 +123,6 @@ export default async function PercepcionPage() {
         </p>
       </div>
 
-      <Footer />
     </>
   );
 }

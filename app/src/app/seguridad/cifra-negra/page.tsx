@@ -1,6 +1,5 @@
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
-import Footer from '@/components/ui/Footer';
 import { getCifraNegra } from '@/lib/data';
 
 export const metadata = {
@@ -130,7 +129,6 @@ export default async function CifraNegraPage() {
         </p>
       </div>
 
-      <Footer />
     </>
   );
 }
