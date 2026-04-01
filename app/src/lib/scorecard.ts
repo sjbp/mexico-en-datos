@@ -6,6 +6,7 @@ export interface ScorecardItem {
   staticValue?: number;
   staticPeriod?: string;
   staticDate?: string;
+  sparkIndicatorId?: string;    // Optional: pull sparkline from this indicator even for static items
   unit: string;
   format: string;
   isGoodDown: boolean;
@@ -21,11 +22,12 @@ export const SCORECARD: ScorecardItem[] = [
     staticValue: 4.02,
     staticPeriod: 'INEGI · Feb 2026',
     staticDate: '2026-02-01',
+    sparkIndicatorId: '628194',
     unit: 'percent',
     format: 'percent1',
     isGoodDown: true,
     context: 'Var. % anual INPC · Banxico prox.',
-    href: '/salud',
+    href: '/indicador/628194',
   },
   {
     id: 'pib',

@@ -384,7 +384,21 @@ async function resolveInegi(item: ScorecardItem): Promise<HeadlineResult | null>
   };
 }
 
-function resolveStatic(item: ScorecardItem): HeadlineResult {
+async function resolveStatic(item: ScorecardItem): Promise<HeadlineResult> {
+  let sparkValues: number[] = [];
+
+  // Optionally pull sparkline from a related indicator
+  if (item.sparkIndicatorId) {
+    try {
+      const values = await getIndicatorValues(item.sparkIndicatorId, '00', 15);
+      sparkValues = values
+        .map((v) => (v.value != null ? Number(v.value) : null))
+        .filter((v): v is number => v !== null);
+    } catch {
+      // Sparkline is optional — don't fail if it errors
+    }
+  }
+
   return {
     id: item.id,
     label: item.label,
@@ -392,7 +406,7 @@ function resolveStatic(item: ScorecardItem): HeadlineResult {
     change: 0,
     changePeriod: '',
     sub: item.staticPeriod ?? item.context,
-    sparkValues: [],
+    sparkValues,
     isGoodDown: item.isGoodDown,
     href: item.href,
   };
@@ -406,7 +420,7 @@ export async function getHeadlineIndicators(): Promise<HeadlineResult[]> {
           case 'inegi':
             return await resolveInegi(item);
           case 'static':
-            return resolveStatic(item);
+            return await resolveStatic(item);
           default:
             return null;
         }
