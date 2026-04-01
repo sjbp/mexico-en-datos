@@ -77,6 +77,8 @@ export const SCORECARD: ScorecardItem[] = [
     staticValue: 25.2,
     staticPeriod: 'SESNSP · 2024',
     staticDate: '2024-12-01',
+    // TODO: Switch sourceType to 'inegi' once sesnsp_homicide_rate indicator is populated
+    sparkIndicatorId: 'sesnsp_homicide_count', // Monthly counts from SESNSP pipeline
     unit: 'rate',
     format: 'rate1',
     isGoodDown: true,
