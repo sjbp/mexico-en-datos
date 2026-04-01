@@ -348,6 +348,12 @@ function formatScorecardValue(raw: number, format: string): string {
       return raw.toFixed(1);
     case 'index1':
       return raw.toFixed(1);
+    case 'index2':
+      return raw.toFixed(2);
+    case 'compact':
+      if (raw >= 1e6) return (raw / 1e6).toFixed(1) + 'M';
+      if (raw >= 1e3) return (raw / 1e3).toFixed(1) + 'K';
+      return raw.toFixed(0);
     default:
       return raw.toFixed(1);
   }
@@ -378,62 +384,6 @@ async function resolveInegi(item: ScorecardItem): Promise<HeadlineResult | null>
   };
 }
 
-async function resolveDerived(item: ScorecardItem): Promise<HeadlineResult | null> {
-  const id = item.derivedFrom!;
-  const method = item.derivedMethod ?? 'yoy_growth';
-
-  // yoy_growth: quarterly data (4 periods = 1 year). Used for PIB.
-  // yoy_pct_change: monthly data (12 periods = 1 year). Used for inflation from INPC index.
-  const periodsPerYear = method === 'yoy_pct_change' ? 12 : 4;
-  const fetchCount = periodsPerYear * 2 + 4; // 2 years + buffer
-  const minNeeded = periodsPerYear + 1;
-
-  const values = await getIndicatorValues(id, '00', fetchCount);
-  if (values.length < minNeeded) return null;
-
-  const latest = values[values.length - 1];
-  const samePeriodLastYear = values[values.length - 1 - periodsPerYear];
-  if (latest.value == null || samePeriodLastYear?.value == null) return null;
-
-  const latestVal = Number(latest.value);
-  const prevYearVal = Number(samePeriodLastYear.value);
-  const growth = ((latestVal / prevYearVal) - 1) * 100;
-
-  // Previous period's YoY for change computation
-  let change = 0;
-  if (values.length >= minNeeded + 1) {
-    const prevPeriod = values[values.length - 2];
-    const prevPeriodLastYear = values[values.length - 2 - periodsPerYear];
-    if (prevPeriod?.value != null && prevPeriodLastYear?.value != null) {
-      const prevGrowth = ((Number(prevPeriod.value) / Number(prevPeriodLastYear.value)) - 1) * 100;
-      change = growth - prevGrowth;
-    }
-  }
-
-  // For sparklines: show computed YoY rates for last N periods (not raw index values)
-  const sparkCount = Math.min(15, values.length - periodsPerYear);
-  const sparkValues: number[] = [];
-  for (let i = values.length - sparkCount; i < values.length; i++) {
-    const cur = values[i]?.value != null ? Number(values[i].value) : null;
-    const prev = values[i - periodsPerYear]?.value != null ? Number(values[i - periodsPerYear].value) : null;
-    if (cur != null && prev != null && prev !== 0) {
-      sparkValues.push(((cur / prev) - 1) * 100);
-    }
-  }
-
-  return {
-    id: item.id,
-    label: item.label,
-    value: formatScorecardValue(growth, item.format),
-    change,
-    changePeriod: latest.period ? `· ${latest.period}` : '',
-    sub: item.context,
-    sparkValues,
-    isGoodDown: item.isGoodDown,
-    href: item.href,
-  };
-}
-
 function resolveStatic(item: ScorecardItem): HeadlineResult {
   return {
     id: item.id,
@@ -455,8 +405,6 @@ export async function getHeadlineIndicators(): Promise<HeadlineResult[]> {
         switch (item.sourceType) {
           case 'inegi':
             return await resolveInegi(item);
-          case 'derived':
-            return await resolveDerived(item);
           case 'static':
             return resolveStatic(item);
           default:

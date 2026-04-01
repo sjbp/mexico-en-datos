@@ -1,10 +1,8 @@
 export interface ScorecardItem {
   id: string;
   label: string;
-  sourceType: 'inegi' | 'derived' | 'static';
+  sourceType: 'inegi' | 'static';
   indicatorId?: string;
-  derivedFrom?: string;
-  derivedMethod?: 'yoy_growth' | 'yoy_pct_change';
   staticValue?: number;
   staticPeriod?: string;
   staticDate?: string;
@@ -18,26 +16,24 @@ export interface ScorecardItem {
 export const SCORECARD: ScorecardItem[] = [
   {
     id: 'inflacion',
-    label: 'Inflacion anual',
-    sourceType: 'derived',
-    derivedFrom: '444612',
-    derivedMethod: 'yoy_pct_change',
-    unit: 'percent',
-    format: 'percent1',
+    label: 'INPC General',
+    sourceType: 'inegi',
+    indicatorId: '628194',
+    unit: 'index',
+    format: 'index2',
     isGoodDown: true,
-    context: 'Meta Banxico: 3% +/- 1pp',
-    href: '/indicador/444612',
+    context: 'Indice de precios · Quincenal',
+    href: '/indicador/628194',
   },
   {
-    id: 'pib_growth',
-    label: 'Crecimiento PIB',
-    sourceType: 'derived',
-    derivedFrom: '735904',
-    derivedMethod: 'yoy_growth',
-    unit: 'percent',
-    format: 'percent1',
+    id: 'pib',
+    label: 'PIB Total',
+    sourceType: 'inegi',
+    indicatorId: '735904',
+    unit: 'millions_mxn',
+    format: 'compact',
     isGoodDown: false,
-    context: 'Variacion % anual',
+    context: 'Millones de pesos · Trimestral',
     href: '/indicador/735904',
   },
   {
