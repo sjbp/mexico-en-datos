@@ -1,43 +1,14 @@
 export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: string }> = {
+  // --- Prices (historical, frozen Jul 2024) ---
   "628194": {
-    summary: "Variacion porcentual anual del Indice Nacional de Precios al Consumidor, publicado quincenalmente.",
-    context: "Es la medida mas seguida de inflacion en Mexico. Un valor alto indica perdida de poder adquisitivo. Banxico tiene un objetivo de 3% +/- 1pp."
+    summary: "Indice general de precios al consumidor, base 2a quincena de julio 2018 = 100. Serie historica congelada en julio 2024.",
+    context: "INEGI migro el INPC a una nueva canasta y ponderadores en 2024. Esta serie ya no se actualiza. Los datos actuales de inflacion se publicaran via Banxico proximamente."
   },
-  "628229": {
-    summary: "Variacion anual del INPC excluyendo productos agropecuarios y energeticos, cuyos precios son mas volatiles.",
-    context: "Refleja la tendencia de fondo de los precios. Es clave para las decisiones de politica monetaria de Banxico."
-  },
-  "444612": {
-    summary: "Indice base 2da quincena de julio 2018 = 100 que mide la evolucion de los precios de una canasta de bienes y servicios representativa del consumo de los hogares mexicanos.",
-    context: "Es el indicador oficial de nivel de precios en Mexico. Se construye con ~300,000 cotizaciones mensuales en 55 ciudades."
-  },
-  "444613": {
-    summary: "Indice de precios que excluye los bienes y servicios con precios mas volatiles (agropecuarios y energeticos).",
-    context: "Muestra la inflacion estructural, sin el ruido de choques temporales de oferta. Banxico lo monitorea de cerca."
-  },
-  "444616": {
-    summary: "Subindice del INPC que mide la evolucion de precios de alimentos, bebidas y tabaco.",
-    context: "Es el componente que mas impacta a los hogares de menores ingresos, donde la alimentacion representa mayor proporcion del gasto."
-  },
-  "444618": {
-    summary: "Subindice del INPC que mide la evolucion de precios de transporte publico y privado.",
-    context: "Incluye gasolinas, transporte publico, vehiculos y refacciones. Sensible a precios internacionales del petroleo."
-  },
-  "444619": {
-    summary: "Subindice del INPC que mide la evolucion de precios de servicios medicos, medicamentos y articulos de cuidado personal.",
-    context: "Historicamente crece por encima de la inflacion general. Relevante para seguros de salud y presupuestos familiares."
-  },
-  "444620": {
-    summary: "Subindice del INPC que mide la evolucion de precios de vivienda, incluyendo rentas, mantenimiento y servicios.",
-    context: "Componente con alta ponderacion en el INPC. Incluye rentas de vivienda, electricidad, gas y agua."
-  },
-  "444621": {
-    summary: "Subindice del INPC que mide la evolucion de precios de servicios educativos y articulos escolares.",
-    context: "Presenta estacionalidad marcada por los ciclos escolares. Las colegiaturas privadas son un componente importante."
-  },
+
+  // --- Economic Activity ---
   "735904": {
-    summary: "Valor total de la produccion de bienes y servicios finales en Mexico, medido trimestralmente a precios de 2018.",
-    context: "Es la medida mas amplia de actividad economica. Mexico es la 12a economia mundial. Tasas de crecimiento del PIB se pueden calcular a partir de esta serie."
+    summary: "Variacion porcentual anual del Producto Interno Bruto de Mexico, a precios constantes de 2018.",
+    context: "Es la medida mas amplia de crecimiento economico. Mexico es la 12a economia mundial. Un valor positivo indica expansion; negativo indica contraccion (recesion). Se publica con ~2 trimestres de rezago."
   },
   "736939": {
     summary: "Indicador mensual que estima la evolucion de la actividad economica total, con metodologia compatible con el PIB.",
@@ -51,30 +22,6 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
     summary: "Indice mensual de actividades secundarias (industria): manufactura, construccion, mineria y electricidad.",
     context: "El sector secundario representa ~30% del PIB. La manufactura de exportacion es un motor clave de la economia mexicana."
   },
-  "444614": {
-    summary: "Porcentaje de la Poblacion Economicamente Activa que no tiene trabajo pero lo busca activamente.",
-    context: "En Mexico la tasa oficial tiende a ser baja (~3-4%) porque no captura la informalidad. Se complementa con la tasa de informalidad y subocupacion."
-  },
-  "444793": {
-    summary: "Porcentaje de la poblacion ocupada en condiciones de informalidad laboral (sin acceso a seguridad social por su trabajo).",
-    context: "Cerca del 55% de los trabajadores mexicanos son informales. Es una de las cifras mas reveladoras del mercado laboral en Mexico."
-  },
-  "444894": {
-    summary: "Porcentaje de la poblacion ocupada que tiene necesidad y disponibilidad de trabajar mas horas.",
-    context: "Complementa la tasa de desempleo mostrando subempleo: personas que trabajan pero no las horas suficientes."
-  },
-  "444609": {
-    summary: "Numero de personas de 15 anos o mas que trabajan o buscan activamente un empleo.",
-    context: "Mide el tamano de la fuerza laboral mexicana. Su crecimiento refleja cambios demograficos y de participacion laboral."
-  },
-  "127598": {
-    summary: "Valor total de las mercancias vendidas al exterior, en millones de dolares.",
-    context: "Mexico es el principal socio comercial de EE.UU. Las exportaciones manufactureras (especialmente automotriz y electronica) representan ~90% del total."
-  },
-  "127601": {
-    summary: "Valor total de las mercancias compradas del exterior, en millones de dolares.",
-    context: "Incluye bienes intermedios para manufactura, bienes de consumo y bienes de capital. El deficit o superavit comercial se calcula contra las exportaciones."
-  },
   "736941": {
     summary: "Indice mensual de actividades primarias: agricultura, ganaderia, pesca y aprovechamiento forestal.",
     context: "El sector primario es altamente estacional y volatil, dependiente del clima y ciclos de cosecha. Representa ~4% del PIB pero emplea al 12% de la poblacion."
@@ -83,10 +30,40 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
     summary: "Indice mensual de actividades terciarias: comercio, servicios financieros, transporte, educacion, salud y gobierno.",
     context: "El sector terciario es el mas grande de la economia mexicana (~63% del PIB). Su crecimiento refleja la urbanizacion y modernizacion economica del pais."
   },
+
+  // --- Employment (post-migration IDs, 32 cities urban aggregate) ---
+  "444612": {
+    summary: "Porcentaje de la Poblacion Economicamente Activa urbana que no tiene trabajo pero lo busca activamente. Agregado de 32 ciudades.",
+    context: "En Mexico la tasa urbana de desempleo tiende a ser baja (~3-5%). Se complementa con la tasa de informalidad y subocupacion para entender el panorama completo del mercado laboral."
+  },
+  "444619": {
+    summary: "Porcentaje de la poblacion ocupada urbana en condiciones de informalidad laboral (sin acceso a seguridad social por su trabajo).",
+    context: "Cerca del 44% de los trabajadores urbanos son informales. A nivel nacional (incluyendo zonas rurales) la cifra supera el 55%. Es una de las metricas mas reveladoras del mercado laboral mexicano."
+  },
+  "444616": {
+    summary: "Porcentaje de la poblacion ocupada urbana que tiene necesidad y disponibilidad de trabajar mas horas.",
+    context: "Complementa la tasa de desempleo mostrando subempleo: personas que trabajan pero no las horas suficientes para cubrir sus necesidades."
+  },
+  "444620": {
+    summary: "Porcentaje de la poblacion de 15 anos y mas que trabaja o busca activamente un empleo, en el agregado de 32 ciudades.",
+    context: "Mide la participacion laboral urbana. Su crecimiento refleja cambios demograficos, mayor participacion femenina y dinamica economica."
+  },
+
+  // --- Trade ---
+  "127598": {
+    summary: "Valor total de las mercancias vendidas al exterior, en millones de dolares.",
+    context: "Mexico es el principal socio comercial de EE.UU. Las exportaciones manufactureras (especialmente automotriz y electronica) representan ~90% del total."
+  },
+  "127601": {
+    summary: "Valor total de las mercancias compradas del exterior, en millones de dolares.",
+    context: "Incluye bienes intermedios para manufactura, bienes de consumo y bienes de capital. El deficit o superavit comercial se calcula contra las exportaciones."
+  },
+
+  // --- Confidence ---
   "454168": {
     summary: "Indice compuesto que mide la percepcion de los consumidores sobre la situacion economica actual y futura del pais y del hogar.",
     context: "Basado en la Encuesta Nacional sobre Confianza del Consumidor (ENCO). Valores por encima de 50 indican optimismo. Es un indicador adelantado del consumo privado."
-  }
+  },
 };
 
 export function getIndicatorDescription(id: string): { summary: string; context: string } | null {

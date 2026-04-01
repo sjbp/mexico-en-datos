@@ -2,105 +2,38 @@ topics:
   prices:
     name_es: "Precios"
     indicators:
-      # --- INPC biweekly (quincenal) ---
+      # NOTE: INEGI migrated INPC to a new system ("Canasta y Ponderadores 2024").
+      # The old BIE indicator IDs (628194, 444612-444621) are either stale or reassigned.
+      # 628194 (INPC index) is frozen at July 2024.
+      # 444612-444621 were REASSIGNED to employment indicators after the Dec 2025 BIE migration.
+      # Current INPC data is NOT available via the standard BIE API.
+      # TODO: Integrate Banxico SIE API for inflation data (series SP68257, SP1).
+
       - id: "628194"
-        name_es: "INPC General (variación % anual, quincenal)"
-        name_en: "Headline CPI (annual % change, biweekly)"
+        name_es: "INPC Indice General (historico, congelado Jul 2024)"
+        name_en: "Headline CPI Index (historical, frozen Jul 2024)"
         subtopic: "inpc"
-        unit: "percent"
-        frequency: "biweekly"
-        source: "BIE-BISE"
-        geo_levels: [national, state]
-
-      - id: "628229"
-        name_es: "INPC Subyacente (variación % anual, quincenal)"
-        name_en: "Core CPI (annual % change, biweekly)"
-        subtopic: "inpc"
-        unit: "percent"
-        frequency: "biweekly"
-        source: "BIE-BISE"
-        geo_levels: [national]
-
-      # --- INPC monthly (índice) ---
-      - id: "444612"
-        name_es: "INPC General (índice, mensual)"
-        name_en: "Headline CPI (index, monthly)"
-        subtopic: "inpc"
-        unit: "index"
-        frequency: "monthly"
-        source: "BIE-BISE"
-        geo_levels: [national, state]
-
-      - id: "444613"
-        name_es: "INPC Subyacente (índice, mensual)"
-        name_en: "Core CPI (index, monthly)"
-        subtopic: "inpc"
-        unit: "index"
-        frequency: "monthly"
-        source: "BIE-BISE"
-        geo_levels: [national]
-
-      - id: "444616"
-        name_es: "INPC Alimentos, bebidas y tabaco (índice, mensual)"
-        name_en: "Food, beverages & tobacco CPI (index, monthly)"
-        subtopic: "inpc_components"
-        unit: "index"
-        frequency: "monthly"
-        source: "BIE-BISE"
-        geo_levels: [national]
-
-      - id: "444620"
-        name_es: "INPC Vivienda (índice, mensual)"
-        name_en: "Housing CPI (index, monthly)"
-        subtopic: "inpc_components"
-        unit: "index"
-        frequency: "monthly"
-        source: "BIE-BISE"
-        geo_levels: [national]
-
-      - id: "444621"
-        name_es: "INPC Educación (índice, mensual)"
-        name_en: "Education CPI (index, monthly)"
-        subtopic: "inpc_components"
-        unit: "index"
-        frequency: "monthly"
-        source: "BIE-BISE"
-        geo_levels: [national]
-
-      - id: "444618"
-        name_es: "INPC Transporte (índice, mensual)"
-        name_en: "Transportation CPI (index, monthly)"
-        subtopic: "inpc_components"
-        unit: "index"
-        frequency: "monthly"
-        source: "BIE-BISE"
-        geo_levels: [national]
-
-      - id: "444619"
-        name_es: "INPC Salud y cuidado personal (índice, mensual)"
-        name_en: "Health & personal care CPI (index, monthly)"
-        subtopic: "inpc_components"
         unit: "index"
         frequency: "monthly"
         source: "BIE-BISE"
         geo_levels: [national]
 
   economic_activity:
-    name_es: "Actividad Económica"
+    name_es: "Actividad Economica"
     indicators:
-      # --- GDP quarterly ---
+      # --- GDP quarterly (this is YoY growth rate, NOT absolute value) ---
       - id: "735904"
-        name_es: "PIB Total (millones de pesos, trimestral)"
-        name_en: "GDP Total (millions MXN, quarterly)"
+        name_es: "PIB Crecimiento (variacion % anual, trimestral)"
+        name_en: "GDP Growth (annual % change, quarterly)"
         subtopic: "pib"
-        unit: "millions_mxn"
+        unit: "percent"
         frequency: "quarterly"
         source: "BIE-BISE"
         geo_levels: [national]
 
       # --- IGAE monthly ---
       - id: "736939"
-        name_es: "IGAE Total (índice, mensual)"
+        name_es: "IGAE Total (indice, mensual)"
         name_en: "IGAE Total (index, monthly)"
         subtopic: "igae"
         unit: "index"
@@ -109,7 +42,7 @@ topics:
         geo_levels: [national]
 
       - id: "736940"
-        name_es: "IGAE Total (variación % anual, mensual)"
+        name_es: "IGAE Total (variacion % anual, mensual)"
         name_en: "IGAE Total (annual % change, monthly)"
         subtopic: "igae"
         unit: "percent"
@@ -118,7 +51,7 @@ topics:
         geo_levels: [national]
 
       - id: "736883"
-        name_es: "IGAE Actividades Secundarias (índice, mensual)"
+        name_es: "IGAE Actividades Secundarias (indice, mensual)"
         name_en: "IGAE Secondary activities (index, monthly)"
         subtopic: "igae"
         unit: "index"
@@ -127,7 +60,7 @@ topics:
         geo_levels: [national]
 
       - id: "736941"
-        name_es: "IGAE Actividades Primarias (índice, mensual)"
+        name_es: "IGAE Actividades Primarias (indice, mensual)"
         name_en: "IGAE Primary activities (index, monthly)"
         subtopic: "igae"
         unit: "index"
@@ -136,7 +69,7 @@ topics:
         geo_levels: [national]
 
       - id: "736895"
-        name_es: "IGAE Actividades Terciarias (índice, mensual)"
+        name_es: "IGAE Actividades Terciarias (indice, mensual)"
         name_en: "IGAE Tertiary activities (index, monthly)"
         subtopic: "igae"
         unit: "index"
@@ -147,39 +80,42 @@ topics:
   employment:
     name_es: "Empleo"
     indicators:
-      - id: "444614"
-        name_es: "Tasa de desocupación (trimestral)"
-        name_en: "Unemployment rate (quarterly)"
+      # NOTE: After INEGI Dec 2025 BIE migration, these IDs were verified:
+      # The catalog names are generic (e.g., "Tasa de desocupacion") but we label them
+      # based on their topic context (poblacion urbana, agregado 32 ciudades).
+      - id: "444612"
+        name_es: "Tasa de desocupacion (mensual, 32 ciudades)"
+        name_en: "Unemployment rate (monthly, 32 cities)"
         subtopic: "enoe"
         unit: "percent"
-        frequency: "quarterly"
-        source: "BIE-BISE"
-        geo_levels: [national, state]
-
-      - id: "444793"
-        name_es: "Tasa de informalidad laboral (trimestral)"
-        name_en: "Labor informality rate (quarterly)"
-        subtopic: "enoe"
-        unit: "percent"
-        frequency: "quarterly"
-        source: "BIE-BISE"
-        geo_levels: [national, state]
-
-      - id: "444894"
-        name_es: "Tasa de subocupación (trimestral)"
-        name_en: "Underemployment rate (quarterly)"
-        subtopic: "enoe"
-        unit: "percent"
-        frequency: "quarterly"
+        frequency: "monthly"
         source: "BIE-BISE"
         geo_levels: [national]
 
-      - id: "444609"
-        name_es: "Población económicamente activa (trimestral)"
-        name_en: "Economically active population (quarterly)"
+      - id: "444619"
+        name_es: "Tasa de informalidad laboral TIL1 (mensual, 32 ciudades)"
+        name_en: "Labor informality rate TIL1 (monthly, 32 cities)"
         subtopic: "enoe"
-        unit: "thousands"
-        frequency: "quarterly"
+        unit: "percent"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "444616"
+        name_es: "Tasa de subocupacion (mensual, 32 ciudades)"
+        name_en: "Underemployment rate (monthly, 32 cities)"
+        subtopic: "enoe"
+        unit: "percent"
+        frequency: "monthly"
+        source: "BIE-BISE"
+        geo_levels: [national]
+
+      - id: "444620"
+        name_es: "Poblacion economicamente activa PEA (mensual, 32 ciudades)"
+        name_en: "Economically active population PEA (monthly, 32 cities)"
+        subtopic: "enoe"
+        unit: "percent"
+        frequency: "monthly"
         source: "BIE-BISE"
         geo_levels: [national]
 
@@ -216,5 +152,8 @@ topics:
         source: "BIE-BISE"
         geo_levels: [national]
 
-  # TODO: find correct IDs for:
-  # - Balanza comercial (saldo) — can derive from exports - imports
+  # TODO: Add Banxico indicators once we have a token:
+  # - SP68257: Inflacion interanual general (the 4.02% number)
+  # - SP1: INPC indice general
+  # - SF43718: Tipo de cambio USD/MXN
+  # - SF61745: Tasa objetivo Banxico
