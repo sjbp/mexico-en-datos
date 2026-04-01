@@ -1,4 +1,26 @@
 export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: string }> = {
+  // --- Banxico series ---
+  "SP30578": {
+    summary: "Variacion porcentual anual del Indice Nacional de Precios al Consumidor. Es la cifra de inflacion que se reporta en las noticias.",
+    context: "El objetivo de Banxico es 3% +/- 1pp. Valores por encima de 4% indican presion inflacionaria; por debajo de 2% sugieren debilidad economica. Es el dato mas vigilado para decisiones de politica monetaria."
+  },
+  "SF43718": {
+    summary: "Tipo de cambio FIX pesos por dolar, determinado diariamente por el Banco de Mexico.",
+    context: "Es la referencia oficial para operaciones en dolares en Mexico. El numero economico mas vigilado del pais. Un peso fuerte favorece importaciones; uno debil favorece exportaciones y remesas."
+  },
+  "SF61745": {
+    summary: "Tasa de interes objetivo de politica monetaria, fijada por la Junta de Gobierno de Banxico.",
+    context: "Afecta directamente hipotecas, ahorro y credito. Banxico la ajusta para controlar la inflacion. Subidas encarecen el credito; recortes lo abaratan. Se decide en juntas aproximadamente cada 6 semanas."
+  },
+  "SP1": {
+    summary: "Indice Nacional de Precios al Consumidor, base segunda quincena de julio 2018 = 100. Serie de Banxico.",
+    context: "Mismo indice que publica INEGI pero a traves de Banxico, que suele mantener la serie mas actualizada. Mide el costo de una canasta representativa de bienes y servicios."
+  },
+  "SP74662": {
+    summary: "Variacion porcentual anual del INPC excluyendo productos con precios volatiles (agropecuarios y energeticos/tarifas de gobierno).",
+    context: "La inflacion subyacente refleja presiones de demanda mas que choques de oferta. Es la medida preferida de Banxico para evaluar la tendencia inflacionaria de mediano plazo."
+  },
+
   // --- Prices (historical, frozen Jul 2024) ---
   "628194": {
     summary: "Indice general de precios al consumidor, base 2a quincena de julio 2018 = 100. Serie historica congelada en julio 2024.",
