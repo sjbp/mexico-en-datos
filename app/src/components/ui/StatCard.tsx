@@ -32,8 +32,8 @@ export default function StatCard({
   const arrow = dir === 'down' ? '\u2193' : dir === 'up' ? '\u2191' : '';
 
   return (
-    <Card interactive>
-      <div className="flex flex-col">
+    <Card interactive className="h-full">
+      <div className="flex flex-col h-full">
         <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
           {label}
         </div>
@@ -47,7 +47,7 @@ export default function StatCard({
           <div className="text-[11px] text-[var(--text-muted)] mt-1">{sub}</div>
         )}
         {sparkValues && sparkValues.length > 1 && (
-          <div className="mt-3">
+          <div className="mt-auto pt-3">
             <Sparkline values={sparkValues} width={160} height={32} />
           </div>
         )}

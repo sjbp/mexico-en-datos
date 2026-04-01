@@ -12,12 +12,12 @@ export default function HeadlineGrid({ headlines }: HeadlineGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 px-[var(--pad-page)] mb-10 max-sm:grid-cols-2">
+    <div className="grid grid-cols-4 gap-3 px-[var(--pad-page)] mb-10 max-sm:grid-cols-2">
       {headlines.map((h) => (
         <Link
           key={h.id}
           href={h.href}
-          className="block no-underline text-inherit"
+          className="block no-underline text-inherit h-full"
         >
           <StatCard
             label={h.label}

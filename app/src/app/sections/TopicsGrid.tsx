@@ -73,20 +73,20 @@ export default function TopicsGrid() {
   return (
     <>
       <SectionHeader title="Explora por tema" />
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3 px-[var(--pad-page)] mb-12 max-sm:grid-cols-1">
+      <div className="grid grid-cols-4 gap-3 px-[var(--pad-page)] mb-12 max-sm:grid-cols-1 sm:max-lg:grid-cols-2">
         {TOPICS.map((t) => (
           <Link
             key={t.name}
             href={t.href}
-            className="block no-underline text-inherit"
+            className="block no-underline text-inherit h-full"
           >
-            <Card interactive>
+            <Card interactive className="h-full flex flex-col">
               <div className="text-xl mb-[10px]">{t.icon}</div>
               <div className="text-[15px] font-semibold text-white mb-[6px]">{t.name}</div>
-              <div className="text-[13px] text-[var(--text-secondary)] leading-normal mb-3">
+              <div className="text-[13px] text-[var(--text-secondary)] leading-normal mb-3 flex-1">
                 {t.desc}
               </div>
-              <div className="flex gap-4">
+              <div className="flex gap-4 mt-auto">
                 {t.stats.map((s, i) => (
                   <div key={i}>
                     <div className="text-base font-bold tracking-tight text-[var(--accent)] tabular-nums">
