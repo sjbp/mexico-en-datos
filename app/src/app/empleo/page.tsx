@@ -8,10 +8,10 @@ import EmpleoClient from './EmpleoClient';
 
 export default async function EmpleoPage() {
   const [unemployment, informality, underemployment, pea, sectorStats, latestQuarter] = await Promise.all([
-    getLatestValue('444614'),
-    getLatestValue('444793'),
-    getLatestValue('444894'),
-    getLatestValue('444609'),
+    getLatestValue('444612'),
+    getLatestValue('444619'),
+    getLatestValue('444616'),
+    getLatestValue('444620'),
     getEmploymentByDimension('sector'),
     getLatestEmploymentQuarter(),
   ]);

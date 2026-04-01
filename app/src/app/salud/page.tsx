@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
 import HBar from '@/components/charts/HBar';
@@ -48,13 +49,13 @@ export default function SaludPage() {
   return (
     <>
       <div className="px-[var(--pad-page)] pt-10 pb-6">
-        <Link
-          href="/"
-          className="text-[var(--text-muted)] text-sm hover:text-[var(--accent)] transition-colors"
-        >
-          &larr; Inicio
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight text-white mt-4 mb-2">
+        <Breadcrumb
+          items={[
+            { label: 'Inicio', href: '/' },
+            { label: 'Salud' },
+          ]}
+        />
+        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
           Salud
         </h1>
         <p className="text-[var(--text-secondary)] text-base leading-relaxed max-w-[640px]">

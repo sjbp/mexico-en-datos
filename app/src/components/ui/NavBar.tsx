@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
 const topics = [
-  { emoji: '📈', label: 'Economía', desc: 'PIB, inflación y actividad económica', href: '/explorador' },
+  { emoji: '📈', label: 'Economía', desc: 'PIB, inflación y actividad económica', href: '/economia' },
   { emoji: '💼', label: 'Empleo', desc: 'Ocupación, desempleo e informalidad', href: '/empleo' },
   { emoji: '🏥', label: 'Salud', desc: 'Mortalidad, cobertura e infraestructura', href: '/salud' },
   { emoji: '🔒', label: 'Seguridad', desc: 'Incidencia delictiva y percepción', href: '/seguridad' },

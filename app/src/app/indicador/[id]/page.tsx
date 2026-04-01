@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Badge from '@/components/ui/Badge';
@@ -60,11 +61,19 @@ export default async function IndicadorPage({
       <div className="pt-10 px-[var(--pad-page)]">
         <Breadcrumb
           items={[
+            { label: 'Inicio', href: '/' },
             { label: 'Explorador', href: '/explorador' },
             { label: topicDisplay, href: `/explorador?topic=${encodeURIComponent(indicator.topic)}` },
             { label: indicator.name_es },
           ]}
         />
+
+        <Link
+          href="/explorador"
+          className="inline-flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors mb-4"
+        >
+          &larr; Volver al explorador
+        </Link>
 
         <h1 className="text-3xl font-bold tracking-tight text-white mb-3">
           {indicator.name_es}

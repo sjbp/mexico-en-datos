@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -14,12 +16,12 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
         <span key={i} className="flex items-center gap-[6px]">
           {i > 0 && <span className="text-[var(--text-muted)]">/</span>}
           {item.href ? (
-            <a
+            <Link
               href={item.href}
               className="text-[var(--text-muted)] underline decoration-white/15 underline-offset-[2.5px] hover:text-[var(--accent)] hover:decoration-[var(--accent)] transition-colors"
             >
               {item.label}
-            </a>
+            </Link>
           ) : (
             <span className="text-[var(--text-secondary)]">{item.label}</span>
           )}

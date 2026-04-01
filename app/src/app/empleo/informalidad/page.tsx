@@ -7,7 +7,7 @@ import InformalidadClient from './InformalidadClient';
 
 export default async function InformalidadPage() {
   const [informality, sectorStats, ageStats, genderStats] = await Promise.all([
-    getLatestValue('444793'),
+    getLatestValue('444619'),
     getEmploymentByDimension('sector'),
     getEmploymentByDimension('age_group'),
     getEmploymentByDimension('gender'),

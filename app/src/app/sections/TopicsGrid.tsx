@@ -15,7 +15,7 @@ const TOPICS: TopicConfig[] = [
     icon: '\ud83d\udcc8',
     name: 'Economia',
     desc: 'PIB, inflacion, actividad economica, confianza, balanza comercial.',
-    href: '/explorador',
+    href: '/economia',
     stats: [{ value: '22', label: 'indicadores' }, { value: 'Quincenal', label: 'actualizacion' }],
   },
   {

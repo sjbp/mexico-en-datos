@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
 import HBar from '@/components/charts/HBar';
@@ -40,13 +41,13 @@ export default function MortalidadPage() {
   return (
     <>
       <div className="px-[var(--pad-page)] pt-10 pb-6">
-        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-4">
-          <Link href="/" className="hover:text-[var(--accent)] transition-colors">Inicio</Link>
-          <span>/</span>
-          <Link href="/salud" className="hover:text-[var(--accent)] transition-colors">Salud</Link>
-          <span>/</span>
-          <span className="text-[var(--text-secondary)]">Mortalidad</span>
-        </div>
+        <Breadcrumb
+          items={[
+            { label: 'Inicio', href: '/' },
+            { label: 'Salud', href: '/salud' },
+            { label: 'Mortalidad' },
+          ]}
+        />
         <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
           Mortalidad en M&eacute;xico
         </h1>
