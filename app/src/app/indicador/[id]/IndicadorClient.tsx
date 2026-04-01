@@ -53,14 +53,32 @@ export default function IndicadorClient({
 
   const labels = useMemo(() => {
     return filteredValues.map((v, i) => {
+      // Use period string directly for readable labels
+      const p = v.period;
       const date = new Date(v.period_date);
+      const year = date.getFullYear();
       const month = date.getMonth();
-      if (month === 0 || i === 0) {
-        return String(date.getFullYear());
+
+      // First point always gets a label
+      if (i === 0) return p.includes('Q') ? `${year} ${p.split('/')[1]}` : String(year);
+
+      // Quarterly: show every quarter
+      if (frequency === 'quarterly') {
+        return p.includes('Q') ? `${year} ${p.split('/')[1]}` : String(year);
       }
+
+      // Monthly/biweekly: show year at January
+      if (month === 0) return String(year);
+
       return '';
     });
-  }, [filteredValues]);
+  }, [filteredValues, frequency]);
+
+  // Full period strings for tooltip display
+  const periods = useMemo(
+    () => filteredValues.map((v) => v.period),
+    [filteredValues]
+  );
 
   const isPercent = unit.toLowerCase().includes('%') || unit.toLowerCase().includes('porcentaje') || unit.toLowerCase().includes('tasa');
   const yUnit = isPercent ? '%' : '';
@@ -117,6 +135,7 @@ export default function IndicadorClient({
         <TimeSeries
           series={series}
           labels={labels}
+          periods={periods}
           yUnit={yUnit}
           yStep={yStep}
           labelStep={labelStep}

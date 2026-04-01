@@ -19,6 +19,7 @@ interface RefBand {
 interface TimeSeriesProps {
   series: SeriesData[];
   labels: string[];
+  periods?: string[];        // Full period labels for tooltip (e.g., "2024/Q1", "2024/03")
   refBand?: RefBand;
   yUnit?: string;
   yStep?: number;
@@ -38,6 +39,7 @@ interface TooltipState {
 export default function TimeSeries({
   series,
   labels,
+  periods,
   refBand,
   yUnit = '%',
   yStep = 2,
@@ -198,7 +200,7 @@ export default function TimeSeries({
         visible: true,
         x: e.clientX,
         y: e.clientY,
-        title: labels[idx] || '',
+        title: (periods && periods[idx]) || labels[idx] || '',
         value: s.values[idx].toFixed(valueDecimals) + yUnit,
         detail: s.label,
       });
