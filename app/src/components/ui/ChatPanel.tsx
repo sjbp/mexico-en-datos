@@ -211,12 +211,13 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatPanel() {
-  const { isOpen, close } = useChatPanel();
+  const { isOpen, close, _registerSubmit, _pendingMessage, _clearPending } = useChatPanel();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sendMessageRef = useRef<(msg: string) => void>(undefined);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -238,6 +239,19 @@ export default function ChatPanel() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, close]);
+
+  // Register submit handler so Hero can send messages directly
+  useEffect(() => {
+    _registerSubmit((msg: string) => sendMessageRef.current?.(msg));
+  }, [_registerSubmit]);
+
+  // Process pending messages from Hero
+  useEffect(() => {
+    if (_pendingMessage && isOpen && !loading) {
+      sendMessageRef.current?.(_pendingMessage);
+      _clearPending();
+    }
+  }, [_pendingMessage, isOpen, loading, _clearPending]);
 
   async function sendMessage(content: string) {
     if (!content.trim() || loading) return;
@@ -294,6 +308,9 @@ export default function ChatPanel() {
       setLoading(false);
     }
   }
+
+  // Keep ref in sync for external callers
+  sendMessageRef.current = sendMessage;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
