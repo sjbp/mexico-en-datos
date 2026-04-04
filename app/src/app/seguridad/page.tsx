@@ -9,17 +9,66 @@ export const metadata = {
   description: 'Datos de criminalidad, cifra negra y percepcion de seguridad en Mexico. Fuente: ENVIPE, ENSU (INEGI) y SESNSP.',
 };
 
+// Human-readable labels for crime types
+const CRIME_LABELS: Record<string, string> = {
+  street_robbery: 'Robo/asalto en calle',
+  home_robbery: 'Robo a casa habitacion',
+  bank_fraud: 'Fraude bancario',
+  threats: 'Amenazas',
+  vehicle_partial_theft: 'Robo parcial de vehiculo',
+  consumer_fraud: 'Fraude al consumidor',
+  vehicle_theft: 'Robo total de vehiculo',
+  extortion: 'Extorsion',
+  vandalism: 'Vandalismo',
+  assault: 'Lesiones',
+  other_robbery: 'Otro tipo de robo',
+  sexual_harassment: 'Acoso sexual',
+  kidnapping: 'Secuestro',
+  sexual_assault: 'Violacion sexual',
+  other: 'Otros delitos',
+};
+
 export default async function SeguridadPage() {
-  const [envipeNational, cifraNegra, homicideRate, stateHomicides] = await Promise.all([
+  const [envipeNational, cifraNegra, envipeByCrime, homicideRate, stateHomicides] = await Promise.all([
     getEnvipeStats(undefined, '00', 'total'),
     getCifraNegra(undefined, '00'),
+    getEnvipeStats(undefined, '00'),
     getLatestValue('sesnsp_homicide_rate', '00'),
     getIndicatorValuesByState('sesnsp_homicide_rate', { latest: true }),
   ]);
 
   const latestEnvipe = envipeNational[0] ?? null;
-  const latestCifraNegra = cifraNegra[0] ?? null;
+  const latestCifraNegra = cifraNegra.find((c) => c.crime_type === 'total') ?? cifraNegra[0] ?? null;
   const latestHomicideRate = homicideRate.latest;
+
+  // Latest year for crime breakdowns
+  const latestYear = latestEnvipe?.year ?? latestCifraNegra?.year ?? null;
+
+  // Cifra negra by crime type (national, latest year)
+  const cifraNegraByCrime = envipeByCrime
+    .filter((s) => s.year === latestYear && s.crime_type !== 'total' && s.cifra_negra != null)
+    .sort((a, b) => Number(b.cifra_negra) - Number(a.cifra_negra))
+    .map((s) => ({
+      label: CRIME_LABELS[s.crime_type] ?? s.crime_type,
+      value: Number(s.cifra_negra),
+      color: Number(s.cifra_negra) >= 90 ? '#E74C3C' : Number(s.cifra_negra) >= 80 ? '#E67E22' : '#F1C40F',
+    }));
+
+  // Prevalence by crime type (national, latest year)
+  const prevalenceByCrime = envipeByCrime
+    .filter((s) => s.year === latestYear && s.crime_type !== 'total' && s.prevalence_rate != null)
+    .sort((a, b) => Number(b.prevalence_rate) - Number(a.prevalence_rate))
+    .slice(0, 12)
+    .map((s) => ({
+      label: CRIME_LABELS[s.crime_type] ?? s.crime_type,
+      value: Number(s.prevalence_rate),
+      color: 'var(--accent)',
+    }));
+
+  // Cifra negra trend (national, total, across years)
+  const cifraNegraTrend = envipeNational
+    .filter((s) => s.cifra_negra != null)
+    .sort((a, b) => a.year - b.year);
 
   // Top 10 most dangerous + bottom 5 safest
   const topDangerous = stateHomicides
@@ -158,9 +207,73 @@ export default async function SeguridadPage() {
                 realidad.
               </p>
             </div>
+            {cifraNegraTrend.length > 1 && (
+              <div className="md:w-[240px] shrink-0">
+                <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+                  Cifra Negra por Ano
+                </div>
+                <div className="flex flex-col gap-1">
+                  {cifraNegraTrend.map((row) => (
+                    <div key={row.year} className="flex items-center justify-between text-sm">
+                      <span className="text-[var(--text-secondary)]">{row.year}</span>
+                      <span className="font-semibold tabular-nums text-[var(--negative)]">
+                        {Number(row.cifra_negra).toFixed(1)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
+
+      {/* Cifra negra by crime type */}
+      {cifraNegraByCrime.length > 0 && (
+        <>
+          <SectionHeader title="Cifra negra por tipo de delito" />
+          <div className="px-[var(--pad-page)] mb-10">
+            <Card large>
+              <div className="mb-4">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Porcentaje de delitos no denunciados por tipo
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  Nacional, ENVIPE {latestYear}. Fuente: INEGI.
+                </div>
+              </div>
+              <HBar
+                data={cifraNegraByCrime}
+                maxVal={100}
+                valueFmt={(v: number) => v.toFixed(1) + '%'}
+              />
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* Victimization prevalence by crime type */}
+      {prevalenceByCrime.length > 0 && (
+        <>
+          <SectionHeader title="Victimizacion por tipo de delito" />
+          <div className="px-[var(--pad-page)] mb-10">
+            <Card large>
+              <div className="mb-4">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Tasa de prevalencia por tipo de delito
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  Victimas por cada 100 mil habitantes 18+, nacional, ENVIPE {latestYear}
+                </div>
+              </div>
+              <HBar
+                data={prevalenceByCrime}
+                valueFmt={(v: number) => v.toLocaleString('es-MX', { maximumFractionDigits: 0 })}
+              />
+            </Card>
+          </div>
+        </>
+      )}
 
       {/* Homicide rate by state */}
       {topDangerous.length > 0 && (
@@ -208,10 +321,10 @@ export default async function SeguridadPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card large>
             <div className="text-base font-semibold text-white tracking-tight mb-1">
-              Cifra negra
+              Cifra negra por estado
             </div>
             <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
-              Analisis de delitos no denunciados por estado y tipo de delito.
+              Mapa y ranking de cifra negra por entidad federativa.
             </p>
             <div className="text-xs text-[var(--accent)]">
               Proximamente con datos de ENVIPE
@@ -235,7 +348,7 @@ export default async function SeguridadPage() {
       <div className="px-[var(--pad-page)] mb-6">
         <p className="text-xs text-[var(--text-muted)]">
           Fuentes: SESNSP (incidencia delictiva), INEGI &mdash; ENVIPE (victimizacion)
-          y ENSU (percepcion de seguridad urbana).
+          y ENSU (percepcion de seguridad urbana). Datos procesados de microdatos ENVIPE {latestYear && `${cifraNegraTrend.map(r => r.year).join(', ')}`}.
         </p>
       </div>
 
