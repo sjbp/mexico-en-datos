@@ -67,7 +67,7 @@ export default function TimeSeries({
     const { w, h } = size;
     const ctx = initCanvas(canvas, w, h);
 
-    const padL = 48, padR = 16, padT = 16, padB = 32;
+    const padL = 48, padR = 16, padT = 16, padB = 48;
     const cw = w - padL - padR;
     const ch = h - padT - padB;
 
@@ -98,12 +98,21 @@ export default function TimeSeries({
       ctx.stroke();
     }
 
-    // X labels
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+    // X labels (rotated -45°)
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '10px Inter, sans-serif';
     for (let i = 0; i < n; i += labelStep) {
-      if (labels[i]) ctx.fillText(labels[i], xPos(i), h - padB + 10);
+      if (labels[i]) {
+        const x = xPos(i);
+        const y = h - padB + 8;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-Math.PI / 5); // ~36° angle
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        ctx.fillText(labels[i], 0, 0);
+        ctx.restore();
+      }
     }
 
     // Reference band

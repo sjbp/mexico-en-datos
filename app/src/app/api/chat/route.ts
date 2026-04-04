@@ -35,22 +35,33 @@ function num(v: unknown): number {
 /** Format a period string like "2024/03" into a readable x-axis label.
  *  Shows "Ene 2024" at January, just "Abr" for other months, "2024/Q1" for quarters. */
 const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-function formatPeriodLabel(period: string, index: number, total: number): string {
+function formatPeriodLabel(period: string, index: number, _total: number): string {
   if (!period) return '';
   // Quarterly: "2024/Q1" → "2024 Q1"
   if (period.includes('Q')) return period.replace('/', ' ');
-  // Monthly: "2024/03" → show year at Jan or first point, month abbreviation otherwise
-  const parts = period.split('/');
-  if (parts.length >= 2) {
-    const year = parts[0];
-    const month = parseInt(parts[1], 10);
-    if (isNaN(month)) return period;
-    const monthName = MONTH_NAMES[month - 1] || '';
-    // Show "Ene 2024" at January or first data point; just "Jul" otherwise
-    if (month === 1 || index === 0) return `${monthName} ${year}`;
-    return monthName;
+
+  let year: string;
+  let month: number;
+
+  // Handle "2024/03" format
+  if (period.includes('/')) {
+    const parts = period.split('/');
+    year = parts[0];
+    month = parseInt(parts[1], 10);
+  // Handle "2024-03-01" date format
+  } else if (period.includes('-')) {
+    const parts = period.split('-');
+    year = parts[0];
+    month = parseInt(parts[1], 10);
+  } else {
+    return period;
   }
-  return period;
+
+  if (isNaN(month)) return period;
+  const monthName = MONTH_NAMES[month - 1] || '';
+  // Show "Ene 24" at January or first data point; just month otherwise
+  if (month === 1 || index === 0) return `${monthName} ${year.slice(-2)}`;
+  return monthName;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,7 +76,8 @@ async function extractChartBlocks(toolName: string, toolInput: any, toolResult: 
         const rows = Array.isArray(toolResult) ? toolResult : [];
         if (rows.length >= 5) {
           const values = rows.map((r: any) => num(r.value));
-          const periods = rows.map((r: any) => r.period ?? '');
+          // Use period field (e.g., "2024/03") if available, fall back to period_date
+          const periods = rows.map((r: any) => r.period ?? r.period_date ?? '');
           const labels = periods.map((p: string, i: number) => formatPeriodLabel(p, i, periods.length));
 
           // Fetch the indicator name for a proper label
