@@ -144,6 +144,12 @@ export default async function EconomiaPage() {
             )}
           </Card>
         </div>
+
+        <div className="border-l-2 border-[var(--accent)] pl-4 mb-6 max-w-[700px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            El IGAE es el pulso mensual de la econom&iacute;a mexicana: un &iacute;ndice que mide la actividad econ&oacute;mica total antes de que salga el PIB trimestral. M&eacute;xico es la 12&ordf; econom&iacute;a m&aacute;s grande del mundo y el principal socio comercial de Estados Unidos. Su estructura productiva se concentra en servicios (63%), manufactura (30%) y agricultura (4%), lo que la hace particularmente sensible al consumo interno y a la demanda estadounidense.
+          </p>
+        </div>
       </div>
 
       {/* IGAE trend */}
@@ -160,6 +166,9 @@ export default async function EconomiaPage() {
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
               &Iacute;ndice base 2018=100, serie desestacionalizada
+              {igaePeriods.length > 0 && (
+                <span> &middot; Datos hasta: {igaePeriods[igaePeriods.length - 1]}</span>
+              )}
             </div>
           </div>
           {igaeNums.length > 0 ? (

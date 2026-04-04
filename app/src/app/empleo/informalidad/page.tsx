@@ -60,6 +60,12 @@ export default async function InformalidadPage() {
             {informality?.latest?.period ? ` (${informality.latest.period})` : ''}
           </span>
         </div>
+
+        <div className="border-l-2 border-[var(--accent)] pl-4 mb-6 max-w-[700px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            La informalidad var&iacute;a dr&aacute;sticamente por sector: en agricultura supera el 90%, mientras que en gobierno ronda el 17%. Las causas son estructurales: el 95% de las empresas en M&eacute;xico son micronegocios donde formalizar implica costos regulatorios que superan el beneficio percibido. A esto se suma una fiscalizaci&oacute;n limitada y la tradici&oacute;n de acuerdos laborales de palabra, especialmente en zonas rurales.
+          </p>
+        </div>
       </div>
 
       {hasMicrodata ? (

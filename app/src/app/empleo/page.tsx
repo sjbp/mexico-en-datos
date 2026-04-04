@@ -115,13 +115,19 @@ export default async function EmpleoPage() {
             )}
           </Card>
         </div>
+
+        <div className="border-l-2 border-[var(--accent)] pl-4 mb-6 max-w-[700px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            La tasa de desocupaci&oacute;n de M&eacute;xico (~3%) parece baja, pero esconde la historia real: casi 6 de cada 10 trabajadores son informales. Eso significa sin seguro m&eacute;dico, sin pensi&oacute;n, sin derechos laborales b&aacute;sicos. Para entender el mercado laboral mexicano, la variable clave no es el desempleo &mdash;es la informalidad.
+          </p>
+        </div>
       </div>
 
       {/* Informality by sector */}
       <SectionHeader title="Informalidad por sector" linkText="Ver detalle" linkHref="/empleo/informalidad" />
       <div className="px-[var(--pad-page)] mb-10">
         {hasMicrodata ? (
-          <EmpleoClient sectorInformalityData={sectorInformalityData} />
+          <EmpleoClient sectorInformalityData={sectorInformalityData} latestQuarter={latestQuarter} />
         ) : (
           <Card large>
             <div className="py-6 text-center">

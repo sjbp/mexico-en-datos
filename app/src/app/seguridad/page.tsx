@@ -184,6 +184,12 @@ export default async function SeguridadPage() {
             )}
           </Card>
         </div>
+
+        <div className="border-l-2 border-[var(--accent)] pl-4 mb-6 max-w-[700px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            Mexico tiene una de las tasas de homicidio mas altas de America Latina, aunque ha mostrado una tendencia a la baja desde su pico en 2019. Para poner en contexto: la tasa mexicana es ~5 veces la de Estados Unidos. Sin embargo, el dato mas revelador no son los homicidios sino la cifra negra &mdash;mas del 90% de los delitos nunca se denuncian, lo que significa que las estadisticas oficiales apenas capturan la superficie del problema.
+          </p>
+        </div>
       </div>
 
       {/* Cifra negra explainer */}
@@ -232,6 +238,13 @@ export default async function SeguridadPage() {
       {cifraNegraByCrime.length > 0 && (
         <>
           <SectionHeader title="Cifra negra por tipo de delito" />
+          <div className="px-[var(--pad-page)] mb-2">
+            <div className="border-l-2 border-[var(--accent)] pl-4 mb-6 max-w-[700px]">
+              <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+                Dato contraintuitivo: el robo total de vehiculo tiene la cifra negra mas baja de todos los delitos. La razon es practica &mdash;las aseguradoras exigen denuncia ante el Ministerio Publico para procesar el reclamo. Donde no hay incentivo economico para denunciar, la cifra negra se dispara por encima del 95%.
+              </p>
+            </div>
+          </div>
           <div className="px-[var(--pad-page)] mb-10">
             <Card large>
               <div className="mb-4">
@@ -279,6 +292,13 @@ export default async function SeguridadPage() {
       {topDangerous.length > 0 && (
         <>
           <SectionHeader title="Homicidios dolosos por estado" />
+          <div className="px-[var(--pad-page)] mb-2">
+            <div className="border-l-2 border-[var(--accent)] pl-4 mb-6 max-w-[700px]">
+              <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+                Los estados con mayores tasas de homicidio coinciden con corredores de trafico de drogas y zonas de disputa territorial entre organizaciones criminales. Colima, Zacatecas y Baja California suelen encabezar la lista, mientras que Yucatan y Aguascalientes se mantienen consistentemente entre los mas seguros del pais.
+              </p>
+            </div>
+          </div>
           <div className="px-[var(--pad-page)] mb-10">
             <Card large>
               <div className="mb-4">

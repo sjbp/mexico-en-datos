@@ -47,6 +47,12 @@ export default async function SalariosPage() {
           Distribuci&oacute;n de ingresos laborales en M&eacute;xico por sector
           econ&oacute;mico, nivel educativo y g&eacute;nero. Datos de la ENOE.
         </p>
+
+        <div className="border-l-2 border-[var(--accent)] pl-4 mb-6 max-w-[700px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            La distribuci&oacute;n salarial en M&eacute;xico es extremadamente desigual: el 10% mejor pagado gana m&aacute;s de 6 veces lo que gana el 10% con menor ingreso. La educaci&oacute;n es el principal elevador: un profesionista gana en promedio 2.5 veces m&aacute;s que alguien con solo secundaria. Aun as&iacute;, persiste una brecha de g&eacute;nero donde las mujeres ganan entre 15% y 20% menos que los hombres en posiciones equivalentes.
+          </p>
+        </div>
       </div>
 
       {hasMicrodata ? (

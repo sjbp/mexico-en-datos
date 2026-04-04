@@ -145,8 +145,15 @@ export default async function ComercioPage() {
 
       {/* Trade trend chart */}
       <SectionHeader title="Tendencia del comercio exterior" />
-      <div className="px-[var(--pad-page)] mb-12">
+      <div className="px-[var(--pad-page)] mb-4">
         <ComercioClient exportValues={chartExports} importValues={chartImports} />
+      </div>
+      <div className="px-[var(--pad-page)] mb-12">
+        <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[700px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            M&eacute;xico exporta m&aacute;s de $50,000 millones de d&oacute;lares al mes, cifra que lo coloca entre los 10 mayores exportadores del mundo. La balanza comercial muestra si el pa&iacute;s vende m&aacute;s de lo que compra: un super&aacute;vit indica fortaleza exportadora, mientras que un d&eacute;ficit refleja mayor dependencia de importaciones (com&uacute;n en meses de alta importaci&oacute;n de bienes intermedios para manufactura). Observa los patrones estacionales: diciembre suele mostrar ca&iacute;das por cierre de plantas, mientras que marzo-abril repuntan con la producci&oacute;n automotriz.
+          </p>
+        </div>
       </div>
 
       {/* Nearshoring context */}

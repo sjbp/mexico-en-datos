@@ -100,6 +100,18 @@ export default async function SaludPage() {
         </div>
       </div>
 
+      {/* Context block */}
+      <div className="px-[var(--pad-page)] mb-8">
+        <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[700px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mb-2" style={{ textWrap: 'pretty' }}>
+            M&eacute;xico enfrenta una doble carga de mortalidad: enfermedades cr&oacute;nicas (diabetes, coraz&oacute;n, ri&ntilde;&oacute;n) que dominan la tabla, y violencia que aparece entre las primeras 10 causas &mdash;algo inusual en pa&iacute;ses de ingreso similar. La diabetes es particularmente cr&iacute;tica: M&eacute;xico tiene la tasa m&aacute;s alta de la OCDE y es la &uacute;nica econom&iacute;a grande donde es la segunda causa de muerte.
+          </p>
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            El COVID-19 ha ca&iacute;do significativamente desde el pico de 2020-2021, pero dej&oacute; una huella duradera: la esperanza de vida baj&oacute; casi 4 a&ntilde;os y a&uacute;n no se recupera del todo. El dato de 39% sin acceso a servicios de salud refleja el vac&iacute;o que dej&oacute; la desaparici&oacute;n del Seguro Popular, a&uacute;n no cubierto completamente por el IMSS-Bienestar.
+          </p>
+        </div>
+      </div>
+
       {/* Leading causes chart */}
       <SectionHeader title="Principales causas de muerte" />
       <div className="px-[var(--pad-page)] mb-10">
