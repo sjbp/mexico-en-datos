@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { useChatPanel } from './ChatProvider';
 
 const topics = [
   { emoji: '📈', label: 'Economía', desc: 'PIB, inflación y actividad económica', href: '/economia' },
@@ -22,6 +23,7 @@ export default function NavBar() {
   const [temasOpen, setTemasOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const temasRef = useRef<HTMLDivElement>(null);
+  const { open: openChat } = useChatPanel();
 
   // Close temas dropdown on click outside
   useEffect(() => {
@@ -120,13 +122,13 @@ export default function NavBar() {
 
         {/* Right side: AI CTA (desktop) + hamburger (mobile) */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/calendario"
-            className="hidden md:flex items-center gap-2 px-3.5 py-1.5 text-[13px] text-[var(--accent)] border border-[var(--accent)]/40 rounded-full no-underline transition-all hover:bg-[var(--accent)]/10 hover:border-[var(--accent)]/60"
+          <button
+            onClick={openChat}
+            className="hidden md:flex items-center gap-2 px-3.5 py-1.5 text-[13px] text-[var(--accent)] border border-[var(--accent)]/40 rounded-full transition-all hover:bg-[var(--accent)]/10 hover:border-[var(--accent)]/60 cursor-pointer"
           >
             <span>🤖</span>
             <span>Pregúntale a los datos</span>
-          </Link>
+          </button>
 
           {/* Mobile hamburger */}
           <button
@@ -175,13 +177,13 @@ export default function NavBar() {
           ))}
 
           <div className="mt-4 pt-4 border-t border-[var(--border)]">
-            <Link
-              href="/calendario"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] text-[var(--accent)] border border-[var(--accent)]/40 rounded-full no-underline transition-all hover:bg-[var(--accent)]/10"
+            <button
+              onClick={() => { openChat(); setMobileOpen(false); }}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-[14px] text-[var(--accent)] border border-[var(--accent)]/40 rounded-full transition-all hover:bg-[var(--accent)]/10 cursor-pointer"
             >
               <span>🤖</span>
               <span>Pregúntale a los datos</span>
-            </Link>
+            </button>
           </div>
         </div>
       )}

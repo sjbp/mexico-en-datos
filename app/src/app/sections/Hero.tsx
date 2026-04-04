@@ -1,6 +1,10 @@
-import Link from 'next/link';
+'use client';
+
+import { useChatPanel } from '@/components/ui/ChatProvider';
 
 export default function Hero() {
+  const { open } = useChatPanel();
+
   return (
     <div className="pt-12 px-[var(--pad-page)] mb-8">
       <h1 className="text-[56px] font-bold tracking-[-0.04em] leading-[1.1] text-white max-sm:text-4xl">
@@ -13,9 +17,9 @@ export default function Hero() {
       </p>
 
       {/* AI CTA */}
-      <Link
-        href="/calendario"
-        className="block max-w-[600px] no-underline group mb-3"
+      <button
+        onClick={open}
+        className="block max-w-[600px] w-full text-left group mb-3 cursor-pointer"
       >
         <div className="flex items-center gap-3 px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-xl transition-all group-hover:border-[var(--accent)]/40">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[var(--text-muted)] shrink-0">
@@ -25,10 +29,7 @@ export default function Hero() {
             Preg&uacute;ntale algo a los datos de M&eacute;xico...
           </span>
         </div>
-      </Link>
-      <p className="text-[11px] text-[var(--text-muted)] mb-6">
-        Impulsado por IA &middot; Pr&oacute;ximamente
-      </p>
+      </button>
 
       {/* Source attribution */}
       <p className="text-[13px] leading-relaxed text-[var(--text-muted)]">
