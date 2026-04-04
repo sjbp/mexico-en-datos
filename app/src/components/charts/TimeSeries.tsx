@@ -214,7 +214,7 @@ export default function TimeSeries({
         detail: s.label,
       });
     }
-  }, [series, labels, valueDecimals, yUnit]);
+  }, [series, labels, periods, valueDecimals, yUnit]);
 
   const handleMouseLeave = useCallback(() => {
     setTooltip((prev) => ({ ...prev, visible: false }));
@@ -230,7 +230,7 @@ export default function TimeSeries({
       />
       {tooltip.visible && (
         <div
-          className="fixed pointer-events-none bg-[var(--surface)] border border-[var(--border)] rounded-lg px-4 py-3 text-[13px] leading-relaxed max-w-[300px] z-20 shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
+          className="fixed pointer-events-none bg-[var(--surface)] border border-[var(--border)] rounded-lg px-4 py-3 text-[13px] leading-relaxed max-w-[300px] z-[100] shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
           style={{
             left: Math.min(tooltip.x + 12, (typeof window !== 'undefined' ? window.innerWidth : 1000) - 220),
             top: tooltip.y - 70,
