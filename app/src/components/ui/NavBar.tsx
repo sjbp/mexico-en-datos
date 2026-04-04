@@ -9,10 +9,7 @@ const topics = [
   { emoji: '💼', label: 'Empleo', desc: 'Ocupación, desempleo e informalidad', href: '/empleo' },
   { emoji: '🏥', label: 'Salud', desc: 'Mortalidad, cobertura e infraestructura', href: '/salud' },
   { emoji: '🔒', label: 'Seguridad', desc: 'Incidencia delictiva y percepción', href: '/seguridad' },
-  { emoji: '🎓', label: 'Educación', desc: 'Escolaridad y matrícula', href: '/educacion' },
-  { emoji: '💰', label: 'Ingresos y Pobreza', desc: 'Distribución del ingreso y pobreza', href: '/ingresos' },
   { emoji: '🏭', label: 'Comercio y Manufactura', desc: 'Producción industrial y comercio', href: '/comercio' },
-  { emoji: '👥', label: 'Población', desc: 'Demografía y proyecciones', href: '/poblacion' },
 ];
 
 const navItems = [

@@ -53,6 +53,7 @@ export default function ComercioClient({ exportValues, importValues }: ComercioC
         </div>
         <div className="text-[13px] text-[var(--text-muted)] mt-1">
           &Uacute;ltimos 60 meses, millones de d&oacute;lares
+          {periods.length > 0 && <span> &middot; Datos hasta: {periods[periods.length - 1]}</span>}
         </div>
       </div>
 

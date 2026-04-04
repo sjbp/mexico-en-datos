@@ -1,4 +1,4 @@
-export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: string }> = {
+export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: string; staleWarning?: string }> = {
   // --- Banxico series ---
   "SP30578": {
     summary: "Variacion porcentual anual del Indice Nacional de Precios al Consumidor. Es la cifra de inflacion que se reporta en las noticias.",
@@ -24,7 +24,8 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
   // --- Prices (historical, frozen Jul 2024) ---
   "628194": {
     summary: "Indice general de precios al consumidor, base 2a quincena de julio 2018 = 100. Serie historica congelada en julio 2024.",
-    context: "INEGI migro el INPC a una nueva canasta y ponderadores en 2024. Esta serie ya no se actualiza. Los datos actuales de inflacion se publicaran via Banxico proximamente."
+    context: "INEGI migro el INPC a una nueva canasta y ponderadores en 2024. Esta serie ya no se actualiza. Los datos actuales de inflacion se publicaran via Banxico proximamente.",
+    staleWarning: "Esta serie fue congelada en julio 2024 por la migracion del INPC de INEGI. Para datos actuales de inflacion, consulta [Inflacion General Anual (Banxico)](/indicador/SP30578)."
   },
 
   // --- Economic Activity ---
@@ -98,6 +99,6 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
   },
 };
 
-export function getIndicatorDescription(id: string): { summary: string; context: string } | null {
+export function getIndicatorDescription(id: string): { summary: string; context: string; staleWarning?: string } | null {
   return INDICATOR_DESCRIPTIONS[id] ?? null;
 }

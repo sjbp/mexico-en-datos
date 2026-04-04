@@ -84,6 +84,11 @@ export default function ExploradorClient({ indicators, topics, initialTopic }: E
                 <div className="text-xs text-[var(--text-muted)] mb-3">
                   {ind.frequency ?? '—'} &middot; {ind.unit ?? '—'}
                 </div>
+                {desc?.staleWarning && (
+                  <div className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-1 mb-2">
+                    Serie historica &middot; Congelado Jul 2024
+                  </div>
+                )}
                 <div className="text-xs text-[var(--text-muted)]">
                   {ind.source ?? 'INEGI'}
                 </div>

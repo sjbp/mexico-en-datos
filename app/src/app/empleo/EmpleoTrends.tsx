@@ -31,6 +31,7 @@ export default function EmpleoTrends({ trends }: EmpleoTrendsProps) {
           </div>
           <div className="text-[13px] text-[var(--text-muted)] mt-1">
             % de trabajadores sin seguridad social
+            {labels.length > 0 && <span> &middot; Datos hasta: {labels[labels.length - 1]}</span>}
           </div>
         </div>
         <div style={{ height: 220 }}>
@@ -56,6 +57,7 @@ export default function EmpleoTrends({ trends }: EmpleoTrendsProps) {
           </div>
           <div className="text-[13px] text-[var(--text-muted)] mt-1">
             Pesos por mes (trabajadores ocupados)
+            {labels.length > 0 && <span> &middot; Datos hasta: {labels[labels.length - 1]}</span>}
           </div>
         </div>
         <div style={{ height: 220 }}>

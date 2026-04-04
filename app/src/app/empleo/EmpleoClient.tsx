@@ -5,9 +5,10 @@ import HBar from '@/components/charts/HBar';
 
 interface EmpleoClientProps {
   sectorInformalityData: { label: string; value: number }[];
+  latestQuarter?: string | null;
 }
 
-export default function EmpleoClient({ sectorInformalityData }: EmpleoClientProps) {
+export default function EmpleoClient({ sectorInformalityData, latestQuarter }: EmpleoClientProps) {
   return (
     <Card large>
       <div className="mb-4">
@@ -16,6 +17,7 @@ export default function EmpleoClient({ sectorInformalityData }: EmpleoClientProp
         </div>
         <div className="text-[13px] text-[var(--text-muted)] mt-1">
           Porcentaje de trabajadores informales por rama de actividad
+          {latestQuarter && <span> &middot; Datos hasta: {latestQuarter}</span>}
         </div>
       </div>
       <HBar

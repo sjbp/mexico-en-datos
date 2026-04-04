@@ -121,7 +121,7 @@ export default async function SaludPage() {
               Tasa de mortalidad por causa (por cada 100,000 habitantes)
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              Nacional, 2023 &mdash; Microdatos de Defunciones Registradas (INEGI / Secretar&iacute;a de Salud)
+              Nacional &mdash; Microdatos de Defunciones Registradas (INEGI / Secretar&iacute;a de Salud) &middot; Datos hasta: 2023
             </div>
           </div>
           <HBar

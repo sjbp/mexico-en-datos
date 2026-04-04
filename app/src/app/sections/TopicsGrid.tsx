@@ -40,32 +40,11 @@ const TOPICS: TopicConfig[] = [
     stats: [{ value: '32', label: 'estados' }, { value: 'Trimestral', label: 'ENSU' }],
   },
   {
-    icon: '\ud83c\udf93',
-    name: 'Educacion',
-    desc: 'Matricula, desercion, calidad educativa, cobertura.',
-    href: '/educacion',
-    stats: [{ value: '32', label: 'estados' }, { value: 'Proximamente', label: '' }],
-  },
-  {
-    icon: '\ud83d\udcb0',
-    name: 'Ingresos y Pobreza',
-    desc: 'Distribucion del ingreso, pobreza, desigualdad.',
-    href: '/ingresos',
-    stats: [{ value: '9', label: 'ediciones ENIGH' }, { value: 'Proximamente', label: '' }],
-  },
-  {
     icon: '\ud83c\udfed',
     name: 'Comercio y Manufactura',
     desc: 'Exportaciones, nearshoring, industria, IED.',
     href: '/comercio',
     stats: [{ value: 'Mensual', label: 'actualizacion' }, { value: 'Proximamente', label: '' }],
-  },
-  {
-    icon: '\ud83d\udc65',
-    name: 'Poblacion',
-    desc: 'Demografia, censo, migracion, vivienda.',
-    href: '/poblacion',
-    stats: [{ value: '2,469', label: 'municipios' }, { value: 'Proximamente', label: '' }],
   },
 ];
 
@@ -73,7 +52,7 @@ export default function TopicsGrid() {
   return (
     <>
       <SectionHeader title="Explora por tema" />
-      <div className="grid grid-cols-4 gap-3 px-[var(--pad-page)] mb-12 max-sm:grid-cols-1 sm:max-lg:grid-cols-2">
+      <div className="grid grid-cols-4 gap-3 px-[var(--pad-page)] mb-4 max-sm:grid-cols-1 sm:max-lg:grid-cols-2">
         {TOPICS.map((t) => (
           <Link
             key={t.name}
@@ -103,6 +82,9 @@ export default function TopicsGrid() {
             </Card>
           </Link>
         ))}
+      </div>
+      <div className="px-[var(--pad-page)] mb-12 text-[13px] text-[var(--text-muted)]">
+        Proximamente: Educacion, Ingresos y Pobreza, Poblacion
       </div>
     </>
   );

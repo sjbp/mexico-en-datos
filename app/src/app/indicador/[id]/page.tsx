@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Badge from '@/components/ui/Badge';
+import StaleWarningBanner from '@/components/ui/StaleWarningBanner';
 import IndicadorClient from './IndicadorClient';
 import { getIndicator, getIndicatorValues, getLatestValue } from '@/lib/data';
 import { fmtNum } from '@/lib/format';
@@ -100,10 +101,15 @@ export default async function IndicadorPage({
           {latest?.period && (
             <>
               <span className="text-xs text-[var(--text-muted)]">&middot;</span>
-              <span className="text-xs text-[var(--text-muted)]">Ultimo: {latest.period}</span>
+              <span className="text-xs text-[var(--text-muted)]">Ultima actualizacion: {latest.period}</span>
             </>
           )}
         </div>
+
+        {/* Stale warning banner */}
+        {description?.staleWarning && (
+          <StaleWarningBanner warning={description.staleWarning} />
+        )}
 
         {/* Indicator description */}
         {description && (
