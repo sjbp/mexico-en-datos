@@ -3,11 +3,19 @@
 import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 'react';
 import Link from 'next/link';
 import { useChatPanel } from './ChatProvider';
+import Sparkline from '@/components/charts/Sparkline';
+import HBar from '@/components/charts/HBar';
+import TimeSeries from '@/components/charts/TimeSeries';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+type Block =
+  | { type: 'text'; content: string }
+  | { type: 'sparkline'; data: { values: number[]; label: string; color?: string } }
+  | { type: 'hbar'; data: { items: { label: string; value: number; color?: string }[]; valueFmt?: string } }
+  | { type: 'timeseries'; data: { values: number[]; labels: string[]; periods: string[]; label: string; color?: string; yUnit?: string } };
+
+type UserMessage = { role: 'user'; content: string };
+type AssistantMessage = { role: 'assistant'; blocks: Block[] };
+type Message = UserMessage | AssistantMessage;
 
 // ── Simple Markdown renderer ────────────────────────────────────────────
 
@@ -194,10 +202,12 @@ function renderInline(text: string): React.ReactNode[] {
 // ── Chat panel component ────────────────────────────────────────────────
 
 const SUGGESTIONS = [
-  '¿Cuál es la inflación actual?',
-  '¿Qué estados tienen más homicidios?',
-  '¿Cuáles son las principales causas de muerte?',
-  'Compara informalidad por sector económico',
+  { emoji: '\u{1F4C8}', text: '\u00BFC\u00F3mo ha evolucionado la inflaci\u00F3n?' },
+  { emoji: '\u{1F5FA}\uFE0F', text: '\u00BFCu\u00E1l es el estado m\u00E1s violento?' },
+  { emoji: '\u{1F4BC}', text: 'Informalidad por sector econ\u00F3mico' },
+  { emoji: '\u{1F480}', text: 'Principales causas de muerte' },
+  { emoji: '\u{1F512}', text: '\u00BFQu\u00E9 delitos tienen mayor cifra negra?' },
+  { emoji: '\u{1F4B1}', text: '\u00BFCu\u00E1l es el tipo de cambio hoy?' },
 ];
 
 export default function ChatPanel() {
@@ -232,17 +242,28 @@ export default function ChatPanel() {
   async function sendMessage(content: string) {
     if (!content.trim() || loading) return;
 
-    const userMessage: Message = { role: 'user', content: content.trim() };
+    const userMessage: UserMessage = { role: 'user', content: content.trim() };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
     setLoading(true);
 
     try {
+      // Serialize messages for the API: assistant blocks → text-only content
+      const apiMessages = newMessages.map((m) => {
+        if (m.role === 'user') return { role: m.role, content: m.content };
+        // For assistant messages, extract text blocks for conversation history
+        const textContent = m.blocks
+          .filter((b): b is Block & { type: 'text' } => b.type === 'text')
+          .map((b) => b.content)
+          .join('\n');
+        return { role: m.role, content: textContent };
+      });
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: apiMessages }),
       });
 
       if (!res.ok) {
@@ -250,17 +271,23 @@ export default function ChatPanel() {
       }
 
       const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: data.response },
-      ]);
+      if (data.blocks) {
+        // New format
+        setMessages((prev) => [...prev, { role: 'assistant', blocks: data.blocks }]);
+      } else if (data.response) {
+        // Old format fallback
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', blocks: [{ type: 'text', content: data.response }] },
+        ]);
+      }
     } catch (err) {
       console.error('Chat error:', err);
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: 'Lo siento, ocurrió un error al procesar tu consulta. Intenta de nuevo.',
+          blocks: [{ type: 'text', content: 'Lo siento, ocurrió un error al procesar tu consulta. Intenta de nuevo.' }],
         },
       ]);
     } finally {
@@ -343,11 +370,11 @@ export default function ChatPanel() {
               <div className="flex flex-wrap justify-center gap-2">
                 {SUGGESTIONS.map((s) => (
                   <button
-                    key={s}
-                    onClick={() => sendMessage(s)}
+                    key={s.text}
+                    onClick={() => sendMessage(s.text)}
                     className="px-3 py-1.5 text-[12px] text-[var(--text-secondary)] bg-white/[0.04] border border-[var(--border)] rounded-full hover:bg-white/[0.08] hover:border-[var(--border-hover)] transition-colors cursor-pointer"
                   >
-                    {s}
+                    {s.emoji} {s.text}
                   </button>
                 ))}
               </div>
@@ -359,19 +386,65 @@ export default function ChatPanel() {
               key={i}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div
-                className={`max-w-[90%] rounded-xl px-3.5 py-2.5 ${
-                  msg.role === 'user'
-                    ? 'bg-[var(--accent)]/15 text-[var(--text-primary)]'
-                    : 'bg-white/[0.04] text-[var(--text-primary)]'
-                }`}
-              >
-                {msg.role === 'user' ? (
+              {msg.role === 'user' ? (
+                <div className="max-w-[90%] rounded-xl px-3.5 py-2.5 bg-[var(--accent)]/15 text-[var(--text-primary)]">
                   <p className="text-[13px] leading-relaxed">{msg.content}</p>
-                ) : (
-                  <div className="chat-markdown">{renderMarkdown(msg.content)}</div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="max-w-[90%] flex flex-col gap-2">
+                  {msg.blocks.map((block, bi) => {
+                    if (block.type === 'text') {
+                      return (
+                        <div key={bi} className="rounded-xl px-3.5 py-2.5 bg-white/[0.04] text-[var(--text-primary)]">
+                          <div className="chat-markdown">{renderMarkdown(block.content)}</div>
+                        </div>
+                      );
+                    }
+                    if (block.type === 'sparkline') {
+                      return (
+                        <div key={bi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+                            {block.data.label}
+                          </div>
+                          <Sparkline values={block.data.values} width={280} height={40} color={block.data.color} />
+                        </div>
+                      );
+                    }
+                    if (block.type === 'hbar') {
+                      const fmt = block.data.valueFmt;
+                      return (
+                        <div key={bi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+                          <HBar
+                            data={block.data.items}
+                            valueFmt={fmt ? (v: number) => v.toFixed(1) + fmt : undefined}
+                          />
+                        </div>
+                      );
+                    }
+                    if (block.type === 'timeseries') {
+                      return (
+                        <div key={bi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 max-w-[340px]">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+                            {block.data.label}
+                          </div>
+                          <TimeSeries
+                            series={[{
+                              values: block.data.values,
+                              color: block.data.color || '#FF9F43',
+                              label: block.data.label,
+                            }]}
+                            labels={block.data.labels}
+                            periods={block.data.periods}
+                            yUnit={block.data.yUnit || ''}
+                            labelStep={Math.max(1, Math.floor(block.data.labels.length / 4))}
+                          />
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              )}
             </div>
           ))}
 

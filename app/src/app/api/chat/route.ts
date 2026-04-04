@@ -17,6 +17,145 @@ import {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
+// ── Block types for structured chat responses ──────────────────────────
+
+type Block =
+  | { type: 'text'; content: string }
+  | { type: 'sparkline'; data: { values: number[]; label: string; color?: string } }
+  | { type: 'hbar'; data: { items: { label: string; value: number; color?: string }[]; valueFmt?: string } }
+  | { type: 'timeseries'; data: { values: number[]; labels: string[]; periods: string[]; label: string; color?: string; yUnit?: string } };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): Block[] {
+  const blocks: Block[] = [];
+
+  if (!toolResult || toolResult.error) return blocks;
+
+  try {
+    switch (toolName) {
+      case 'get_indicator_timeseries': {
+        const rows = Array.isArray(toolResult) ? toolResult : [];
+        if (rows.length >= 5) {
+          const values = rows.map((r: { value: number }) => r.value);
+          const periods = rows.map((r: { period: string }) => r.period);
+          // Short labels: last 4 chars of period
+          const labels = periods.map((p: string) => p.slice(-4));
+          blocks.push({
+            type: 'timeseries',
+            data: {
+              values,
+              labels,
+              periods,
+              label: toolInput.indicator_id?.replace(/_/g, ' ') || 'Serie de tiempo',
+              color: '#FF9F43',
+            },
+          });
+        }
+        break;
+      }
+
+      case 'get_indicator_by_state': {
+        const rows = Array.isArray(toolResult) ? toolResult : [];
+        if (rows.length >= 5) {
+          const sorted = [...rows]
+            .filter((r: { value: number }) => r.value != null)
+            .sort((a: { value: number }, b: { value: number }) => b.value - a.value)
+            .slice(0, 10);
+          blocks.push({
+            type: 'hbar',
+            data: {
+              items: sorted.map((r: { state_name: string; value: number }) => ({
+                label: r.state_name,
+                value: r.value,
+              })),
+            },
+          });
+        }
+        break;
+      }
+
+      case 'get_employment_by_dimension': {
+        const rows = Array.isArray(toolResult) ? toolResult : [];
+        if (rows.length >= 2) {
+          const sorted = [...rows]
+            .filter((r: { informality_rate: number }) => r.informality_rate != null)
+            .sort((a: { informality_rate: number }, b: { informality_rate: number }) => b.informality_rate - a.informality_rate);
+          blocks.push({
+            type: 'hbar',
+            data: {
+              items: sorted.map((r: { dimension_value: string; informality_rate: number }) => ({
+                label: r.dimension_value,
+                value: r.informality_rate,
+              })),
+              valueFmt: '%',
+            },
+          });
+        }
+        break;
+      }
+
+      case 'get_crime_stats': {
+        const rows = Array.isArray(toolResult) ? toolResult : [];
+        if (rows.length >= 2) {
+          const sorted = [...rows]
+            .filter((r: { prevalence_rate: number }) => r.prevalence_rate != null)
+            .sort((a: { prevalence_rate: number }, b: { prevalence_rate: number }) => b.prevalence_rate - a.prevalence_rate);
+          blocks.push({
+            type: 'hbar',
+            data: {
+              items: sorted.map((r: { crime_type: string; prevalence_rate: number }) => ({
+                label: r.crime_type,
+                value: r.prevalence_rate,
+              })),
+            },
+          });
+        }
+        break;
+      }
+
+      case 'get_mortality_causes': {
+        const rows = Array.isArray(toolResult) ? toolResult : [];
+        if (rows.length >= 2) {
+          blocks.push({
+            type: 'hbar',
+            data: {
+              items: rows.map((r: { cause_group: string; rate_per_100k: number }) => ({
+                label: r.cause_group,
+                value: r.rate_per_100k,
+              })),
+            },
+          });
+        }
+        break;
+      }
+
+      case 'get_cifra_negra': {
+        const rows = Array.isArray(toolResult) ? toolResult : [];
+        if (rows.length >= 2) {
+          const sorted = [...rows]
+            .filter((r: { cifra_negra: number }) => r.cifra_negra != null)
+            .sort((a: { cifra_negra: number }, b: { cifra_negra: number }) => b.cifra_negra - a.cifra_negra);
+          blocks.push({
+            type: 'hbar',
+            data: {
+              items: sorted.slice(0, 10).map((r: { geo_code: string; cifra_negra: number }) => ({
+                label: r.geo_code,
+                value: r.cifra_negra,
+              })),
+              valueFmt: '%',
+            },
+          });
+        }
+        break;
+      }
+    }
+  } catch (e) {
+    console.error('Chart extraction error:', e);
+  }
+
+  return blocks;
+}
+
 const SYSTEM_PROMPT = `Eres el asistente de datos de México en Datos, una plataforma de datos públicos de México.
 
 Tu trabajo es responder preguntas sobre la economía, empleo, seguridad, salud y otros indicadores de México usando datos reales de fuentes oficiales (INEGI, Banxico, SESNSP, CONEVAL).
@@ -334,6 +473,10 @@ export async function POST(request: NextRequest) {
       content: m.content,
     }));
 
+    // Track tool calls for chart extraction
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const toolCallLog: { name: string; input: any; result: any }[] = [];
+
     // Tool use loop — keep calling Claude until we get a final text response
     const MAX_ROUNDS = 10;
     for (let round = 0; round < MAX_ROUNDS; round++) {
@@ -351,11 +494,23 @@ export async function POST(request: NextRequest) {
       );
 
       if (toolUseBlocks.length === 0) {
-        // No tool calls — return the text response
+        // No tool calls — extract charts from collected tool results and return blocks
         const textBlock = response.content.find(
           (block): block is Anthropic.TextBlock => block.type === 'text',
         );
-        return NextResponse.json({ response: textBlock?.text ?? '' });
+        const textContent = textBlock?.text ?? '';
+
+        const chartBlocks: Block[] = [];
+        for (const call of toolCallLog) {
+          chartBlocks.push(...extractChartBlocks(call.name, call.input, call.result));
+        }
+
+        return NextResponse.json({
+          blocks: [
+            { type: 'text', content: textContent },
+            ...chartBlocks,
+          ],
+        });
       }
 
       // Execute tool calls and build results
@@ -363,6 +518,7 @@ export async function POST(request: NextRequest) {
       const toolResults: any[] = [];
       for (const block of toolUseBlocks) {
         const result = await executeTool(block.name, block.input as Record<string, unknown>);
+        toolCallLog.push({ name: block.name, input: block.input, result });
         toolResults.push({
           type: 'tool_result' as const,
           tool_use_id: block.id,
@@ -377,7 +533,9 @@ export async function POST(request: NextRequest) {
 
     // If we exhausted rounds, return what we have
     return NextResponse.json({
-      response: 'Lo siento, no pude completar la consulta. Intenta con una pregunta más específica.',
+      blocks: [
+        { type: 'text', content: 'Lo siento, no pude completar la consulta. Intenta con una pregunta más específica.' },
+      ],
     });
   } catch (error) {
     console.error('Chat API error:', error);
