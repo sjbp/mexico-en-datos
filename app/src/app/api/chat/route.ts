@@ -32,8 +32,29 @@ function num(v: unknown): number {
   return isNaN(n) ? 0 : n;
 }
 
+/** Format a period string like "2024/03" into a readable x-axis label.
+ *  Shows "Ene 2024" at January, just "Abr" for other months, "2024/Q1" for quarters. */
+const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function formatPeriodLabel(period: string, index: number, total: number): string {
+  if (!period) return '';
+  // Quarterly: "2024/Q1" → "2024 Q1"
+  if (period.includes('Q')) return period.replace('/', ' ');
+  // Monthly: "2024/03" → show year at Jan or first point, month abbreviation otherwise
+  const parts = period.split('/');
+  if (parts.length >= 2) {
+    const year = parts[0];
+    const month = parseInt(parts[1], 10);
+    if (isNaN(month)) return period;
+    const monthName = MONTH_NAMES[month - 1] || '';
+    // Show "Ene 2024" at January or first data point; just "Jul" otherwise
+    if (month === 1 || index === 0) return `${monthName} ${year}`;
+    return monthName;
+  }
+  return period;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): Block[] {
+async function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): Promise<Block[]> {
   const blocks: Block[] = [];
 
   if (!toolResult || toolResult.error) return blocks;
@@ -45,15 +66,22 @@ function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): 
         if (rows.length >= 5) {
           const values = rows.map((r: any) => num(r.value));
           const periods = rows.map((r: any) => r.period ?? '');
-          // Short labels: last 4 chars of period
-          const labels = periods.map((p: string) => p.slice(-4));
+          const labels = periods.map((p: string, i: number) => formatPeriodLabel(p, i, periods.length));
+
+          // Fetch the indicator name for a proper label
+          let chartLabel = 'Serie de tiempo';
+          try {
+            const indicator = await getIndicator(toolInput.indicator_id);
+            if (indicator?.name_es) chartLabel = indicator.name_es;
+          } catch { /* fallback to default */ }
+
           blocks.push({
             type: 'timeseries',
             data: {
               values,
               labels,
               periods,
-              label: toolInput.indicator_id?.replace(/_/g, ' ') || 'Serie de tiempo',
+              label: chartLabel,
               color: '#FF9F43',
             },
           });
@@ -509,7 +537,7 @@ export async function POST(request: NextRequest) {
 
         const chartBlocks: Block[] = [];
         for (const call of toolCallLog) {
-          chartBlocks.push(...extractChartBlocks(call.name, call.input, call.result));
+          chartBlocks.push(...await extractChartBlocks(call.name, call.input, call.result));
         }
 
         return NextResponse.json({
