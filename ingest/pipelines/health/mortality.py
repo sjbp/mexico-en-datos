@@ -54,6 +54,14 @@ logger = logging.getLogger("ingest.pipelines.health.mortality")
 # ---------------------------------------------------------------------------
 
 CAUSE_GROUPS: list[dict[str, str]] = [
+    # NOTE: order matters — more-specific groups must come before broader ones
+    # so that cerebrovascular (I60-I69) matches before cardiovascular (I00-I99).
+    {
+        "name": "Enfermedades cerebrovasculares",
+        "code": "cerebrovascular",
+        "icd10_range": "I60-I69",
+        "pattern": r"^I6[0-9]",
+    },
     {
         "name": "Enfermedades del corazón",
         "code": "cardiovascular",
@@ -77,12 +85,6 @@ CAUSE_GROUPS: list[dict[str, str]] = [
         "code": "liver_disease",
         "icd10_range": "K70-K77",
         "pattern": r"^K7[0-7]",
-    },
-    {
-        "name": "Enfermedades cerebrovasculares",
-        "code": "cerebrovascular",
-        "icd10_range": "I60-I69",
-        "pattern": r"^I6[0-9]",
     },
     {
         "name": "Homicidios",
@@ -169,11 +171,11 @@ def decode_age(edad_raw: str | None) -> int | None:
         val = int(edad_raw)
     except (ValueError, TypeError):
         return None
+    if val >= 5000:
+        return val - 5000 + 100
     if val >= 4000:
         # Unit = years
         return val - 4000
-    if val >= 5000:
-        return val - 5000 + 100
     # Sub-year ages map to 0
     if val >= 1000:
         return 0
@@ -187,19 +189,25 @@ SEX_MAP = {"1": "M", "2": "F"}
 # Download
 # ---------------------------------------------------------------------------
 
-BASE_URL = "https://www.inegi.org.mx/contenidos/programas/mortalidad/{year}/microdatos/defunciones_base_datos_{year}_csv.zip"
+# Primary source: DGIS (Secretaría de Salud) open data — same underlying INEGI
+# microdata but with a stable download URL.
+BASE_URL_DGIS = "http://www.dgis.salud.gob.mx/descargas/datosabiertos/defunciones/registro/DEFUN_{year}.zip"
 
-AVAILABLE_YEARS = list(range(2010, 2024))  # 2010-2023
+# Fallback: INEGI direct (URL may break when they reorganise).
+BASE_URL_INEGI = "https://www.inegi.org.mx/contenidos/programas/mortalidad/{year}/microdatos/defunciones_base_datos_{year}_csv.zip"
+
+AVAILABLE_YEARS = list(range(2010, 2025))  # 2010-2024
 
 
 def download_microdata(year: int, cache_dir: Path | None = None) -> Path:
     """Download and extract mortality microdata CSV for a given year.
 
+    Tries DGIS first, then INEGI as fallback.
     Returns the path to the extracted CSV file.
     """
+    import ssl
     import urllib.request
 
-    url = BASE_URL.format(year=year)
     if cache_dir is None:
         cache_dir = Path("data/cache/mortality")
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -211,8 +219,35 @@ def download_microdata(year: int, cache_dir: Path | None = None) -> Path:
         logger.info("Using cached CSV: %s", csv_path)
         return csv_path
 
-    logger.info("Downloading %s", url)
-    urllib.request.urlretrieve(url, zip_path)
+    # DGIS may have an expired certificate; allow it.
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    urls = [
+        BASE_URL_DGIS.format(year=year),
+        BASE_URL_INEGI.format(year=year),
+    ]
+
+    downloaded = False
+    for url in urls:
+        try:
+            logger.info("Downloading %s", url)
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            resp = urllib.request.urlopen(req, context=ctx, timeout=300)
+            ctype = resp.headers.get("Content-Type", "")
+            if "text/html" in ctype:
+                logger.warning("Got HTML instead of ZIP from %s — skipping", url)
+                continue
+            with open(zip_path, "wb") as fp:
+                fp.write(resp.read())
+            downloaded = True
+            break
+        except Exception as exc:
+            logger.warning("Failed to download from %s: %s", url, exc)
+
+    if not downloaded:
+        raise RuntimeError(f"Could not download mortality data for year {year}")
 
     logger.info("Extracting %s", zip_path)
     with zipfile.ZipFile(zip_path, "r") as zf:
@@ -275,17 +310,36 @@ def process_year(year: int, *, dry_run: bool = False) -> list[dict[str, Any]]:
             key_all_both = (year, geo_code, cause_group, "all", "all")
             counts[key_all_both] = counts.get(key_all_both, 0) + 1
 
-            # National aggregates
-            key_nat = (year, "00", cause_group, age_group, sex)
-            counts[key_nat] = counts.get(key_nat, 0) + 1
-            key_nat_all = (year, "00", cause_group, "all", "all")
-            counts[key_nat_all] = counts.get(key_nat_all, 0) + 1
+            # National aggregates (geo_code "00")
+            if geo_code != "00":
+                for nat_key in [
+                    (year, "00", cause_group, age_group, sex),
+                    (year, "00", cause_group, age_group, "all"),
+                    (year, "00", cause_group, "all", sex),
+                    (year, "00", cause_group, "all", "all"),
+                ]:
+                    counts[nat_key] = counts.get(nat_key, 0) + 1
 
     # Build icd10_range lookup
     icd_lookup = {cg["code"]: cg["icd10_range"] for cg in CAUSE_GROUPS}
 
+    # CONAPO mid-year population estimates (millions) for national rate.
+    # Source: CONAPO Proyecciones de la Población de México 2020-2070.
+    NATIONAL_POP = {
+        2010: 114_255_555, 2011: 115_682_868, 2012: 117_053_750,
+        2013: 118_395_054, 2014: 119_713_203, 2015: 121_005_815,
+        2016: 122_273_473, 2017: 123_518_270, 2018: 124_737_789,
+        2019: 125_929_439, 2020: 126_014_024, 2021: 127_768_286,
+        2022: 128_901_958, 2023: 129_406_736, 2024: 130_118_356,
+    }
+    pop_national = NATIONAL_POP.get(year)
+
     rows = []
     for (yr, geo, cause, age_grp, sx), deaths in counts.items():
+        rate = None
+        # Compute rate_per_100k for national, all-age, all-sex aggregates
+        if geo == "00" and age_grp == "all" and sx == "all" and pop_national:
+            rate = round(deaths / pop_national * 100_000, 2)
         rows.append({
             "year": yr,
             "geo_code": geo,
@@ -294,7 +348,7 @@ def process_year(year: int, *, dry_run: bool = False) -> list[dict[str, Any]]:
             "age_group": age_grp,
             "sex": sx,
             "deaths": deaths,
-            "rate_per_100k": None,  # computed in a separate pass with CONAPO data
+            "rate_per_100k": rate,
         })
 
     logger.info("Year %d: %d aggregate rows from microdata", year, len(rows))

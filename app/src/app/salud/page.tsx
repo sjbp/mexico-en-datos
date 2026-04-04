@@ -3,6 +3,7 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
 import HBar from '@/components/charts/HBar';
+import { getLeadingCausesOfDeath } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Salud | M\u00e9xico en Datos',
@@ -10,17 +11,44 @@ export const metadata: Metadata = {
     'Indicadores de salud p\u00fablica en M\u00e9xico: mortalidad, cobertura, infraestructura hospitalaria y m\u00e1s.',
 };
 
-// Static placeholder data based on known Mexican mortality statistics (2023 est.)
-const LEADING_CAUSES = [
-  { label: 'Enf. del coraz\u00f3n', value: 156.0, color: '#E74C3C' },
-  { label: 'Diabetes mellitus', value: 102.0, color: '#F39C12' },
-  { label: 'Tumores malignos', value: 73.0, color: '#9B59B6' },
-  { label: 'Enf. del h\u00edgado', value: 41.0, color: '#E67E22' },
-  { label: 'Cerebrovascular', value: 33.0, color: '#3498DB' },
-  { label: 'Homicidios', value: 25.0, color: '#E74C3C' },
-];
+const CAUSE_LABELS: Record<string, string> = {
+  cardiovascular: 'Enf. del coraz\u00f3n',
+  diabetes: 'Diabetes mellitus',
+  cancer: 'Tumores malignos',
+  liver_disease: 'Enf. del h\u00edgado',
+  cerebrovascular: 'Cerebrovascular',
+  homicide: 'Homicidios',
+  respiratory: 'Inf. respiratorias',
+  traffic_accidents: 'Acc. de tr\u00e1nsito',
+  kidney_disease: 'Enf. del ri\u00f1\u00f3n',
+  covid19: 'COVID-19',
+};
 
-export default function SaludPage() {
+const CAUSE_COLORS: Record<string, string> = {
+  cardiovascular: '#E74C3C',
+  diabetes: '#F39C12',
+  cancer: '#9B59B6',
+  liver_disease: '#E67E22',
+  cerebrovascular: '#3498DB',
+  homicide: '#E74C3C',
+  respiratory: '#2ECC71',
+  traffic_accidents: '#1ABC9C',
+  kidney_disease: '#8E44AD',
+  covid19: '#34495E',
+};
+
+export default async function SaludPage() {
+  const causes = await getLeadingCausesOfDeath(2023);
+
+  const topCause = causes[0];
+  const chartData = causes
+    .filter((c) => c.rate_per_100k != null)
+    .map((c) => ({
+      label: CAUSE_LABELS[c.cause_group] || c.cause_group,
+      value: Number(c.rate_per_100k),
+      color: CAUSE_COLORS[c.cause_group] || 'var(--accent)',
+    }));
+
   return (
     <>
       <div className="px-[var(--pad-page)] pt-10 pb-6">
@@ -46,8 +74,14 @@ export default function SaludPage() {
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
               Principal causa de muerte
             </div>
-            <div className="text-lg font-bold text-white">Enfermedades del coraz&oacute;n</div>
-            <div className="text-xs text-[var(--text-muted)] mt-1">~156 por cada 100k hab. (2023 est.)</div>
+            <div className="text-lg font-bold text-white">
+              {topCause ? (CAUSE_LABELS[topCause.cause_group] || topCause.cause_group) : 'Enfermedades del coraz\u00f3n'}
+            </div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">
+              {topCause?.rate_per_100k != null
+                ? `${Number(topCause.rate_per_100k).toFixed(1)} por cada 100k hab. (2023)`
+                : '~156 por cada 100k hab. (2023 est.)'}
+            </div>
           </Card>
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
@@ -75,15 +109,15 @@ export default function SaludPage() {
               Tasa de mortalidad por causa (por cada 100,000 habitantes)
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              Nacional, 2023 estimado
+              Nacional, 2023 &mdash; Microdatos de Defunciones Registradas (INEGI / Secretar&iacute;a de Salud)
             </div>
           </div>
           <HBar
-            data={LEADING_CAUSES}
-            valueFmt={(v: number) => v.toFixed(0)}
+            data={chartData}
+            valueFmt={(v: number) => v.toFixed(1)}
           />
-          <div className="text-xs text-[var(--text-muted)] mt-4 italic">
-            Datos 2023 estimados. Serie hist&oacute;rica pr&oacute;ximamente.
+          <div className="text-xs text-[var(--text-muted)] mt-4">
+            Fuente: Estad&iacute;sticas de Defunciones Registradas 2023. Clasificaci&oacute;n CIE-10. Tasa calculada con proyecci&oacute;n CONAPO.
           </div>
         </Card>
       </div>
@@ -92,17 +126,6 @@ export default function SaludPage() {
       <SectionHeader title="Proximamente" />
       <div className="px-[var(--pad-page)] mb-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card large>
-            <div className="text-base font-semibold text-white tracking-tight mb-1">
-              Mortalidad
-            </div>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
-              Principales causas de muerte, tendencias hist&oacute;ricas y clasificaci&oacute;n CIE-10.
-            </p>
-            <div className="text-xs text-[var(--accent)]">
-              Proximamente con datos de INEGI (Estad&iacute;sticas de Mortalidad)
-            </div>
-          </Card>
           <Card large>
             <div className="text-base font-semibold text-white tracking-tight mb-1">
               Cobertura de salud
