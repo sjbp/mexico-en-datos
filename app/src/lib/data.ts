@@ -85,6 +85,40 @@ export async function getTopicsWithCounts(): Promise<{ topic: string; count: num
   }
 }
 
+export async function getIndicatorValuesByState(
+  id: string,
+  options?: { latest?: boolean },
+): Promise<(IndicatorValue & { geo_name: string })[]> {
+  try {
+    if (options?.latest) {
+      return await query<IndicatorValue & { geo_name: string }>(
+        `SELECT iv.*, ga.name as geo_name
+         FROM indicator_values iv
+         JOIN geographic_areas ga ON ga.code = iv.geo_code
+         WHERE iv.indicator_id = $1
+           AND iv.geo_code != '00'
+           AND iv.period_date = (
+             SELECT MAX(iv2.period_date) FROM indicator_values iv2
+             WHERE iv2.indicator_id = $1 AND iv2.geo_code = iv.geo_code
+           )
+         ORDER BY iv.value DESC`,
+        [id]
+      );
+    }
+    return await query<IndicatorValue & { geo_name: string }>(
+      `SELECT iv.*, ga.name as geo_name
+       FROM indicator_values iv
+       JOIN geographic_areas ga ON ga.code = iv.geo_code
+       WHERE iv.indicator_id = $1 AND iv.geo_code != '00'
+       ORDER BY iv.period_date, iv.geo_code`,
+      [id]
+    );
+  } catch (error) {
+    console.error('Error fetching indicator values by state:', error);
+    return [];
+  }
+}
+
 // ── Employment (Scope 2) ────────────────────────────────────────────────
 
 export async function getEmploymentByDimension(

@@ -1,24 +1,47 @@
-import Link from 'next/link';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
-import { getEnvipeStats, getCifraNegra, getLatestValue } from '@/lib/data';
+import HBar from '@/components/charts/HBar';
+import { getEnvipeStats, getCifraNegra, getLatestValue, getIndicatorValuesByState } from '@/lib/data';
 
 export const metadata = {
   title: 'Seguridad - Mexico en Datos',
-  description: 'Datos de criminalidad, cifra negra y percepcion de seguridad en Mexico. Fuente: ENVIPE y ENSU (INEGI).',
+  description: 'Datos de criminalidad, cifra negra y percepcion de seguridad en Mexico. Fuente: ENVIPE, ENSU (INEGI) y SESNSP.',
 };
 
 export default async function SeguridadPage() {
-  const [envipeNational, cifraNegra, homicideRate] = await Promise.all([
+  const [envipeNational, cifraNegra, homicideRate, stateHomicides] = await Promise.all([
     getEnvipeStats(undefined, '00', 'total'),
     getCifraNegra(undefined, '00'),
     getLatestValue('sesnsp_homicide_rate', '00'),
+    getIndicatorValuesByState('sesnsp_homicide_rate', { latest: true }),
   ]);
 
   const latestEnvipe = envipeNational[0] ?? null;
   const latestCifraNegra = cifraNegra[0] ?? null;
   const latestHomicideRate = homicideRate.latest;
+
+  // Top 10 most dangerous + bottom 5 safest
+  const topDangerous = stateHomicides
+    .filter((s) => s.value != null)
+    .slice(0, 10)
+    .map((s) => ({
+      label: s.geo_name,
+      value: Number(s.value),
+      color: '#E74C3C',
+    }));
+
+  const bottomSafest = stateHomicides
+    .filter((s) => s.value != null)
+    .slice(-5)
+    .reverse()
+    .map((s) => ({
+      label: s.geo_name,
+      value: Number(s.value),
+      color: '#2ECC71',
+    }));
+
+  const statePeriod = stateHomicides[0]?.period ?? '';
 
   return (
     <>
@@ -35,7 +58,7 @@ export default async function SeguridadPage() {
         </h1>
         <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-8 max-w-2xl">
           Datos sobre criminalidad, victimizacion y percepcion de seguridad en Mexico.
-          Fuentes: ENVIPE (encuesta anual de victimizacion) y ENSU (percepcion trimestral en zonas urbanas).
+          Fuentes: SESNSP (incidencia delictiva), ENVIPE (victimizacion anual) y ENSU (percepcion trimestral).
         </p>
 
         {/* Headline stats */}
@@ -128,83 +151,90 @@ export default async function SeguridadPage() {
                 uno de los indicadores mas reveladores del sistema de justicia mexicano: la gran
                 mayoria de los delitos simplemente nunca se reportan.
               </p>
-              <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-4">
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                 Las razones principales incluyen desconfianza en la autoridad, considerarlo una
                 perdida de tiempo, miedo a represalias y falta de pruebas. Esto significa que las
                 estadisticas oficiales de incidencia delictiva solo capturan una fraccion de la
                 realidad.
               </p>
-              <Link
-                href="/seguridad/cifra-negra"
-                className="text-sm text-[var(--accent)] hover:underline"
-              >
-                Explorar cifra negra por estado y tipo de delito &rarr;
-              </Link>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Crime type breakdown placeholder */}
-      <SectionHeader title="Delitos por tipo" linkText="Ver detalle" linkHref="/seguridad/cifra-negra" />
-      <div className="px-[var(--pad-page)] mb-10">
-        <Card large>
-          <div className="py-8 text-center">
-            <div className="text-sm text-[var(--text-muted)]">
-              Datos detallados proximamente
-            </div>
-            <p className="text-xs text-[var(--text-muted)] mt-2">
-              Desglose de victimizacion por tipo de delito: robo, extorsion, fraude, amenazas, lesiones y mas.
-            </p>
+      {/* Homicide rate by state */}
+      {topDangerous.length > 0 && (
+        <>
+          <SectionHeader title="Homicidios dolosos por estado" />
+          <div className="px-[var(--pad-page)] mb-10">
+            <Card large>
+              <div className="mb-4">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Estados con mayor tasa de homicidios dolosos
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  Tasa por cada 100 mil habitantes ({statePeriod})
+                </div>
+              </div>
+              <HBar
+                data={topDangerous}
+                valueFmt={(v: number) => v.toFixed(1)}
+              />
+            </Card>
           </div>
-        </Card>
-      </div>
 
-      {/* Safety perception placeholder */}
-      <SectionHeader title="Percepcion de seguridad" linkText="Ver ciudades" linkHref="/seguridad/percepcion" />
-      <div className="px-[var(--pad-page)] mb-10">
-        <Card large>
-          <div className="py-8 text-center">
-            <div className="text-sm text-[var(--text-muted)]">
-              Datos detallados proximamente
-            </div>
-            <p className="text-xs text-[var(--text-muted)] mt-2">
-              Porcentaje de la poblacion que se siente insegura en su ciudad, por trimestre (ENSU).
-            </p>
+          <div className="px-[var(--pad-page)] mb-10">
+            <Card large>
+              <div className="mb-4">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Estados con menor tasa de homicidios dolosos
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  Tasa por cada 100 mil habitantes ({statePeriod})
+                </div>
+              </div>
+              <HBar
+                data={bottomSafest}
+                valueFmt={(v: number) => v.toFixed(1)}
+              />
+            </Card>
           </div>
-        </Card>
-      </div>
+        </>
+      )}
 
-      {/* Sub-page links */}
+      {/* Proximamente sections */}
+      <SectionHeader title="Proximamente" />
       <div className="px-[var(--pad-page)] mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link href="/seguridad/cifra-negra">
-            <Card interactive large>
-              <div className="text-base font-semibold text-white tracking-tight mb-1">
-                Cifra negra
-              </div>
-              <p className="text-sm text-[var(--text-muted)]">
-                Analisis de delitos no denunciados por estado y tipo de delito.
-              </p>
-            </Card>
-          </Link>
-          <Link href="/seguridad/percepcion">
-            <Card interactive large>
-              <div className="text-base font-semibold text-white tracking-tight mb-1">
-                Percepcion de seguridad
-              </div>
-              <p className="text-sm text-[var(--text-muted)]">
-                Como se siente la poblacion en las principales ciudades del pais (ENSU trimestral).
-              </p>
-            </Card>
-          </Link>
+          <Card large>
+            <div className="text-base font-semibold text-white tracking-tight mb-1">
+              Cifra negra
+            </div>
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
+              Analisis de delitos no denunciados por estado y tipo de delito.
+            </p>
+            <div className="text-xs text-[var(--accent)]">
+              Proximamente con datos de ENVIPE
+            </div>
+          </Card>
+          <Card large>
+            <div className="text-base font-semibold text-white tracking-tight mb-1">
+              Percepcion de seguridad
+            </div>
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
+              Como se siente la poblacion en las principales ciudades del pais (ENSU trimestral).
+            </p>
+            <div className="text-xs text-[var(--accent)]">
+              Proximamente con datos de ENSU
+            </div>
+          </Card>
         </div>
       </div>
 
       {/* Attribution */}
       <div className="px-[var(--pad-page)] mb-6">
         <p className="text-xs text-[var(--text-muted)]">
-          Fuentes: SESNSP (incidencia delictiva), INEGI — ENVIPE (victimizacion)
+          Fuentes: SESNSP (incidencia delictiva), INEGI &mdash; ENVIPE (victimizacion)
           y ENSU (percepcion de seguridad urbana).
         </p>
       </div>

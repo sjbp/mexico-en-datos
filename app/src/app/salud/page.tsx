@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
@@ -19,30 +18,6 @@ const LEADING_CAUSES = [
   { label: 'Enf. del h\u00edgado', value: 41.0, color: '#E67E22' },
   { label: 'Cerebrovascular', value: 33.0, color: '#3498DB' },
   { label: 'Homicidios', value: 25.0, color: '#E74C3C' },
-];
-
-const SECTIONS = [
-  {
-    title: 'Mortalidad',
-    description:
-      'Principales causas de muerte, tendencias hist\u00f3ricas y clasificaci\u00f3n CIE-10. Datos de INEGI.',
-    href: '/salud/mortalidad',
-    ready: true,
-  },
-  {
-    title: 'Cobertura de salud',
-    description:
-      'Asegurados IMSS, ISSSTE, Seguro Popular / INSABI / IMSS-Bienestar. Datos de IMSS y CONEVAL.',
-    href: '/salud/cobertura',
-    ready: true,
-  },
-  {
-    title: 'Infraestructura',
-    description:
-      'Cat\u00e1logo de 30,000+ unidades m\u00e9dicas (CLUES): hospitales, cl\u00ednicas y centros de salud.',
-    href: '/salud/infraestructura',
-    ready: true,
-  },
 ];
 
 export default function SaludPage() {
@@ -113,22 +88,43 @@ export default function SaludPage() {
         </Card>
       </div>
 
-      {/* Sub-sections */}
-      <SectionHeader title="Explorar" />
+      {/* Proximamente sections */}
+      <SectionHeader title="Proximamente" />
       <div className="px-[var(--pad-page)] mb-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {SECTIONS.map((section) => (
-            <Link key={section.href} href={section.href}>
-              <Card interactive className="h-full">
-                <div className="text-base font-semibold text-white tracking-tight mb-2">
-                  {section.title}
-                </div>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                  {section.description}
-                </p>
-              </Card>
-            </Link>
-          ))}
+          <Card large>
+            <div className="text-base font-semibold text-white tracking-tight mb-1">
+              Mortalidad
+            </div>
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
+              Principales causas de muerte, tendencias hist&oacute;ricas y clasificaci&oacute;n CIE-10.
+            </p>
+            <div className="text-xs text-[var(--accent)]">
+              Proximamente con datos de INEGI (Estad&iacute;sticas de Mortalidad)
+            </div>
+          </Card>
+          <Card large>
+            <div className="text-base font-semibold text-white tracking-tight mb-1">
+              Cobertura de salud
+            </div>
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
+              Asegurados IMSS, ISSSTE, IMSS-Bienestar y carencia por acceso a servicios de salud.
+            </p>
+            <div className="text-xs text-[var(--accent)]">
+              Proximamente con datos de IMSS y CONEVAL
+            </div>
+          </Card>
+          <Card large>
+            <div className="text-base font-semibold text-white tracking-tight mb-1">
+              Infraestructura
+            </div>
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
+              Cat&aacute;logo de 30,000+ unidades m&eacute;dicas: hospitales, cl&iacute;nicas y centros de salud.
+            </p>
+            <div className="text-xs text-[var(--accent)]">
+              Proximamente con datos de CLUES (Secretar&iacute;a de Salud)
+            </div>
+          </Card>
         </div>
       </div>
 
