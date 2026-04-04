@@ -182,6 +182,41 @@ export async function getEmploymentTimeseries(
   }
 }
 
+export async function getEmploymentTrends(): Promise<{
+  quarters: string[];
+  informality: (number | null)[];
+  avgIncome: (number | null)[];
+}> {
+  try {
+    // Aggregate national-level stats per quarter using gender dimension (Hombre + Mujer = total)
+    const rows = await query<{
+      quarter: string;
+      quarter_date: string;
+      informality_rate: number | null;
+      avg_income: number | null;
+    }>(
+      `SELECT quarter, quarter_date,
+              CASE WHEN SUM(employed) > 0
+                   THEN ROUND((SUM(informal)::numeric / SUM(employed)::numeric) * 100, 2)
+                   ELSE NULL END as informality_rate,
+              ROUND(AVG(avg_monthly_income)::numeric, 0) as avg_income
+       FROM employment_stats
+       WHERE dimension = 'gender' AND geo_code = '00'
+       GROUP BY quarter, quarter_date
+       ORDER BY quarter_date`
+    );
+
+    return {
+      quarters: rows.map(r => r.quarter),
+      informality: rows.map(r => r.informality_rate != null ? Number(r.informality_rate) : null),
+      avgIncome: rows.map(r => r.avg_income != null ? Number(r.avg_income) : null),
+    };
+  } catch (error) {
+    console.error('Error fetching employment trends:', error);
+    return { quarters: [], informality: [], avgIncome: [] };
+  }
+}
+
 export async function getLatestEmploymentQuarter(): Promise<string | null> {
   try {
     const rows = await query<{ quarter: string }>(

@@ -2,18 +2,20 @@ import Link from 'next/link';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Card from '@/components/ui/Card';
 import Breadcrumb from '@/components/ui/Breadcrumb';
-import { getLatestValue, getEmploymentByDimension, getLatestEmploymentQuarter } from '@/lib/data';
+import { getLatestValue, getEmploymentByDimension, getLatestEmploymentQuarter, getEmploymentTrends } from '@/lib/data';
 import { fmtPct, fmtCompact } from '@/lib/format';
 import EmpleoClient from './EmpleoClient';
+import EmpleoTrends from './EmpleoTrends';
 
 export default async function EmpleoPage() {
-  const [unemployment, informality, underemployment, pea, sectorStats, latestQuarter] = await Promise.all([
+  const [unemployment, informality, underemployment, pea, sectorStats, latestQuarter, trends] = await Promise.all([
     getLatestValue('444612'),
     getLatestValue('444619'),
     getLatestValue('444616'),
     getLatestValue('444620'),
     getEmploymentByDimension('sector'),
     getLatestEmploymentQuarter(),
+    getEmploymentTrends(),
   ]);
 
   const hasMicrodata = sectorStats.length > 0;
@@ -138,17 +140,21 @@ export default async function EmpleoPage() {
       {/* Employment trends */}
       <SectionHeader title="Tendencias de empleo" />
       <div className="px-[var(--pad-page)] mb-10">
-        <Card large>
-          <div className="py-6 text-center">
-            <div className="text-base font-semibold text-white tracking-tight mb-2">
-              Datos detallados pr&oacute;ximamente
+        {trends.quarters.length >= 2 ? (
+          <EmpleoTrends trends={trends} />
+        ) : (
+          <Card large>
+            <div className="py-6 text-center">
+              <div className="text-base font-semibold text-white tracking-tight mb-2">
+                Datos detallados pr&oacute;ximamente
+              </div>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-[480px] mx-auto">
+                Series de tiempo de desocupaci&oacute;n, informalidad y subocupaci&oacute;n
+                con desglose por dimensi&oacute;n. Disponible al procesar los microdatos de la ENOE.
+              </p>
             </div>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-[480px] mx-auto">
-              Series de tiempo de desocupaci&oacute;n, informalidad y subocupaci&oacute;n
-              con desglose por dimensi&oacute;n. Disponible al procesar los microdatos de la ENOE.
-            </p>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
 
       {/* Sub-pages navigation */}
