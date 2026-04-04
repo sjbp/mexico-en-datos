@@ -33,64 +33,53 @@ logger = logging.getLogger("ingest.pipelines.enoe")
 # Exact column names may vary by quarter — adjust as needed.
 
 ENOE_COLUMNS = {
-    "age": "EDA",              # Age in years
-    "sex": "SEX",              # 1=Hombre, 2=Mujer
-    "occupation_position": "POS_OCU",  # Position in occupation
-    "sector": "RAMA",          # Economic sector / branch (2-digit SCIAN)
-    "hourly_income": "ING_X_HRS",  # Hourly income (pesos)
-    "hours_worked": "HRSOCUP",     # Hours worked per week
-    "contract_type": "TIP_CON",    # Contract type (1=written, 2=verbal/none → informal)
-    "locality_size": "T_LOC",      # Locality size category
-    "state": "ENT",               # State code (01-32)
-    "class_activity": "CLASE1",    # 1=employed, 2=unemployed
-    "class_subactivity": "CLASE2", # Subclassification (underemployed, etc.)
-    "education": "CS_P13_1",       # Education level
+    "age": "eda",              # Age in years
+    "sex": "sex",              # 1=Hombre, 2=Mujer
+    "occupation_position": "pos_ocu",  # Position in occupation
+    "sector": "rama_est2",     # Economic sector (ENOE 11-sector grouping)
+    "hourly_income": "ing_x_hrs",  # Hourly income (pesos)
+    "hours_worked": "hrsocup",     # Hours worked per week
+    "contract_type": "tip_con",    # Contract type (1=written, 2=verbal/none → informal)
+    "locality_size": "t_loc",      # Locality size category
+    "state": "ent",               # State code (01-32)
+    "class_activity": "clase1",    # 1=employed, 2=unemployed
+    "class_subactivity": "clase2", # Subclassification (underemployed, etc.)
+    "education": "cs_p13_1",       # Education level
+    "weight": "fac_tri",          # Survey weight (quarterly expansion factor)
 }
 
-# ── Sector labels (RAMA codes → human-readable) ──────────────────────────
+# ── Sector labels (rama_est2 codes → human-readable) ────────────────────
 SECTOR_LABELS = {
-    11: "Agricultura",
-    21: "Mineria",
-    22: "Electricidad y agua",
-    23: "Construccion",
-    31: "Manufactura",
-    32: "Manufactura",
-    33: "Manufactura",
-    43: "Comercio al por mayor",
-    46: "Comercio al por menor",
-    48: "Transporte",
-    49: "Transporte",
-    51: "Medios masivos",
-    52: "Servicios financieros",
-    53: "Servicios inmobiliarios",
-    54: "Servicios profesionales",
-    55: "Corporativos",
-    56: "Servicios de apoyo",
-    61: "Educacion",
-    62: "Salud",
-    71: "Esparcimiento",
-    72: "Alojamiento y alimentos",
-    81: "Otros servicios",
-    93: "Gobierno",
+    0: "No especificado",
+    1: "Agricultura y ganaderia",
+    2: "Industria extractiva y electricidad",
+    3: "Industria manufacturera",
+    4: "Construccion",
+    5: "Comercio",
+    6: "Restaurantes y alojamiento",
+    7: "Transportes y comunicaciones",
+    8: "Servicios profesionales y financieros",
+    9: "Servicios sociales",
+    10: "Servicios diversos",
+    11: "Gobierno",
 }
 
-AGE_GROUP_BINS = [15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 100]
+AGE_GROUP_BINS = [15, 25, 35, 45, 55, 65, 100]
 AGE_GROUP_LABELS = [
-    "15-19", "20-24", "25-29", "30-34", "35-39",
-    "40-44", "45-49", "50-54", "55-59", "60-64", "65+",
+    "15-24", "25-34", "35-44", "45-54", "55-64", "65+",
 ]
 
 EDUCATION_LABELS = {
     0: "Sin instruccion",
-    1: "Preescolar",
-    2: "Primaria incompleta",
-    3: "Primaria completa",
-    4: "Secundaria incompleta",
-    5: "Secundaria completa",
-    6: "Preparatoria incompleta",
-    7: "Preparatoria completa",
-    8: "Superior incompleta",
-    9: "Superior completa",
+    1: "Primaria",
+    2: "Primaria",
+    3: "Primaria",
+    4: "Secundaria",
+    5: "Secundaria",
+    6: "Preparatoria",
+    7: "Preparatoria",
+    8: "Universidad",
+    9: "Universidad",
 }
 
 GENDER_LABELS = {1: "Hombre", 2: "Mujer"}
@@ -115,7 +104,7 @@ def download_enoe(quarter: str, dest_dir: str | None = None) -> Path:
 
     year = quarter[:4]
     q = quarter[-1]  # '1', '2', '3', '4'
-    url = f"https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/{year}trim{q}_csv.zip"
+    url = f"https://www.inegi.org.mx/contenidos/programas/enoe/15ymas/microdatos/enoe_{year}_trim{q}_csv.zip"
 
     if dest_dir is None:
         dest_dir = tempfile.mkdtemp(prefix="enoe_")
@@ -143,47 +132,79 @@ def load_sdem_csv(csv_dir: Path) -> pd.DataFrame:
     The SDEM table contains sociodemographic + labor variables for all respondents.
     File naming varies: SDEMT{q}{yy}.csv or similar.
     """
-    sdem_files = list(csv_dir.rglob("SDEM*.csv")) + list(csv_dir.rglob("sdem*.csv"))
+    sdem_files = (
+        list(csv_dir.rglob("SDEM*.csv"))
+        + list(csv_dir.rglob("sdem*.csv"))
+        + list(csv_dir.rglob("*SDEM*.csv"))
+        + list(csv_dir.rglob("*SDEMT*.csv"))
+        + list(csv_dir.rglob("*_SDEM*.csv"))
+    )
+    # Deduplicate
+    sdem_files = list(dict.fromkeys(sdem_files))
     if not sdem_files:
         raise FileNotFoundError(f"No SDEM CSV found in {csv_dir}")
 
     csv_path = sdem_files[0]
     logger.info("Loading SDEM CSV: %s", csv_path)
-    df = pd.read_csv(csv_path, low_memory=False)
+    df = pd.read_csv(csv_path, low_memory=False, encoding="latin-1")
+    # Normalize column names to lowercase (varies across quarters)
+    df.columns = df.columns.str.lower().str.strip()
     logger.info("Loaded %d rows, %d columns", len(df), len(df.columns))
     return df
 
 
-def classify_informal(row: pd.Series) -> bool:
-    """Classify a worker as informal based on ENOE criteria.
+def classify_informal(seg_soc: pd.Series) -> pd.Series:
+    """Classify workers as informal based on ENOE criteria.
 
-    Simplified informality: no written contract (TIP_CON != 1) or
-    works in a micro-business without benefits.
+    Uses the seg_soc (social security access) variable, which is the basis
+    for INEGI's official TIL (Tasa de Informalidad Laboral):
+    - 1 = Has social security (formal)
+    - 2 = No social security (informal)
+    - 0, 3 = Not applicable / not specified (treated as not informal)
     """
-    tip_con = row.get(ENOE_COLUMNS["contract_type"])
-    if pd.isna(tip_con):
-        return False
-    return int(tip_con) != 1
+    return seg_soc == 2
 
 
 def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Add derived columns needed for aggregation."""
     col = ENOE_COLUMNS
 
+    # Coerce key columns to numeric (CSV may load them as strings)
+    for key in ["class_activity", "class_subactivity", "weight", "age",
+                 "hours_worked", "hourly_income", "sex", "sector", "education"]:
+        c = col.get(key)
+        if c and c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+    if "seg_soc" in df.columns:
+        df["seg_soc"] = pd.to_numeric(df["seg_soc"], errors="coerce")
+    if "sub_o" in df.columns:
+        df["sub_o"] = pd.to_numeric(df["sub_o"], errors="coerce")
+
     # Filter to population 15+ who are in the labor force
     # CLASE1: 1=employed, 2=unemployed (both are PEA)
     df = df[df[col["class_activity"]].isin([1, 2])].copy()
 
+    # Ensure weight has no NaNs
+    df[col["weight"]] = df[col["weight"]].fillna(0)
+
     # Employed flag
     df["is_employed"] = df[col["class_activity"]] == 1
 
-    # Informal flag (only for employed)
+    # Informal flag (only for employed): seg_soc==2 means no social security
     df["is_informal"] = False
     employed_mask = df["is_employed"]
-    df.loc[employed_mask, "is_informal"] = df.loc[employed_mask].apply(classify_informal, axis=1)
+    if "seg_soc" in df.columns:
+        df.loc[employed_mask, "is_informal"] = classify_informal(df.loc[employed_mask, "seg_soc"])
+    else:
+        # Fallback to contract type
+        tip_con = col["contract_type"]
+        if tip_con in df.columns:
+            df.loc[employed_mask, "is_informal"] = df.loc[employed_mask, tip_con].isin([3, 4, 5, 6])
 
-    # Underemployed: employed but wants to work more hours (CLASE2 == 1 in some schemas)
-    if col["class_subactivity"] in df.columns:
+    # Underemployed: sub_o==1 means needs/wants more hours (official ENOE indicator)
+    if "sub_o" in df.columns:
+        df["is_underemployed"] = (df["is_employed"]) & (df["sub_o"] == 1)
+    elif col["class_subactivity"] in df.columns:
         df["is_underemployed"] = (df["is_employed"]) & (df[col["class_subactivity"]] == 1)
     else:
         df["is_underemployed"] = False
@@ -196,22 +217,21 @@ def add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
         right=False,
     )
 
-    # Gender label
-    df["gender"] = df[col["sex"]].map(GENDER_LABELS)
+    # Gender label (sex column may be string or int)
+    sex_numeric = pd.to_numeric(df[col["sex"]], errors="coerce")
+    df["gender"] = sex_numeric.map(GENDER_LABELS)
 
     # Sector label
     if col["sector"] in df.columns:
-        df["sector"] = df[col["sector"]].apply(
-            lambda x: SECTOR_LABELS.get(int(x), "Otro") if pd.notna(x) else "No especificado"
-        )
+        sector_numeric = pd.to_numeric(df[col["sector"]], errors="coerce")
+        df["sector"] = sector_numeric.map(SECTOR_LABELS).fillna("No especificado")
     else:
         df["sector"] = "No especificado"
 
     # Education label
     if col["education"] in df.columns:
-        df["education"] = df[col["education"]].apply(
-            lambda x: EDUCATION_LABELS.get(int(x), "Otro") if pd.notna(x) else "No especificado"
-        )
+        edu_numeric = pd.to_numeric(df[col["education"]], errors="coerce")
+        df["education"] = edu_numeric.map(EDUCATION_LABELS).fillna("No especificado")
     else:
         df["education"] = "No especificado"
 
@@ -250,35 +270,35 @@ def aggregate_by_dimension(
     col = ENOE_COLUMNS
     results = []
 
+    w = col["weight"]
     grouped = df.groupby(dimension, observed=True)
 
     for dim_value, group in grouped:
-        total_pea = len(group)
-        employed = group["is_employed"].sum()
+        weights = group[w]
+        total_pea = weights.sum()
+        employed = (group["is_employed"] * weights).sum()
         unemployed = total_pea - employed
-        informal = group["is_informal"].sum()
-        underemployed = group["is_underemployed"].sum()
+        informal = (group["is_informal"] * weights).sum()
+        underemployed = (group["is_underemployed"] * weights).sum()
 
         unemployment_rate = (unemployed / total_pea * 100) if total_pea > 0 else None
         informality_rate = (informal / employed * 100) if employed > 0 else None
 
-        employed_with_hours = group.loc[
-            group["is_employed"] & group[col["hours_worked"]].notna()
-        ]
-        avg_hours = (
-            employed_with_hours[col["hours_worked"]].mean()
-            if len(employed_with_hours) > 0
-            else None
-        )
+        employed_mask = group["is_employed"] & group[col["hours_worked"]].notna()
+        employed_with_hours = group.loc[employed_mask]
+        if len(employed_with_hours) > 0:
+            wh = employed_with_hours[w]
+            avg_hours = (employed_with_hours[col["hours_worked"]] * wh).sum() / wh.sum()
+        else:
+            avg_hours = None
 
-        employed_with_income = group.loc[
-            group["is_employed"] & group["monthly_income"].notna() & (group["monthly_income"] > 0)
-        ]
-        avg_income = (
-            employed_with_income["monthly_income"].mean()
-            if len(employed_with_income) > 0
-            else None
-        )
+        income_mask = group["is_employed"] & group["monthly_income"].notna() & (group["monthly_income"] > 0)
+        employed_with_income = group.loc[income_mask]
+        if len(employed_with_income) > 0:
+            wi = employed_with_income[w]
+            avg_income = (employed_with_income["monthly_income"] * wi).sum() / wi.sum()
+        else:
+            avg_income = None
 
         results.append({
             "quarter": quarter,
@@ -286,13 +306,13 @@ def aggregate_by_dimension(
             "geo_code": geo_code,
             "dimension": dimension,
             "dimension_value": str(dim_value),
-            "employed": int(employed),
-            "informal": int(informal),
-            "underemployed": int(underemployed),
-            "unemployment_rate": round(unemployment_rate, 2) if unemployment_rate is not None else None,
-            "informality_rate": round(informality_rate, 2) if informality_rate is not None else None,
-            "avg_hours_worked": round(avg_hours, 1) if avg_hours is not None else None,
-            "avg_monthly_income": round(avg_income, 0) if avg_income is not None else None,
+            "employed": int(float(employed)),
+            "informal": int(float(informal)),
+            "underemployed": int(float(underemployed)),
+            "unemployment_rate": float(round(unemployment_rate, 2)) if unemployment_rate is not None else None,
+            "informality_rate": float(round(informality_rate, 2)) if informality_rate is not None else None,
+            "avg_hours_worked": float(round(avg_hours, 1)) if avg_hours is not None else None,
+            "avg_monthly_income": float(round(avg_income, 0)) if avg_income is not None else None,
         })
 
     return results
