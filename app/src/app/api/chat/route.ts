@@ -25,6 +25,13 @@ type Block =
   | { type: 'hbar'; data: { items: { label: string; value: number; color?: string }[]; valueFmt?: string } }
   | { type: 'timeseries'; data: { values: number[]; labels: string[]; periods: string[]; label: string; color?: string; yUnit?: string } };
 
+/** Safely coerce a DB value (possibly string) to number */
+function num(v: unknown): number {
+  if (v == null) return 0;
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): Block[] {
   const blocks: Block[] = [];
@@ -36,8 +43,8 @@ function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): 
       case 'get_indicator_timeseries': {
         const rows = Array.isArray(toolResult) ? toolResult : [];
         if (rows.length >= 5) {
-          const values = rows.map((r: { value: number }) => r.value);
-          const periods = rows.map((r: { period: string }) => r.period);
+          const values = rows.map((r: any) => num(r.value));
+          const periods = rows.map((r: any) => r.period ?? '');
           // Short labels: last 4 chars of period
           const labels = periods.map((p: string) => p.slice(-4));
           blocks.push({
@@ -58,15 +65,15 @@ function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): 
         const rows = Array.isArray(toolResult) ? toolResult : [];
         if (rows.length >= 5) {
           const sorted = [...rows]
-            .filter((r: { value: number }) => r.value != null)
-            .sort((a: { value: number }, b: { value: number }) => b.value - a.value)
+            .filter((r: any) => r.value != null)
+            .sort((a: any, b: any) => num(b.value) - num(a.value))
             .slice(0, 10);
           blocks.push({
             type: 'hbar',
             data: {
-              items: sorted.map((r: { state_name: string; value: number }) => ({
-                label: r.state_name,
-                value: r.value,
+              items: sorted.map((r: any) => ({
+                label: r.geo_name ?? r.state_name ?? r.geo_code,
+                value: num(r.value),
               })),
             },
           });
@@ -78,14 +85,14 @@ function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): 
         const rows = Array.isArray(toolResult) ? toolResult : [];
         if (rows.length >= 2) {
           const sorted = [...rows]
-            .filter((r: { informality_rate: number }) => r.informality_rate != null)
-            .sort((a: { informality_rate: number }, b: { informality_rate: number }) => b.informality_rate - a.informality_rate);
+            .filter((r: any) => r.informality_rate != null)
+            .sort((a: any, b: any) => num(b.informality_rate) - num(a.informality_rate));
           blocks.push({
             type: 'hbar',
             data: {
-              items: sorted.map((r: { dimension_value: string; informality_rate: number }) => ({
+              items: sorted.map((r: any) => ({
                 label: r.dimension_value,
-                value: r.informality_rate,
+                value: num(r.informality_rate),
               })),
               valueFmt: '%',
             },
@@ -98,14 +105,14 @@ function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): 
         const rows = Array.isArray(toolResult) ? toolResult : [];
         if (rows.length >= 2) {
           const sorted = [...rows]
-            .filter((r: { prevalence_rate: number }) => r.prevalence_rate != null)
-            .sort((a: { prevalence_rate: number }, b: { prevalence_rate: number }) => b.prevalence_rate - a.prevalence_rate);
+            .filter((r: any) => r.prevalence_rate != null)
+            .sort((a: any, b: any) => num(b.prevalence_rate) - num(a.prevalence_rate));
           blocks.push({
             type: 'hbar',
             data: {
-              items: sorted.map((r: { crime_type: string; prevalence_rate: number }) => ({
+              items: sorted.map((r: any) => ({
                 label: r.crime_type,
-                value: r.prevalence_rate,
+                value: num(r.prevalence_rate),
               })),
             },
           });
@@ -119,9 +126,9 @@ function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): 
           blocks.push({
             type: 'hbar',
             data: {
-              items: rows.map((r: { cause_group: string; rate_per_100k: number }) => ({
+              items: rows.map((r: any) => ({
                 label: r.cause_group,
-                value: r.rate_per_100k,
+                value: num(r.rate_per_100k),
               })),
             },
           });
@@ -133,14 +140,14 @@ function extractChartBlocks(toolName: string, toolInput: any, toolResult: any): 
         const rows = Array.isArray(toolResult) ? toolResult : [];
         if (rows.length >= 2) {
           const sorted = [...rows]
-            .filter((r: { cifra_negra: number }) => r.cifra_negra != null)
-            .sort((a: { cifra_negra: number }, b: { cifra_negra: number }) => b.cifra_negra - a.cifra_negra);
+            .filter((r: any) => r.cifra_negra != null)
+            .sort((a: any, b: any) => num(b.cifra_negra) - num(a.cifra_negra));
           blocks.push({
             type: 'hbar',
             data: {
-              items: sorted.slice(0, 10).map((r: { geo_code: string; cifra_negra: number }) => ({
-                label: r.geo_code,
-                value: r.cifra_negra,
+              items: sorted.slice(0, 10).map((r: any) => ({
+                label: r.crime_type ?? r.geo_code,
+                value: num(r.cifra_negra),
               })),
               valueFmt: '%',
             },
