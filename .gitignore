@@ -7,3 +7,4 @@ node_modules/
 .next/
 uv.lock
 .vercel
+data/

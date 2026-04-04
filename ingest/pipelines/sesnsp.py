@@ -180,8 +180,8 @@ def process_incidence(
                     if year and row_year != year:
                         continue
 
-                    crime_type = row.get("Tipo de delito", "")
-                    if crime_filter not in crime_type:
+                    crime_type = row.get("Subtipo de delito", "")
+                    if crime_filter != crime_type:
                         continue
 
                     # Normalize state code
@@ -349,10 +349,10 @@ def upsert_indicator_values(
             %(indicator_id)s, %(geo_code)s, %(period)s,
             %(period_date)s, %(value)s, %(status)s
         )
-        ON CONFLICT (indicator_id, geo_code, period_date) DO UPDATE SET
-            period = EXCLUDED.period,
-            value  = EXCLUDED.value,
-            status = EXCLUDED.status
+        ON CONFLICT (indicator_id, geo_code, period) DO UPDATE SET
+            period_date = EXCLUDED.period_date,
+            value       = EXCLUDED.value,
+            status      = EXCLUDED.status
     """
 
     with conn.cursor() as cur:
@@ -364,37 +364,35 @@ def upsert_indicator_values(
 
 def ensure_indicators(conn: Any) -> None:
     """Create SESNSP indicator entries if they don't exist."""
+    from ingest.utils.db import upsert_indicator
+
     indicators = [
         {
             "id": HOMICIDE_COUNT_INDICATOR_ID,
             "name_es": "Homicidios dolosos (cuenta mensual)",
             "name_en": "Intentional homicides (monthly count)",
             "topic": "seguridad",
+            "subtopic": "homicidios",
             "unit": "count",
             "frequency": "monthly",
             "source": "SESNSP",
+            "geo_levels": ["national", "state"],
         },
         {
             "id": HOMICIDE_RATE_INDICATOR_ID,
             "name_es": "Tasa de homicidios dolosos por 100 mil hab.",
             "name_en": "Intentional homicide rate per 100k",
             "topic": "seguridad",
+            "subtopic": "homicidios",
             "unit": "rate_per_100k",
             "frequency": "annual",
             "source": "SESNSP",
+            "geo_levels": ["national", "state"],
         },
     ]
 
-    sql = """
-        INSERT INTO indicators (id, name_es, name_en, topic, unit, frequency, source)
-        VALUES (%(id)s, %(name_es)s, %(name_en)s, %(topic)s, %(unit)s, %(frequency)s, %(source)s)
-        ON CONFLICT (id) DO NOTHING
-    """
-
-    with conn.cursor() as cur:
-        for ind in indicators:
-            cur.execute(sql, ind)
-    conn.commit()
+    for ind in indicators:
+        upsert_indicator(conn, ind)
     logger.info("Ensured SESNSP indicators exist")
 
 

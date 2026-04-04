@@ -81,6 +81,16 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
     context: "Incluye bienes intermedios para manufactura, bienes de consumo y bienes de capital. El deficit o superavit comercial se calcula contra las exportaciones."
   },
 
+  // --- Security (SESNSP) ---
+  "sesnsp_homicide_rate": {
+    summary: "Tasa anual de homicidios dolosos por cada 100 mil habitantes, calculada a partir de las carpetas de investigacion reportadas por las procuradurias estatales al SESNSP.",
+    context: "Mide la violencia letal intencional. Mexico alcanzo su pico en 2018-2019 (~29 por 100k). Valores por debajo de 15 se consideran altos a nivel internacional pero representan una mejora relativa para Mexico. Solo captura casos denunciados; la cifra real es mayor."
+  },
+  "sesnsp_homicide_count": {
+    summary: "Numero mensual de carpetas de investigacion por homicidio doloso, reportadas por las fiscalias estatales al Secretariado Ejecutivo del SESNSP.",
+    context: "Permite dar seguimiento mensual a la tendencia de violencia homicida. Es la fuente oficial mas oportuna para homicidios en Mexico. Los datos se publican con ~2 meses de rezago."
+  },
+
   // --- Confidence ---
   "454168": {
     summary: "Indice compuesto que mide la percepcion de los consumidores sobre la situacion economica actual y futura del pais y del hogar.",

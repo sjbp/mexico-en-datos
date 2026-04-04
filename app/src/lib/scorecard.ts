@@ -73,16 +73,13 @@ export const SCORECARD: ScorecardItem[] = [
   {
     id: 'homicidios',
     label: 'Homicidios',
-    sourceType: 'static',
-    staticValue: 25.2,
-    staticPeriod: 'SESNSP · 2024',
-    staticDate: '2024-12-01',
-    // TODO: Switch sourceType to 'inegi' once sesnsp_homicide_rate indicator is populated
-    sparkIndicatorId: 'sesnsp_homicide_count', // Monthly counts from SESNSP pipeline
+    sourceType: 'inegi',
+    indicatorId: 'sesnsp_homicide_rate',
+    sparkIndicatorId: 'sesnsp_homicide_count',
     unit: 'rate',
     format: 'rate1',
     isGoodDown: true,
-    context: 'Tasa por 100 mil hab.',
+    context: 'Tasa por 100 mil hab. · SESNSP',
     href: '/seguridad',
   },
   {

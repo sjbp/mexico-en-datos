@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
-import { getEnvipeStats, getCifraNegra } from '@/lib/data';
+import { getEnvipeStats, getCifraNegra, getLatestValue } from '@/lib/data';
 
 export const metadata = {
   title: 'Seguridad - Mexico en Datos',
@@ -10,13 +10,15 @@ export const metadata = {
 };
 
 export default async function SeguridadPage() {
-  const [envipeNational, cifraNegra] = await Promise.all([
+  const [envipeNational, cifraNegra, homicideRate] = await Promise.all([
     getEnvipeStats(undefined, '00', 'total'),
     getCifraNegra(undefined, '00'),
+    getLatestValue('sesnsp_homicide_rate', '00'),
   ]);
 
   const latestEnvipe = envipeNational[0] ?? null;
   const latestCifraNegra = cifraNegra[0] ?? null;
+  const latestHomicideRate = homicideRate.latest;
 
   return (
     <>
@@ -37,7 +39,25 @@ export default async function SeguridadPage() {
         </p>
 
         {/* Headline stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <Card large>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+              Homicidios Dolosos
+            </div>
+            {latestHomicideRate ? (
+              <>
+                <div className="text-[36px] font-bold tabular-nums text-[var(--negative)] leading-none mb-1">
+                  {Number(latestHomicideRate.value).toFixed(1)}
+                </div>
+                <div className="text-xs text-[var(--text-muted)]">
+                  por cada 100 mil hab. ({latestHomicideRate.period})
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-[var(--text-muted)]">Datos detallados proximamente</div>
+            )}
+          </Card>
+
           <Card large>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
               Cifra Negra Nacional
@@ -184,8 +204,8 @@ export default async function SeguridadPage() {
       {/* Attribution */}
       <div className="px-[var(--pad-page)] mb-6">
         <p className="text-xs text-[var(--text-muted)]">
-          Fuente: INEGI, Encuesta Nacional de Victimizacion y Percepcion sobre Seguridad Publica (ENVIPE)
-          y Encuesta Nacional de Seguridad Publica Urbana (ENSU).
+          Fuentes: SESNSP (incidencia delictiva), INEGI — ENVIPE (victimizacion)
+          y ENSU (percepcion de seguridad urbana).
         </p>
       </div>
 
