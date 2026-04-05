@@ -30,7 +30,7 @@ export default function ComercioClient({ exportValues, importValues }: ComercioC
   const series = [
     {
       values: exSlice.map((p) => (p.value != null ? Number(p.value) : 0)),
-      color: 'var(--accent)',
+      color: '#FF9F43',
       label: 'Exportaciones (MDD)',
     },
     {

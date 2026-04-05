@@ -176,7 +176,7 @@ export default async function EconomiaPage() {
               series={[
                 {
                   values: igaeNums,
-                  color: 'var(--accent)',
+                  color: '#FF9F43',
                   label: 'IGAE Total',
                 },
               ]}

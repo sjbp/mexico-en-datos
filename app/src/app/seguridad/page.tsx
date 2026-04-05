@@ -62,7 +62,7 @@ export default async function SeguridadPage() {
     .map((s) => ({
       label: CRIME_LABELS[s.crime_type] ?? s.crime_type,
       value: Number(s.prevalence_rate),
-      color: 'var(--accent)',
+      color: '#FF9F43',
     }));
 
   // Cifra negra trend (national, total, across years)
