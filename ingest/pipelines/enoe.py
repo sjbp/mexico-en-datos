@@ -494,8 +494,16 @@ def main(argv: list[str] | None = None) -> None:
             logger.info("=== Processing %s ===", quarter)
 
             try:
+                year = quarter[:4]
+                q = quarter[-1]
                 if args.data_dir:
-                    csv_dir = Path(args.data_dir)
+                    # Look for quarter-specific subdirectory first
+                    quarter_dir = Path(args.data_dir) / f"{year}trim{q}"
+                    if quarter_dir.exists():
+                        csv_dir = quarter_dir
+                    else:
+                        # Download into the data dir
+                        csv_dir = download_enoe(quarter, args.data_dir)
                 else:
                     csv_dir = download_enoe(quarter)
 
