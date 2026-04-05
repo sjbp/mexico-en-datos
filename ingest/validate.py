@@ -52,6 +52,14 @@ STRUCTURAL_CHECKS = {
         "min_rows": 1000,
         "no_nulls": ["year", "geo_code", "cause_group", "age_group", "sex", "deaths"],
     },
+    "health_facilities": {
+        "min_rows": 30000,
+        "no_nulls": ["clues_id", "name", "institution", "facility_type", "geo_code"],
+    },
+    "ensanut_stats": {
+        "min_rows": 500,
+        "no_nulls": ["year", "geo_code", "condition", "age_group", "sex"],
+    },
 }
 
 # Primary-key-like columns used for duplicate detection
@@ -62,6 +70,8 @@ _PK_COLUMNS = {
     "employment_stats": ["quarter", "geo_code", "dimension", "dimension_value"],
     "envipe_stats": ["year", "geo_code", "crime_type"],
     "mortality_stats": ["year", "geo_code", "cause_group", "age_group", "sex"],
+    "health_facilities": ["clues_id"],
+    "ensanut_stats": ["year", "geo_code", "condition", "age_group", "sex"],
 }
 
 # ---------------------------------------------------------------------------
