@@ -77,6 +77,8 @@ jobs:
 
       - name: Download and process ENOE
         if: steps.check.outputs.existing_rows == '0'
+        id: process
+        continue-on-error: true
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
@@ -86,7 +88,6 @@ jobs:
           uv run python -m ingest.pipelines.enoe --quarter "$QUARTER" --data-dir data/enoe
 
       - name: Report results
-        if: steps.check.outputs.existing_rows == '0'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
@@ -104,3 +105,9 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: uv run python -m ingest.validate
+
+      - name: Fail if processing errored
+        if: steps.process.outcome == 'failure'
+        run: |
+          echo "::warning::ENOE processing failed for quarter ${{ steps.quarter.outputs.target }}. Data may not be available on INEGI yet."
+          echo "This is expected if the quarter hasn't been published. Will retry next scheduled run."
