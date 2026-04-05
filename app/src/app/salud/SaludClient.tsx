@@ -57,8 +57,9 @@ export function LifeExpectancyChart({ data }: { data: SimpleTimeData }) {
       series={series}
       labels={data.labels}
       periods={data.labels}
-      yUnit=" anos"
+      yUnit=" años"
       yStep={1}
+      yMin={70}
       labelStep={1}
       valueDecimals={1}
     />

@@ -23,6 +23,7 @@ interface TimeSeriesProps {
   refBand?: RefBand;
   yUnit?: string;
   yStep?: number;
+  yMin?: number;
   labelStep?: number;
   valueDecimals?: number;
 }
@@ -43,6 +44,7 @@ export default function TimeSeries({
   refBand,
   yUnit = '%',
   yStep = 2,
+  yMin: yMinProp,
   labelStep = 12,
   valueDecimals = 2,
 }: TimeSeriesProps) {
@@ -73,7 +75,7 @@ export default function TimeSeries({
 
     let allVals: number[] = [];
     series.forEach((s) => { allVals = allVals.concat(s.values); });
-    const yMin = 0;
+    const yMin = yMinProp ?? 0;
     const yMax = Math.ceil(Math.max(...allVals) / 2) * 2 + 2;
     const n = series[0].values.length;
 
