@@ -601,6 +601,47 @@ export async function getCifraNegraByState(
   }
 }
 
+// ── Hospitals per capita by state ─────────────────────────────────────
+
+export async function getHospitalsPerCapita(): Promise<{geo_name: string; hospitals: number; per_100k: number}[]> {
+  // Approximate 2023 state populations (CONAPO projections, millions)
+  const STATE_POP: Record<string, number> = {
+    'Aguascalientes': 1.49, 'Baja California': 3.90, 'Baja California Sur': 0.87,
+    'Campeche': 1.01, 'Coahuila de Zaragoza': 3.22, 'Colima': 0.79,
+    'Chiapas': 5.73, 'Chihuahua': 3.80, 'Ciudad de Mexico': 9.21,
+    'Durango': 1.87, 'Guanajuato': 6.23, 'Guerrero': 3.62,
+    'Hidalgo': 3.12, 'Jalisco': 8.49, 'Mexico': 17.43,
+    'Michoacan de Ocampo': 4.83, 'Morelos': 2.04, 'Nayarit': 1.29,
+    'Nuevo Leon': 5.95, 'Oaxaca': 4.17, 'Puebla': 6.62,
+    'Queretaro': 2.40, 'Quintana Roo': 1.97, 'San Luis Potosi': 2.87,
+    'Sinaloa': 3.16, 'Sonora': 3.12, 'Tabasco': 2.56,
+    'Tamaulipas': 3.69, 'Tlaxcala': 1.38, 'Veracruz de Ignacio de la Llave': 8.25,
+    'Yucatan': 2.36, 'Zacatecas': 1.65,
+  };
+
+  try {
+    const rows = await query<{ geo_name: string; hospitals: number }>(
+      `SELECT ga.name as geo_name, COUNT(*)::int as hospitals
+       FROM health_facilities hf
+       JOIN geographic_areas ga ON ga.code = LEFT(hf.geo_code, 2)
+       WHERE hf.facility_type = 'hospital'
+       GROUP BY ga.name
+       ORDER BY COUNT(*) DESC`
+    );
+    return rows.map((r) => {
+      const pop = STATE_POP[r.geo_name] ?? 4.0; // fallback ~4M
+      return {
+        geo_name: r.geo_name,
+        hospitals: r.hospitals,
+        per_100k: Number(((r.hospitals / (pop * 1_000_000)) * 100_000).toFixed(1)),
+      };
+    }).sort((a, b) => b.per_100k - a.per_100k);
+  } catch (error) {
+    console.error('Error fetching hospitals per capita:', error);
+    return [];
+  }
+}
+
 // ── Headlines ───────────────────────────────────────────────────────────
 
 import { SCORECARD, type ScorecardItem } from './scorecard';

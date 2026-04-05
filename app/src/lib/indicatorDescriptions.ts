@@ -124,6 +124,12 @@ export const ENSANUT_DESCRIPTIONS: Record<string, { summary: string; context: st
     summary: "Porcentaje de adultos (20+) con presion arterial >= 140/90 mmHg, medida directamente durante la encuesta ENSANUT (promedio de segunda y tercera lecturas).",
     context: "Esta medicion directa captura tanto casos diagnosticados como no diagnosticados. La diferencia con la hipertension autoreportada revela la brecha de diagnostico. El protocolo usa el promedio de las lecturas 2 y 3 para mayor precision."
   },
+
+  // --- CONEVAL ---
+  "coneval_sin_salud": {
+    summary: "Porcentaje de la poblacion que carece de acceso a servicios de salud segun la medicion multidimensional de pobreza del CONEVAL.",
+    context: "Esta carencia se redujo de 38% a 15% entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento en 2020 y las transiciones a INSABI y luego IMSS-Bienestar, se disparo a 39% en 2022. Es uno de los indicadores mas politizados del pais."
+  },
 };
 
 export function getIndicatorDescription(id: string): { summary: string; context: string; staleWarning?: string } | null {

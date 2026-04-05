@@ -10,8 +10,9 @@ import {
   getTopCauseByAge,
   getTotalDeaths,
   getHealthFacilitySummary,
+  getHospitalsPerCapita,
 } from '@/lib/data';
-import { MortalityTrendChart } from './SaludClient';
+import { MortalityTrendChart, LifeExpectancyChart, HealthCoverageGapChart } from './SaludClient';
 
 export const metadata: Metadata = {
   title: 'Salud | Mexico en Datos',
@@ -56,6 +57,31 @@ const TREND_CAUSES = [
 // Sort age groups in natural order
 const AGE_ORDER = ['15-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75+'];
 
+// ── Hardcoded CONAPO life expectancy data ──────────────────────────────
+const LIFE_EXPECTANCY = [
+  { year: 2015, value: 75.0 },
+  { year: 2016, value: 75.1 },
+  { year: 2017, value: 75.1 },
+  { year: 2018, value: 75.0 },
+  { year: 2019, value: 75.4 },
+  { year: 2020, value: 73.1 },  // COVID
+  { year: 2021, value: 71.5 },  // COVID peak
+  { year: 2022, value: 74.0 },  // Recovery
+  { year: 2023, value: 75.1 },  // Near pre-COVID
+];
+
+// ── CONEVAL "carencia por acceso a salud" ──────────────────────────────
+const HEALTH_ACCESS_GAP = [
+  { year: 2008, value: 38.4 },
+  { year: 2010, value: 29.2 },
+  { year: 2012, value: 21.5 },
+  { year: 2014, value: 18.2 },
+  { year: 2016, value: 15.5 },  // Seguro Popular peak coverage
+  { year: 2018, value: 16.2 },
+  { year: 2020, value: 28.2 },  // INSABI transition begins
+  { year: 2022, value: 39.1 },  // IMSS-Bienestar transition
+];
+
 function formatNumber(n: number): string {
   return n.toLocaleString('es-MX');
 }
@@ -68,6 +94,7 @@ export default async function SaludPage() {
     diabetesByAge,
     topCauseByAge,
     facilitySummary,
+    hospitalsPerCapita,
     ...trendResults
   ] = await Promise.all([
     getLeadingCausesOfDeath(2023),
@@ -75,6 +102,7 @@ export default async function SaludPage() {
     getMortalityByAge('diabetes', 2023),
     getTopCauseByAge(2023),
     getHealthFacilitySummary(),
+    getHospitalsPerCapita(),
     ...TREND_CAUSES.map((t) => getMortalityTrend(t.cause)),
   ]);
 
@@ -149,6 +177,32 @@ export default async function SaludPage() {
     value: f.count,
     color: 'var(--accent)',
   }));
+
+  // Life expectancy chart data
+  const lifeExpData = {
+    labels: LIFE_EXPECTANCY.map((d) => String(d.year)),
+    values: LIFE_EXPECTANCY.map((d) => d.value),
+  };
+
+  // Health coverage gap chart data
+  const coverageGapData = {
+    labels: HEALTH_ACCESS_GAP.map((d) => String(d.year)),
+    values: HEALTH_ACCESS_GAP.map((d) => d.value),
+  };
+
+  // Hospitals per capita chart data (top 15 + bottom 5)
+  const hospitalsChartData = hospitalsPerCapita.length > 0
+    ? [
+        ...hospitalsPerCapita.slice(0, 15),
+        ...hospitalsPerCapita.slice(-5).filter((h) => !hospitalsPerCapita.slice(0, 15).includes(h)),
+      ].map((h) => ({
+        label: h.geo_name,
+        value: h.per_100k,
+        color: h.per_100k < hospitalsPerCapita[Math.floor(hospitalsPerCapita.length / 2)]?.per_100k
+          ? '#EF4444'
+          : 'var(--accent)',
+      }))
+    : [];
 
   return (
     <>
@@ -263,7 +317,59 @@ export default async function SaludPage() {
         </Card>
       </div>
 
-      {/* ── 3. Mortality trends ────────────────────────────────────── */}
+      {/* ── 3. Life expectancy trend ──────────────────────────────── */}
+      <SectionHeader title="Esperanza de vida" />
+      <div className="px-[var(--pad-page)] mb-12">
+        <Card large>
+          <div className="mb-4">
+            <div className="text-base font-semibold text-white tracking-tight">
+              Esperanza de vida al nacer
+            </div>
+            <div className="text-[13px] text-[var(--text-muted)] mt-1">
+              Anos &middot; Nacional &middot; CONAPO &middot; 2015-2023
+            </div>
+          </div>
+          <div className="h-[280px]">
+            <LifeExpectancyChart data={lifeExpData} />
+          </div>
+          <div className="border-l-2 border-[var(--accent)] pl-4 mt-5 max-w-[640px]">
+            <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+              La esperanza de vida cayo de 75.4 a 71.5 anos durante la pandemia de COVID-19 (2019-2021), una perdida de casi 4 anos. Para 2023 se ha recuperado a niveles pre-pandemia.
+            </p>
+          </div>
+          <div className="text-xs text-[var(--text-muted)] mt-4">
+            Fuente: CONAPO, Proyecciones de la Poblacion de Mexico y de las Entidades Federativas.
+          </div>
+        </Card>
+      </div>
+
+      {/* ── 4. Health coverage gap ────────────────────────────────── */}
+      <SectionHeader title="Cobertura de salud" />
+      <div className="px-[var(--pad-page)] mb-12">
+        <Card large className="border-l-2 border-[#EF4444]">
+          <div className="mb-4">
+            <div className="text-base font-semibold text-white tracking-tight">
+              Poblacion sin acceso a servicios de salud
+            </div>
+            <div className="text-[13px] text-[var(--text-muted)] mt-1">
+              % de la poblacion &middot; Nacional &middot; CONEVAL &middot; 2008-2022
+            </div>
+          </div>
+          <div className="h-[280px]">
+            <HealthCoverageGapChart data={coverageGapData} />
+          </div>
+          <div className="border-l-2 border-[#EF4444] pl-4 mt-5 max-w-[640px]">
+            <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+              El porcentaje de la poblacion sin acceso a servicios de salud bajo de 38% a 15% entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento y la transicion a INSABI y luego IMSS-Bienestar, la carencia se disparo a 39% en 2022 &mdash; peor que en 2008.
+            </p>
+          </div>
+          <div className="text-xs text-[var(--text-muted)] mt-4">
+            Fuente: CONEVAL, Medicion multidimensional de la pobreza.
+          </div>
+        </Card>
+      </div>
+
+      {/* ── 5. Mortality trends ────────────────────────────────────── */}
       {trendData && trendData.years.length >= 2 ? (
         <>
           <SectionHeader title="Tendencias de mortalidad" />
@@ -310,7 +416,7 @@ export default async function SaludPage() {
         </>
       )}
 
-      {/* ── 4. Diabetes: Mexico's crisis ───────────────────────────── */}
+      {/* ── 6. Diabetes: Mexico's crisis ───────────────────────────── */}
       {diabetesAgeData.length > 0 && (
         <>
           <SectionHeader title="Diabetes: la crisis mexicana" />
@@ -344,7 +450,7 @@ export default async function SaludPage() {
         </>
       )}
 
-      {/* ── 5. What kills each generation ──────────────────────────── */}
+      {/* ── 7. What kills each generation ──────────────────────────── */}
       {topCauseByAgeSorted.length > 0 && (
         <>
           <SectionHeader title="Que mata a cada generacion" />
@@ -394,7 +500,7 @@ export default async function SaludPage() {
         </>
       )}
 
-      {/* ── 6. Health infrastructure ───────────────────────────────── */}
+      {/* ── 8. Health infrastructure ───────────────────────────────── */}
       {facilityChartData.length > 0 ? (
         <>
           <SectionHeader title="Infraestructura de salud" />
@@ -431,7 +537,38 @@ export default async function SaludPage() {
         </>
       )}
 
-      {/* ── 7. ENSANUT prevalence (static context) ─────────────────── */}
+      {/* ── 9. Hospitals per capita by state ──────────────────────── */}
+      {hospitalsChartData.length > 0 && (
+        <>
+          <SectionHeader title="Hospitales per capita por estado" />
+          <div className="px-[var(--pad-page)] mb-12">
+            <Card large>
+              <div className="mb-4">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Hospitales por cada 100 mil habitantes por estado
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  CLUES (hospitales) / CONAPO (poblacion est. 2023)
+                </div>
+              </div>
+              <HBar
+                data={hospitalsChartData}
+                valueFmt={(v: number) => v.toFixed(1)}
+              />
+              <div className="border-l-2 border-[var(--accent)] pl-4 mt-5 max-w-[640px]">
+                <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+                  La distribucion de infraestructura hospitalaria es profundamente desigual. Los estados del sureste tienen significativamente menos hospitales per capita que las entidades del norte y centro.
+                </p>
+              </div>
+              <div className="text-xs text-[var(--text-muted)] mt-4">
+                Fuente: CLUES (Sec. Salud), CONAPO (Proyecciones de Poblacion 2023).
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* ── 10. ENSANUT prevalence (static context) ────────────────── */}
       <SectionHeader title="Prevalencia de enfermedades cronicas" />
       <div className="px-[var(--pad-page)] mb-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
@@ -470,10 +607,10 @@ export default async function SaludPage() {
         </div>
       </div>
 
-      {/* ── 8. Attribution ─────────────────────────────────────────── */}
+      {/* ── 11. Attribution ────────────────────────────────────────── */}
       <div className="px-[var(--pad-page)] mb-10">
         <div className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Fuentes: INEGI (Estadisticas de Mortalidad 2018-2023), ENSANUT 2022 (INSP), Secretaria de Salud (CLUES), CONEVAL, CONAPO (Proyecciones de Poblacion)
+          Fuentes: INEGI (Estadisticas de Mortalidad 2018-2023), ENSANUT 2022 (INSP), Secretaria de Salud (CLUES), CONEVAL (Medicion de Pobreza), CONAPO (Proyecciones de Poblacion)
         </div>
       </div>
     </>

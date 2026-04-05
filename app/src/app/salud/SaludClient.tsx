@@ -33,3 +33,60 @@ export function MortalityTrendChart({ data }: { data: TrendData }) {
     />
   );
 }
+
+// ── Life Expectancy Chart ─────────────────────────────────────────────
+
+interface SimpleTimeData {
+  labels: string[];
+  values: number[];
+}
+
+export function LifeExpectancyChart({ data }: { data: SimpleTimeData }) {
+  if (data.values.length < 2) return null;
+
+  const series = [
+    {
+      values: data.values,
+      color: 'var(--accent)',
+      label: 'Esperanza de vida',
+    },
+  ];
+
+  return (
+    <TimeSeries
+      series={series}
+      labels={data.labels}
+      periods={data.labels}
+      yUnit=" anos"
+      yStep={1}
+      labelStep={1}
+      valueDecimals={1}
+    />
+  );
+}
+
+// ── Health Coverage Gap Chart ─────────────────────────────────────────
+
+export function HealthCoverageGapChart({ data }: { data: SimpleTimeData }) {
+  if (data.values.length < 2) return null;
+
+  const series = [
+    {
+      values: data.values,
+      color: '#EF4444',
+      label: 'Sin acceso a salud',
+    },
+  ];
+
+  return (
+    <TimeSeries
+      series={series}
+      labels={data.labels}
+      periods={data.labels}
+      yUnit="%"
+      yStep={5}
+      labelStep={1}
+      valueDecimals={1}
+    />
+  );
+}

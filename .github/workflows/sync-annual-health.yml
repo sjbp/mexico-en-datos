@@ -1,0 +1,61 @@
+name: Annual Health Data Sync (Mortality + CLUES)
+
+on:
+  schedule:
+    # Run June 15 (mortality data for previous year usually available by mid-year)
+    - cron: '0 16 15 6 *'
+  workflow_dispatch:
+    inputs:
+      mortality_year:
+        description: 'Mortality year to process (e.g., 2024). Leave empty for auto-detect.'
+        required: false
+        type: string
+
+jobs:
+  sync-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Determine mortality year
+        id: year
+        run: |
+          if [ -n "${{ inputs.mortality_year }}" ]; then
+            echo "target=${{ inputs.mortality_year }}" >> $GITHUB_OUTPUT
+          else
+            # Auto-detect: current year - 1 (data published mid-year for previous year)
+            YEAR=$(date -d "6 months ago" +%Y 2>/dev/null || date -v-6m +%Y)
+            echo "target=$YEAR" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Process mortality data
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run python -m ingest.pipelines.health.mortality --year ${{ steps.year.outputs.target }}
+
+      - name: Refresh CLUES facility catalog
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          mkdir -p data/clues
+          uv run python -m ingest.pipelines.health.clues
+
+      - name: Validate data integrity
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run python -m ingest.validate
