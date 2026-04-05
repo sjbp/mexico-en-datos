@@ -124,10 +124,12 @@ export default function NavBar() {
         <div className="flex items-center gap-3">
           <button
             onClick={openChat}
-            className="hidden md:flex items-center gap-2 px-3.5 py-1.5 text-[13px] text-[var(--accent)] border border-[var(--accent)]/40 rounded-full transition-all hover:bg-[var(--accent)]/10 hover:border-[var(--accent)]/60 cursor-pointer"
+            className="hidden md:flex items-center gap-2 px-3.5 py-1.5 text-[12px] font-medium text-[var(--accent)] bg-[var(--accent-dim)] rounded-full transition-all hover:bg-[var(--accent)]/15 cursor-pointer"
           >
-            <span>🤖</span>
-            <span>Pregúntale a los datos</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <path d="M12 3L14.5 8.5L20 9.27L16 13.14L16.94 18.63L12 16L7.06 18.63L8 13.14L4 9.27L9.5 8.5L12 3Z" />
+            </svg>
+            <span>Pregunta con IA</span>
           </button>
 
           {/* Mobile hamburger */}
@@ -179,10 +181,12 @@ export default function NavBar() {
           <div className="mt-4 pt-4 border-t border-[var(--border)]">
             <button
               onClick={() => { openChat(); setMobileOpen(false); }}
-              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-[14px] text-[var(--accent)] border border-[var(--accent)]/40 rounded-full transition-all hover:bg-[var(--accent)]/10 cursor-pointer"
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-[13px] font-medium text-[var(--accent)] bg-[var(--accent-dim)] rounded-full transition-all hover:bg-[var(--accent)]/15 cursor-pointer"
             >
-              <span>🤖</span>
-              <span>Pregúntale a los datos</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <path d="M12 3L14.5 8.5L20 9.27L16 13.14L16.94 18.63L12 16L7.06 18.63L8 13.14L4 9.27L9.5 8.5L12 3Z" />
+              </svg>
+              <span>Pregunta con IA</span>
             </button>
           </div>
         </div>
