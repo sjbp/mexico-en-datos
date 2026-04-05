@@ -1,14 +1,19 @@
 # Mexico en Datos — Design Document
 
+*Last updated: April 5, 2026*
+
 ## Vision
 
 A public website that makes Mexico's public data accessible, interactive, and understandable for everyone — not just economists and statisticians. Think **FRED meets Our World in Data, for Mexico**.
 
-The platform combines clean data visualizations with opinionated storytelling. An AI interface (future) will let anyone query Mexican statistical data in natural language and get instant, sourced insights.
+The platform combines clean data visualizations with opinionated storytelling. An AI assistant lets anyone query Mexican statistical data in natural language and get instant, sourced insights with inline charts.
 
-**Primary data sources**: INEGI (BIE-BISE indicators), Banxico (monetary/financial), SESNSP (crime), and future integration of IMSS, CONAPO, CONEVAL, Secretaria de Salud, and ENOE/ENVIPE/ENSU microdata.
+**Primary data sources**: INEGI (BIE-BISE indicators), Banxico (monetary/financial), SESNSP (crime), ENOE (employment microdata), ENVIPE (victimization survey), INEGI/DGIS (mortality microdata).
 
 **Name**: Mexico en Datos
+**URL**: https://datamx.sebastian.mx
+**GitHub**: https://github.com/sjbp/mexico-en-datos
+**Hosting**: Vercel (project: mexico-en-datos, Analytics enabled)
 
 ---
 
@@ -29,10 +34,10 @@ The platform combines clean data visualizations with opinionated storytelling. A
 
 ### Our differentiation
 1. **Clean, fast, modern UX** — not a government portal
-2. **Opinionated data storytelling** — not just charts, but context on why numbers matter
-3. **All Mexican public data in one place** — macro indicators, health, survey microdata, geographic data. Not just INEGI — we integrate Banxico, SESNSP, and will add Secretaria de Salud, IMSS, CONAPO, CONEVAL
-4. **AI-powered querying** (future) — ask questions in Spanish, get charts + insights
-5. **Shareable** — every chart/insight gets a unique URL, optimized for social sharing
+2. **Opinionated data storytelling** — not just charts, but narrative context on why numbers matter
+3. **All Mexican public data in one place** — macro indicators, health, survey microdata, geographic data. Not just INEGI — we integrate Banxico, SESNSP, ENOE, ENVIPE, and mortality records
+4. **AI-powered querying** — ask questions in Spanish, get charts + insights via Claude tool use
+5. **Shareable** — every chart/insight gets a unique URL
 
 ---
 
@@ -42,8 +47,8 @@ The platform combines clean data visualizations with opinionated storytelling. A
 ┌──────────────────────────────────────────────────────┐
 │              Frontend (Next.js 16 on Vercel)          │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐ │
-│  │ Scorecard│ │  Topic   │ │  Source  │ │Indicator│ │
-│  │ Homepage │ │ Sections │ │ Explorer │ │ Detail  │ │
+│  │ Scorecard│ │  Topic   │ │  Source  │ │   AI    │ │
+│  │ Homepage │ │ Sections │ │ Explorer │ │  Chat   │ │
 │  └──────────┘ └──────────┘ └──────────┘ └─────────┘ │
 └────────────────────┬─────────────────────────────────┘
                      │ Server components + API routes
@@ -59,7 +64,7 @@ The platform combines clean data visualizations with opinionated storytelling. A
 │           Data Ingestion Pipelines (Python / uv)      │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐ │
 │  │INEGI     │ │ Banxico  │ │ SESNSP   │ │Microdata│ │
-│  │BIE-BISE  │ │ SIE API  │ │ CSV      │ │(future) │ │
+│  │BIE-BISE  │ │ SIE API  │ │ CSV      │ │ENOE/etc │ │
 │  └──────────┘ └──────────┘ └──────────┘ └─────────┘ │
 └──────────────────────────────────────────────────────┘
 ```
@@ -71,10 +76,11 @@ The platform combines clean data visualizations with opinionated storytelling. A
 | Frontend | Next.js 16.2.1, React 19, TypeScript | App Router, server components |
 | Styling | Tailwind CSS | Custom design system in `site/med.css` |
 | Charts | Canvas 2D (custom) | Known dev-mode bfcache issue; works in production |
+| AI Assistant | Claude Sonnet 4 via API | 10 tools mapping to data.ts functions, inline chart generation |
 | Database | Neon PostgreSQL | `@neondatabase/serverless` driver for Vercel edge |
 | Python pipeline | Python 3.12+, uv | Dependencies in `pyproject.toml` |
 | Node runtime | Node 22 via fnm | |
-| Hosting | Vercel | Frontend + API routes |
+| Hosting | Vercel | Frontend + API routes, Vercel Analytics enabled |
 | Design system | `site/med.css` + `site/med.js` | `MED` namespace: sparklines, time series, hbars, treemap |
 
 ---
@@ -94,38 +100,47 @@ Eight headline indicators that give a pulse-check on Mexico. Displayed as cards 
 | 3 | Desempleo | INEGI | 444612 | ✅ LIVE |
 | 4 | Tipo de cambio USD/MXN | Banxico | SF43718 | ✅ LIVE |
 | 5 | Informalidad laboral | INEGI | 444619 | ✅ LIVE |
-| 6 | Homicidios (tasa por 100k) | SESNSP | static | 📋 STATIC (25.2, 2024) |
+| 6 | Homicidios (tasa por 100k) | SESNSP | sesnsp_homicide_rate | ✅ LIVE |
 | 7 | Sin acceso a salud (%) | CONEVAL | static | 📋 STATIC (39.1%, 2024) |
 | 8 | Confianza del consumidor | INEGI | 454168 | ✅ LIVE |
+
+7 of 8 indicators are live. Only "Sin acceso a salud" remains static (CONEVAL source, no API).
 
 Configuration lives in `app/src/lib/scorecard.ts`. Each item has a `sourceType` (`'inegi'` or `'static'`), display format, "good direction" (up/down), and link to detail page.
 
 ### 2. Topic Sections
 
-Eight deep-dive sections, each with a landing page and sub-pages:
+Five topic sections with landing pages and sub-pages where applicable:
 
 | # | Topic | Route | Status | Notes |
 |---|---|---|---|---|
-| 1 | Economia | `/economia` | ✅ BUILT | IGAE chart, PIB, trade, confidence data |
-| 2 | Empleo | `/empleo` | 🔧 STRUCTURE READY | Pages + pipeline skeleton, needs ENOE microdata |
-| 3 | Seguridad | `/seguridad` | 🔧 STRUCTURE READY | Pages + pipeline skeleton, needs ENVIPE/ENSU/SESNSP data |
-| 4 | Salud | `/salud` | 🔧 STRUCTURE READY | Pages + 5 health pipeline skeletons, needs microdata |
-| 5 | Educacion | `/educacion` | 📋 PLACEHOLDER | Page exists, needs SEP data sources |
-| 6 | Ingresos y Pobreza | `/ingresos` | 📋 PLACEHOLDER | Page exists, needs ENIGH/CONEVAL data |
-| 7 | Comercio y Manufactura | `/comercio` | ✅ PARTIALLY BUILT | Has real export/import charts from INEGI |
-| 8 | Poblacion | `/poblacion` | 📋 PLACEHOLDER | Page exists, needs Census/CONAPO data |
+| 1 | Economia | `/economia` | ✅ BUILT | IGAE chart, 4 headline stats, sector breakdown |
+| 2 | Empleo | `/empleo` | ✅ BUILT | 4 headline stats, informality by sector, trends (4 quarters ENOE data) |
+| 3 | Seguridad | `/seguridad` | ✅ BUILT | Homicide stats, cifra negra (90.2%), crime types, state rankings |
+| 4 | Salud | `/salud` | ✅ BUILT | Leading causes of death from 800K records, narrative context |
+| 5 | Comercio | `/comercio` | ✅ BUILT | Export/import multi-series chart, nearshoring context |
 
 ### 3. Data Source Explorer
 
 Browse available data by institution at `/fuentes`. Each source gets a detail page at `/fuentes/[slug]`.
 
-Planned sources: INEGI, Banxico, IMSS, CONEVAL, CONAPO, Secretaria de Salud.
+Active sources: INEGI and Banxico. Additional source cards displayed for SESNSP, CONEVAL, CONAPO, Secretaria de Salud (6 total).
+
+### 4. AI Assistant
+
+Claude Sonnet 4 with tool use, accessible from any page:
+- **Slide-out chat panel** triggered by "Pregunta con IA" button in NavBar
+- **Hero section** redesigned as "Que quieres saber sobre Mexico?" with inline input
+- **10 data tools** mapping to `data.ts` functions for querying indicators, employment, security, health, and geographic data
+- **Inline chart generation** in chat responses (HBar, TimeSeries components)
+- **System prompt** optimized for concise, visual-first answers in Spanish
+- API route at `/api/chat`
 
 ---
 
 ## Data Model
 
-### Core tables (populated)
+### Core tables
 
 ```sql
 -- Indicator catalog
@@ -165,24 +180,32 @@ CREATE TABLE geographic_areas (
 );
 ```
 
-**Status**: All three tables are populated with ~22 INEGI indicators + Banxico series and 33 geographic areas (national + 32 states).
+**Status**: All three tables populated. ~27K rows in `indicator_values` (22 INEGI indicators + Banxico series + 17,391 SESNSP homicide rows). 33 geographic areas (national + 32 states).
 
-### Domain tables (schema exists, data empty)
+### Domain tables
 
 ```sql
--- Scope 2: Employment (ENOE microdata aggregates)
+-- Employment (ENOE microdata aggregates)
 CREATE TABLE employment_stats (...);     -- 003_employment_tables.sql
+-- ✅ POPULATED: 3,461 rows — ENOE 2024 Q2-Q4 + 2025 Q1
+-- Dimensions: sector, age_group, gender, education
 
--- Scope 3: Security
-CREATE TABLE envipe_stats (...);         -- 004_security_tables.sql (annual victimization)
-CREATE TABLE ensu_stats (...);           -- 004_security_tables.sql (quarterly perception)
+-- Security: annual victimization
+CREATE TABLE envipe_stats (...);         -- 004_security_tables.sql
+-- ✅ POPULATED: 1,555 rows — 2022-2024, crime types, cifra negra, trust by state
 
--- Scope 4: Health
-CREATE TABLE mortality_stats (...);      -- 005_health_tables.sql (INEGI microdata)
-CREATE TABLE health_facilities (...);    -- 005_health_tables.sql (CLUES catalog)
+-- Security: quarterly perception
+CREATE TABLE ensu_stats (...);           -- 004_security_tables.sql
+-- ⬜ EMPTY: schema exists, pipeline skeleton ready
+
+-- Health: mortality
+CREATE TABLE mortality_stats (...);      -- 005_health_tables.sql
+-- ✅ POPULATED: 9,270 rows — 2023, 10 ICD-10 cause groups, by state/age/sex
+
+-- Health: facilities
+CREATE TABLE health_facilities (...);    -- 005_health_tables.sql
+-- ⬜ EMPTY: schema exists, pipeline skeleton ready
 ```
-
-All domain tables have schemas defined in `db/migrations/` but are not yet populated.
 
 ---
 
@@ -190,24 +213,24 @@ All domain tables have schemas defined in `db/migrations/` but are not yet popul
 
 ### Active pipelines (producing data)
 
-| Pipeline | File | Source API | Series |
+| Pipeline | File | Source | Data |
 |---|---|---|---|
-| INEGI Indicators | `ingest/pipelines/indicators.py` | INEGI BIE-BISE | ~22 economic indicators (GDP, IGAE, employment, trade, confidence) |
-| Banxico SIE | `ingest/pipelines/banxico.py` | Banxico SIE | Inflation (SP30578), USD/MXN (SF43718), tasa objetivo (SF61745) |
+| INEGI Indicators | `ingest/pipelines/indicators.py` | INEGI BIE-BISE API | ~22 economic indicators (GDP, IGAE, employment, trade, confidence) |
+| Banxico SIE | `ingest/pipelines/banxico.py` | Banxico SIE API | Inflation (SP30578), USD/MXN (SF43718), tasa objetivo (SF61745) |
+| SESNSP | `ingest/pipelines/sesnsp.py` | SESNSP monthly CSVs | 17,391 rows of homicide data by state (2015-2025) |
+| ENOE | `ingest/pipelines/enoe.py` | ENOE quarterly microdata | 3,461 rows: 4 quarters processed (2024 Q2-Q4, 2025 Q1) |
+| ENVIPE | `ingest/pipelines/envipe.py` | ENVIPE annual microdata | 1,555 rows: 3 years processed (2022-2024) |
+| Mortality | `ingest/pipelines/health/mortality.py` | INEGI/DGIS mortality microdata | 9,270 aggregated rows from 800K death records (2023), 10 ICD-10 cause groups |
 
 ### Pipeline skeletons (code exists, not yet running)
 
 | Pipeline | File | Data source | Blocking on |
 |---|---|---|---|
-| SESNSP | `ingest/pipelines/sesnsp.py` | SESNSP monthly CSVs | Data download + processing logic |
-| ENOE | `ingest/pipelines/enoe.py` | ENOE quarterly microdata | Microdata download + aggregation |
-| ENVIPE | `ingest/pipelines/envipe.py` | ENVIPE annual microdata | Microdata download + aggregation |
 | ENSU | `ingest/pipelines/ensu.py` | ENSU quarterly microdata | Microdata download + aggregation |
-| Mortality | `ingest/pipelines/health/mortality.py` | INEGI mortality microdata | ICD-10 mapping + aggregation |
+| CLUES | `ingest/pipelines/health/clues.py` | Health facility catalog | CSV download + geocoding |
 | IMSS Coverage | `ingest/pipelines/health/imss_coverage.py` | IMSS Datos Abiertos | CSV download + processing |
 | CONAPO | `ingest/pipelines/health/conapo.py` | CONAPO projections | Excel processing |
 | COVID | `ingest/pipelines/health/covid.py` | Historical COVID microdata | CSV processing |
-| CLUES | `ingest/pipelines/health/clues.py` | Health facility catalog | CSV download + geocoding |
 
 ### INEGI API migration issues (Dec 2025)
 
@@ -217,6 +240,7 @@ The INEGI BIE underwent a major migration in December 2025:
 - **Many indicator IDs were reassigned**: Old IDs (e.g., 444612-444621 which were INPC series) now return employment data
 - **INPC data no longer available via BIE API**: INEGI moved INPC to a new "Canasta y Ponderadores 2024" system. The old INPC indicator 628194 is frozen at July 2024
 - **Workaround**: We now source inflation data from Banxico SIE API (series SP30578, SP1)
+- **Stale warning**: indicator 628194 displays a stale INPC warning banner on the frontend
 
 ---
 
@@ -303,40 +327,33 @@ INDICATOR/{id}/es/{geo}/{recent}/BIE-BISE/2.0/{token}?type=json
 
 ## Frontend Routes
 
-### All 23 current pages
+### All 14 current pages
 
 | Route | Description | Status |
 |---|---|---|
-| `/` | Homepage: hero, 8 scorecard cards, 8 topic cards, sources | ✅ BUILT |
-| `/economia` | Economia landing: IGAE chart, key metrics | ✅ BUILT |
-| `/empleo` | Employment landing | 🔧 STRUCTURE READY |
-| `/empleo/informalidad` | Informality deep dive | 🔧 STRUCTURE READY |
-| `/empleo/salarios` | Wage distribution | 🔧 STRUCTURE READY |
-| `/seguridad` | Security landing | 🔧 STRUCTURE READY |
-| `/seguridad/cifra-negra` | Unreported crime analysis | 🔧 STRUCTURE READY |
-| `/seguridad/percepcion` | Safety perception tracker | 🔧 STRUCTURE READY |
-| `/salud` | Health landing | 🔧 STRUCTURE READY |
-| `/salud/mortalidad` | Mortality/causes of death | 🔧 STRUCTURE READY |
-| `/salud/cobertura` | Health insurance coverage | 🔧 STRUCTURE READY |
-| `/salud/infraestructura` | Health facilities | 🔧 STRUCTURE READY |
-| `/comercio` | Trade & manufacturing | ✅ PARTIALLY BUILT |
-| `/educacion` | Education placeholder | 📋 PLACEHOLDER |
-| `/ingresos` | Income/poverty placeholder | 📋 PLACEHOLDER |
-| `/poblacion` | Demographics placeholder | 📋 PLACEHOLDER |
-| `/explorador` | Full indicator browser | ✅ BUILT |
+| `/` | Homepage: AI hero, 8 scorecard cards, 5 topic cards, 6 source cards | ✅ BUILT |
+| `/economia` | IGAE chart, 4 headline stats, sector breakdown | ✅ BUILT |
+| `/empleo` | 4 headline stats, informality by sector, trends (4 quarters) | ✅ BUILT |
+| `/empleo/informalidad` | Breakdowns by sector, age, gender | ✅ BUILT |
+| `/empleo/salarios` | Income by sector, education, gender | ✅ BUILT |
+| `/seguridad` | Homicide stats, cifra negra (90.2%), crime types, state rankings | ✅ BUILT |
+| `/salud` | Leading causes of death from 800K records, narrative context | ✅ BUILT |
+| `/comercio` | Export/import multi-series chart, nearshoring context | ✅ BUILT |
+| `/explorador` | Browse all 21 indicators | ✅ BUILT |
 | `/explorador/[topic]` | Topic-filtered browser | ✅ BUILT |
-| `/indicador/[id]` | Individual indicator detail + chart | ✅ BUILT |
-| `/comparar` | Multi-indicator comparison tool | ✅ BUILT |
-| `/fuentes` | Data source explorer landing | ✅ BUILT |
-| `/fuentes/[slug]` | Individual source page | ✅ BUILT |
-| `/calendario` | Release calendar / coming soon | 📋 PLACEHOLDER |
+| `/indicador/[id]` | Detail page with time series, description, metadata | ✅ BUILT |
+| `/comparar` | Multi-indicator comparison | ✅ BUILT |
+| `/fuentes` | 6 data source institution cards | ✅ BUILT |
+| `/fuentes/[slug]` | Per-source detail (INEGI and Banxico active) | ✅ BUILT |
 
 ### Persistent navigation
 
 All pages share a NavBar in `layout.tsx`:
 ```
-[Mexico en Datos]   Panorama   Temas (dropdown)   Fuentes   [Pregunta (AI CTA)]
+[Mexico en Datos]   Panorama   Temas (dropdown: Economia, Empleo, Salud, Seguridad, Comercio)   Fuentes   [Pregunta con IA]
 ```
+
+The "Pregunta con IA" button opens the slide-out ChatPanel from any page.
 
 ---
 
@@ -351,9 +368,12 @@ The curated indicator catalog lives in `ingest/config/indicators.yaml`, organize
 | Empleo | Desocupacion, informalidad, subocupacion, PEA | INEGI BIE-BISE |
 | Comercio Exterior | Exports, imports (monthly, USD) | INEGI BIE-BISE |
 | Confianza | Consumer confidence ICC | INEGI BIE-BISE |
-| Financial (TODO) | Inflation, USD/MXN, tasa objetivo | Banxico SIE |
+| Seguridad | Homicidios por estado (tasa por 100k) | SESNSP |
+| Inflacion | Inflacion interanual, INPC indice, subyacente | Banxico SIE |
+| Tipo de Cambio | USD/MXN FIX | Banxico SIE |
+| Tasa Objetivo | Tasa objetivo Banxico | Banxico SIE |
 
-Total: ~22 indicators currently ingested. Banxico series are in the database but not yet in the YAML config.
+Total: ~22 indicators ingested via INEGI/Banxico APIs + SESNSP homicide data in `indicator_values`.
 
 ---
 
@@ -368,25 +388,62 @@ Total: ~22 indicators currently ingested. Banxico series are in the database but
 ├── vercel.json                     -- Vercel deployment config
 ├── app/                            -- Next.js 16 application
 │   ├── src/
-│   │   ├── app/                    -- App Router pages (23 routes)
-│   │   │   ├── page.tsx            -- Homepage (scorecard + topics + sources)
+│   │   ├── app/                    -- App Router pages (14 routes)
+│   │   │   ├── page.tsx            -- Homepage (AI hero + scorecard + topics + sources)
+│   │   │   ├── layout.tsx          -- Root layout (NavBar + ChatProvider + ChatPanel)
+│   │   │   ├── sections/           -- Homepage section components
+│   │   │   │   ├── Hero.tsx        -- AI-first hero ("Que quieres saber sobre Mexico?")
+│   │   │   │   ├── HeadlineGrid.tsx
+│   │   │   │   ├── TopicsGrid.tsx
+│   │   │   │   ├── SourcesGrid.tsx
+│   │   │   │   ├── InflationSection.tsx
+│   │   │   │   └── MortalitySection.tsx
 │   │   │   ├── economia/           -- Economia section
 │   │   │   ├── empleo/             -- Employment (+ informalidad, salarios)
-│   │   │   ├── seguridad/          -- Security (+ cifra-negra, percepcion)
-│   │   │   ├── salud/              -- Health (+ mortalidad, cobertura, infraestructura)
+│   │   │   ├── seguridad/          -- Security (homicides, cifra negra, state rankings)
+│   │   │   ├── salud/              -- Health (mortality causes of death)
 │   │   │   ├── comercio/           -- Trade & manufacturing
-│   │   │   ├── educacion/          -- Education (placeholder)
-│   │   │   ├── ingresos/           -- Income/poverty (placeholder)
-│   │   │   ├── poblacion/          -- Demographics (placeholder)
 │   │   │   ├── explorador/         -- Indicator browser (+ [topic])
 │   │   │   ├── indicador/[id]/     -- Individual indicator detail
 │   │   │   ├── comparar/           -- Multi-indicator comparison
 │   │   │   ├── fuentes/            -- Source explorer (+ [slug])
-│   │   │   └── calendario/         -- Coming soon
-│   │   ├── components/             -- React components (charts, layout, UI)
+│   │   │   └── api/
+│   │   │       ├── chat/           -- AI assistant API route (Claude tool use)
+│   │   │       ├── indicators/     -- Indicator CRUD + values + latest
+│   │   │       ├── employment/     -- ENOE employment data + timeseries
+│   │   │       ├── security/       -- ENVIPE + ENSU endpoints
+│   │   │       ├── health/         -- Mortality + facilities endpoints
+│   │   │       ├── geographic/     -- Geographic areas
+│   │   │       └── topics/         -- Topic listing
+│   │   ├── components/
+│   │   │   ├── charts/             -- Chart components
+│   │   │   │   ├── HBar.tsx        -- Horizontal bar chart (also used in AI chat)
+│   │   │   │   ├── TimeSeries.tsx  -- Time series chart (also used in AI chat)
+│   │   │   │   └── Sparkline.tsx   -- Inline sparkline for scorecard
+│   │   │   └── ui/                 -- UI components
+│   │   │       ├── NavBar.tsx      -- Persistent nav with Temas dropdown
+│   │   │       ├── ChatPanel.tsx   -- Slide-out AI chat panel
+│   │   │       ├── ChatProvider.tsx-- Chat state context provider
+│   │   │       ├── StaleWarningBanner.tsx -- Stale INPC warning
+│   │   │       ├── Card.tsx
+│   │   │       ├── StatCard.tsx
+│   │   │       ├── Badge.tsx
+│   │   │       ├── Breadcrumb.tsx
+│   │   │       ├── DataTable.tsx
+│   │   │       ├── Footer.tsx
+│   │   │       ├── NavTabs.tsx
+│   │   │       ├── SearchInput.tsx
+│   │   │       └── SectionHeader.tsx
 │   │   ├── lib/                    -- Utilities, types, data fetching
+│   │   │   ├── data.ts             -- Data fetching functions (10 used as AI tools)
 │   │   │   ├── scorecard.ts        -- 8 headline indicator config
-│   │   │   └── data.ts             -- Data fetching functions
+│   │   │   ├── sources.ts          -- Data source institution definitions
+│   │   │   ├── types.ts            -- TypeScript types
+│   │   │   ├── db.ts               -- Database connection
+│   │   │   ├── format.ts           -- Number/date formatting
+│   │   │   ├── colors.ts           -- Color palette
+│   │   │   ├── canvas.ts           -- Canvas 2D chart utilities
+│   │   │   └── indicatorDescriptions.ts
 │   │   └── styles/                 -- Tailwind + global styles
 │   ├── package.json
 │   └── next.config.js
@@ -394,16 +451,16 @@ Total: ~22 indicators currently ingested. Banxico series are in the database but
 │   ├── pipelines/
 │   │   ├── indicators.py           -- INEGI BIE-BISE sync (ACTIVE)
 │   │   ├── banxico.py              -- Banxico SIE sync (ACTIVE)
-│   │   ├── sesnsp.py               -- SESNSP crime data (skeleton)
-│   │   ├── enoe.py                 -- ENOE microdata (skeleton)
-│   │   ├── envipe.py               -- ENVIPE microdata (skeleton)
+│   │   ├── sesnsp.py               -- SESNSP homicide data (ACTIVE)
+│   │   ├── enoe.py                 -- ENOE microdata (ACTIVE)
+│   │   ├── envipe.py               -- ENVIPE microdata (ACTIVE)
 │   │   ├── ensu.py                 -- ENSU microdata (skeleton)
-│   │   └── health/                 -- Health sub-pipelines (5 skeletons)
-│   │       ├── mortality.py
-│   │       ├── imss_coverage.py
-│   │       ├── conapo.py
-│   │       ├── covid.py
-│   │       └── clues.py
+│   │   └── health/
+│   │       ├── mortality.py         -- Mortality microdata (ACTIVE)
+│   │       ├── clues.py             -- Health facility catalog (skeleton)
+│   │       ├── imss_coverage.py     -- IMSS data (skeleton)
+│   │       ├── conapo.py            -- CONAPO projections (skeleton)
+│   │       └── covid.py             -- COVID historical (skeleton)
 │   ├── config/
 │   │   └── indicators.yaml         -- Curated indicator catalog
 │   └── utils/
@@ -433,12 +490,13 @@ Each page displays source attribution per the terms of use of each data provider
 Fuente: INEGI, [nombre del producto] | Banxico SIE | SESNSP | ...
 Ultima actualizacion: [date]
 ```
-Multi-source pages cite all contributing sources.
+Multi-source pages cite all contributing sources. "Last updated" timestamps displayed on charts.
 
-### SEO & social sharing
-- Each chart/page gets OG meta tags with a rendered preview image
-- Structured data (schema.org Dataset) for search engines
-- Spanish-first content
+### Design polish
+- Narrative context on all data sections (not just charts, but explanations of what the data means)
+- "Last updated" timestamps on charts
+- Stale INPC warning banner on indicator 628194
+- Centered hero with AI-first presentation
 
 ### Performance
 - Pre-aggregate everything at ingestion time
@@ -453,12 +511,40 @@ Multi-source pages cite all contributing sources.
 
 ---
 
+## Roadmap
+
+### Completed
+
+- **Scope 1: Macro indicators** — 22 indicators from INEGI + Banxico + SESNSP
+- **Scope 2 partial: Employment** — ENOE 4 quarters, sector/age/gender/education breakdowns
+- **Scope 3 partial: Security** — SESNSP homicides + ENVIPE cifra negra/victimization
+- **Scope 4 partial: Health** — Mortality causes of death from 800K records
+- **AI Assistant** — Claude tool use with 10 data tools + inline charts
+- **Commerce** — Export/import charts with nearshoring context
+
+### Next priorities
+
+1. **More ENOE quarters** — process historical quarters (2020-2023) for long-term employment trends
+2. **ENSU data** — quarterly urban safety perception (table exists, pipeline skeleton ready)
+3. **CLUES health facilities** — 30K+ geolocated clinics/hospitals for map visualization
+4. **OG images / social sharing** — rendered preview images for each chart/page
+5. **Charting library evaluation** — consider replacing custom Canvas 2D with a library (uPlot, ECharts) for better interactivity and edge case handling
+6. **More Banxico series** — remittances, TIIE, balance of payments
+7. **CONEVAL integration** — poverty measurement, social program evaluation (would make "sin acceso a salud" live)
+
+### Deferred
+
+- **Education** (SEP data) — no clear data source via API
+- **Income/Poverty** (ENIGH) — biennial, next edition 2026
+- **Demographics/Census** — one-time load, lower urgency
+- **DENUE business directory** — standalone product, not a topic section
+- **DGIS hospital discharges / SINAVE epidemiology** — high effort (web scraping / PDF parsing)
+
+---
+
 ## Open Questions
 
-1. **Domain name**: Still TBD — `mexicoendatos.com` is the working name
-2. **INPC from INEGI**: How to get current INPC data from INEGI's new "Canasta y Ponderadores 2024" system? For now Banxico is the workaround
-3. **ENOE microdata timing**: When to process the first quarter of ENOE microdata? This unblocks the entire Empleo section
-4. **Priority order for remaining scopes**: Security (SESNSP pipeline) vs Health (mortality microdata) vs Employment (ENOE) — which delivers the most value next?
-5. **Open source?**: Open-sourcing could build community and trust, but increases maintenance burden
-6. **AI assistant implementation**: Claude API with tool use over our data API — when to build this? Requires enough data breadth to be useful
-7. **Health data gaps**: Mexico has no systematic mental health survey and no wait-time tracking. Should we document what data *doesn't exist*?
+1. **INPC from INEGI**: How to get current INPC data from INEGI's new system? Banxico workaround is working but not ideal
+2. **Open source strategy**: Repo is public — should we add a license and contributing guide?
+3. **Data refresh automation**: Cron jobs for daily Banxico sync, weekly INEGI check?
+4. **Chart library**: Custom Canvas 2D vs mature library (known tooltip issue in chat panel)
