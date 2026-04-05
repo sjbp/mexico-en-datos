@@ -79,14 +79,12 @@ function renderMarkdown(text: string) {
       }
     }
 
-    // Headers
-    const headerMatch = block.match(/^(#{1,3})\s+(.+)$/);
+    // Headers — render as bold text (not oversized headers in chat context)
+    const headerMatch = block.match(/^#{1,4}\s+(.+)$/);
     if (headerMatch) {
-      const level = headerMatch[1].length;
-      const sizes = ['text-[16px] font-semibold', 'text-[15px] font-semibold', 'text-[14px] font-medium'];
       elements.push(
-        <p key={i} className={`${sizes[level - 1]} text-[var(--text-primary)] mt-3 mb-1`}>
-          {renderInline(headerMatch[2])}
+        <p key={i} className="text-[13px] font-semibold text-[var(--text-primary)] mt-2 mb-1">
+          {renderInline(headerMatch[1])}
         </p>,
       );
       continue;
