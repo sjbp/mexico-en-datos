@@ -54,8 +54,16 @@ const SOURCES: SourceConfig[] = [
   {
     icon: '\ud83c\udfe5',
     name: 'Sec. Salud',
-    desc: 'Mortalidad, causas de muerte (CIE-10)',
-    badge: '800K registros',
+    desc: 'Mortalidad, causas de muerte (CIE-10), CLUES',
+    badge: '6 anos',
+    active: true,
+    href: '/salud',
+  },
+  {
+    icon: '\ud83e\ude7a',
+    name: 'ENSANUT',
+    desc: 'Prevalencia de obesidad, diabetes, hipertension',
+    badge: '2022',
     active: true,
     href: '/salud',
   },
@@ -80,7 +88,7 @@ export default function SourcesGrid() {
       </div>
 
       {/* Horizontal scroll on mobile, grid on desktop */}
-      <div className="flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-6 sm:overflow-visible">
+      <div className="flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-4 lg:grid-cols-7 sm:overflow-visible">
         {SOURCES.map((s) => (
           <Link
             key={s.name}

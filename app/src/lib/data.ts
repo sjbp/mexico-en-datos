@@ -536,39 +536,6 @@ export async function getEnsanutStats(
   }
 }
 
-// ── Health facility summary ────────────────────────────────────────────
-
-export async function getHealthFacilitySummary(): Promise<{ institution: string; count: number }[]> {
-  try {
-    return await query<{ institution: string; count: number }>(
-      `SELECT institution, COUNT(*)::int as count
-       FROM health_facilities
-       GROUP BY institution
-       ORDER BY count DESC`
-    );
-  } catch (error) {
-    return [];
-  }
-}
-
-export async function getHealthFacilitiesByState(
-  institution?: string,
-): Promise<{ geo_name: string; count: number }[]> {
-  try {
-    return await query<{ geo_name: string; count: number }>(
-      `SELECT ga.name as geo_name, COUNT(*)::int as count
-       FROM health_facilities hf
-       JOIN geographic_areas ga ON ga.code = LEFT(hf.geo_code, 2)
-       WHERE ($1::text IS NULL OR hf.institution = $1)
-       GROUP BY ga.name
-       ORDER BY count DESC`,
-      [institution ?? null]
-    );
-  } catch (error) {
-    return [];
-  }
-}
-
 export async function getCifraNegraByState(
   year?: number,
 ): Promise<(EnvipeStat & { geo_name: string })[]> {

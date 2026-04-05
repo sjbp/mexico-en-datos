@@ -3,24 +3,32 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
 import HBar from '@/components/charts/HBar';
-import { getLeadingCausesOfDeath } from '@/lib/data';
+import {
+  getLeadingCausesOfDeath,
+  getMortalityByAge,
+  getMortalityTrend,
+  getTopCauseByAge,
+  getTotalDeaths,
+  getHealthFacilitySummary,
+} from '@/lib/data';
+import { MortalityTrendChart } from './SaludClient';
 
 export const metadata: Metadata = {
-  title: 'Salud | M\u00e9xico en Datos',
+  title: 'Salud | Mexico en Datos',
   description:
-    'Indicadores de salud p\u00fablica en M\u00e9xico: principales causas de muerte, cobertura de salud y esperanza de vida.',
+    'Panorama de salud en Mexico: mortalidad por causa y edad, tendencias historicas, crisis de diabetes, infraestructura hospitalaria. Datos de INEGI, ENSANUT e INSP.',
 };
 
 const CAUSE_LABELS: Record<string, string> = {
-  cardiovascular: 'Enf. del coraz\u00f3n',
+  cardiovascular: 'Enf. del corazon',
   diabetes: 'Diabetes mellitus',
   cancer: 'Tumores malignos',
-  liver_disease: 'Enf. del h\u00edgado',
+  liver_disease: 'Enf. del higado',
   cerebrovascular: 'Cerebrovascular',
   homicide: 'Homicidios',
   respiratory: 'Inf. respiratorias',
-  traffic_accidents: 'Acc. de tr\u00e1nsito',
-  kidney_disease: 'Enf. del ri\u00f1\u00f3n',
+  traffic_accidents: 'Acc. de transito',
+  kidney_disease: 'Enf. del rinon',
   covid19: 'COVID-19',
 };
 
@@ -37,10 +45,43 @@ const CAUSE_COLORS: Record<string, string> = {
   covid19: '#34495E',
 };
 
+const TREND_CAUSES = [
+  { cause: 'cardiovascular', label: 'Cardiovascular', color: '#E74C3C' },
+  { cause: 'diabetes', label: 'Diabetes', color: '#F39C12' },
+  { cause: 'cancer', label: 'Cancer', color: '#9B59B6' },
+  { cause: 'homicide', label: 'Homicidios', color: '#EF4444' },
+  { cause: 'respiratory', label: 'Respiratorias', color: '#2ECC71' },
+];
+
+// Sort age groups in natural order
+const AGE_ORDER = ['15-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75+'];
+
+function formatNumber(n: number): string {
+  return n.toLocaleString('es-MX');
+}
+
 export default async function SaludPage() {
-  const causes = await getLeadingCausesOfDeath(2023);
+  // Fetch all data in parallel
+  const [
+    causes,
+    totalDeaths,
+    diabetesByAge,
+    topCauseByAge,
+    facilitySummary,
+    ...trendResults
+  ] = await Promise.all([
+    getLeadingCausesOfDeath(2023),
+    getTotalDeaths(2023),
+    getMortalityByAge('diabetes', 2023),
+    getTopCauseByAge(2023),
+    getHealthFacilitySummary(),
+    ...TREND_CAUSES.map((t) => getMortalityTrend(t.cause)),
+  ]);
 
   const topCause = causes[0];
+  const diabetesEntry = causes.find((c) => c.cause_group === 'diabetes');
+
+  // Leading causes chart data
   const chartData = causes
     .filter((c) => c.rate_per_100k != null)
     .map((c) => ({
@@ -49,8 +90,69 @@ export default async function SaludPage() {
       color: CAUSE_COLORS[c.cause_group] || 'var(--accent)',
     }));
 
+  // Trends data — build if we have multi-year data
+  const hasMultiYearData = trendResults.some((r) => r.length > 1);
+  let trendData: {
+    years: string[];
+    series: { cause: string; label: string; color: string; values: number[] }[];
+  } | null = null;
+
+  if (hasMultiYearData) {
+    // Get union of all years
+    const yearSet = new Set<number>();
+    trendResults.forEach((r) => r.forEach((row) => yearSet.add(row.year)));
+    const years = Array.from(yearSet).sort();
+
+    trendData = {
+      years: years.map(String),
+      series: TREND_CAUSES.map((t, i) => {
+        const data = trendResults[i];
+        const byYear = new Map(data.map((r) => [r.year, Number(r.rate_per_100k ?? 0)]));
+        return {
+          cause: t.cause,
+          label: t.label,
+          color: t.color,
+          values: years.map((y) => byYear.get(y) ?? 0),
+        };
+      }).filter((s) => s.values.some((v) => v > 0)),
+    };
+  }
+
+  // Diabetes by age chart data (use deaths since rate_per_100k is NULL for age groups)
+  const diabetesAgeData = diabetesByAge
+    .filter((d) => !['0-4', '5-14'].includes(d.age_group))
+    .sort((a, b) => {
+      const ai = AGE_ORDER.indexOf(a.age_group);
+      const bi = AGE_ORDER.indexOf(b.age_group);
+      return ai - bi;
+    })
+    .map((d) => ({
+      label: d.age_group + ' anos',
+      value: d.deaths,
+      color: '#F39C12',
+    }));
+
+  // Top cause by age — sorted and labeled
+  const topCauseByAgeSorted = topCauseByAge
+    .sort((a, b) => {
+      const ai = AGE_ORDER.indexOf(a.age_group);
+      const bi = AGE_ORDER.indexOf(b.age_group);
+      return ai - bi;
+    });
+
+  // Facility count
+  const totalFacilities = facilitySummary.reduce((sum, f) => sum + f.count, 0);
+
+  // Facility chart data
+  const facilityChartData = facilitySummary.slice(0, 8).map((f) => ({
+    label: f.institution,
+    value: f.count,
+    color: 'var(--accent)',
+  }));
+
   return (
     <>
+      {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="px-[var(--pad-page)] pt-10 pb-6">
         <Breadcrumb
           items={[
@@ -62,66 +164,93 @@ export default async function SaludPage() {
           Salud
         </h1>
         <p className="text-[var(--text-secondary)] text-base leading-relaxed max-w-[640px]">
-          Indicadores de salud p&uacute;blica en M&eacute;xico: principales causas de muerte,
-          cobertura de salud y esperanza de vida. Datos de la Secretar&iacute;a de Salud e INEGI.
+          Panorama de salud publica en Mexico: mortalidad, enfermedades cronicas, infraestructura hospitalaria. Datos de 6+ anos de registros oficiales y multiples fuentes.
         </p>
       </div>
 
-      {/* Headline metrics */}
+      {/* ── Narrative intro ────────────────────────────────────────── */}
       <div className="px-[var(--pad-page)] mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[700px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mb-2" style={{ textWrap: 'pretty' }}>
+            Mexico enfrenta una triple crisis de salud: una epidemia de obesidad y diabetes (36% de obesidad, la mas alta de la OCDE), un colapso de cobertura (39% sin acceso tras el desmantelamiento del Seguro Popular), y enfermedades cronicas que matan a personas mas jovenes que en paises comparables.
+          </p>
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            La diabetes es particularmente critica: es la unica economia grande donde aparece como segunda causa de muerte. El COVID-19 dejo una huella duradera en la esperanza de vida, y los homicidios siguen entre las 10 primeras causas &mdash; algo inusual en paises de ingreso similar.
+          </p>
+        </div>
+      </div>
+
+      {/* ── 1. Headline stats ──────────────────────────────────────── */}
+      <div className="px-[var(--pad-page)] mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+              Defunciones registradas 2023
+            </div>
+            <div className="text-2xl font-bold text-white tabular-nums">
+              {totalDeaths > 0 ? formatNumber(totalDeaths) : '~850,000'}
+            </div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">
+              Todas las causas, nivel nacional
+            </div>
+          </Card>
+
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
               Principal causa de muerte
             </div>
             <div className="text-lg font-bold text-white">
-              {topCause ? (CAUSE_LABELS[topCause.cause_group] || topCause.cause_group) : 'Enfermedades del coraz\u00f3n'}
+              {topCause
+                ? (CAUSE_LABELS[topCause.cause_group] || topCause.cause_group)
+                : 'Enf. del corazon'}
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
               {topCause?.rate_per_100k != null
-                ? `${Number(topCause.rate_per_100k).toFixed(1)} por cada 100k hab. (2023)`
-                : '~156 por cada 100k hab. (2023 est.)'}
+                ? `${Number(topCause.rate_per_100k).toFixed(1)} por 100k hab. (2023)`
+                : '~150 por 100k hab. (2023 est.)'}
             </div>
           </Card>
+
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
-              Esperanza de vida
+              Muertes por diabetes
             </div>
-            <div className="text-lg font-bold text-white">75.1 a&ntilde;os</div>
-            <div className="text-xs text-[var(--text-muted)] mt-1">CONAPO 2023 est. (baj&oacute; en 2020-2021)</div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: '#F39C12' }}>
+              {diabetesEntry
+                ? formatNumber(diabetesEntry.deaths)
+                : '~110,000'}
+            </div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">
+              2a causa de muerte &middot; 2023
+            </div>
           </Card>
+
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
-              Sin acceso a salud
+              {totalFacilities > 0 ? 'Unidades de salud' : 'Sin acceso a salud'}
             </div>
-            <div className="text-lg font-bold text-white">39.1%</div>
-            <div className="text-xs text-[var(--text-muted)] mt-1">CONEVAL 2022, carencia por acceso</div>
+            <div className="text-2xl font-bold text-white tabular-nums">
+              {totalFacilities > 0 ? formatNumber(totalFacilities) : '39.1%'}
+            </div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">
+              {totalFacilities > 0
+                ? 'Catalogo CLUES &middot; Sec. Salud'
+                : 'CONEVAL 2024 &middot; Carencia por acceso'}
+            </div>
           </Card>
         </div>
       </div>
 
-      {/* Context block */}
-      <div className="px-[var(--pad-page)] mb-8">
-        <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[700px]">
-          <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mb-2" style={{ textWrap: 'pretty' }}>
-            M&eacute;xico enfrenta una doble carga de mortalidad: enfermedades cr&oacute;nicas (diabetes, coraz&oacute;n, ri&ntilde;&oacute;n) que dominan la tabla, y violencia que aparece entre las primeras 10 causas &mdash;algo inusual en pa&iacute;ses de ingreso similar. La diabetes es particularmente cr&iacute;tica: M&eacute;xico tiene la tasa m&aacute;s alta de la OCDE y es la &uacute;nica econom&iacute;a grande donde es la segunda causa de muerte.
-          </p>
-          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-            El COVID-19 ha ca&iacute;do significativamente desde el pico de 2020-2021, pero dej&oacute; una huella duradera: la esperanza de vida baj&oacute; casi 4 a&ntilde;os y a&uacute;n no se recupera del todo. El dato de 39% sin acceso a servicios de salud refleja el vac&iacute;o que dej&oacute; la desaparici&oacute;n del Seguro Popular, a&uacute;n no cubierto completamente por el IMSS-Bienestar.
-          </p>
-        </div>
-      </div>
-
-      {/* Leading causes chart */}
+      {/* ── 2. Leading causes of death ─────────────────────────────── */}
       <SectionHeader title="Principales causas de muerte" />
-      <div className="px-[var(--pad-page)] mb-10">
+      <div className="px-[var(--pad-page)] mb-12">
         <Card large>
           <div className="mb-4">
             <div className="text-base font-semibold text-white tracking-tight">
-              Tasa de mortalidad por causa (por cada 100,000 habitantes)
+              Tasa de mortalidad por causa
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              Nacional &mdash; Microdatos de Defunciones Registradas (INEGI / Secretar&iacute;a de Salud) &middot; Datos hasta: 2023
+              Tasa por 100 mil habitantes, 2023 &middot; Nacional &middot; Datos hasta: 2023
             </div>
           </div>
           <HBar
@@ -129,19 +258,224 @@ export default async function SaludPage() {
             valueFmt={(v: number) => v.toFixed(1)}
           />
           <div className="text-xs text-[var(--text-muted)] mt-4">
-            Fuente: Estad&iacute;sticas de Defunciones Registradas 2023. Clasificaci&oacute;n CIE-10. Tasa calculada con proyecci&oacute;n CONAPO.
+            Fuente: Estadisticas de Defunciones Registradas 2023, INEGI / Sec. Salud. Clasificacion CIE-10.
           </div>
         </Card>
       </div>
 
-      {/* Attribution */}
-      <div className="px-[var(--pad-page)] mb-10">
-        <div className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Fuentes: INEGI / Secretar&iacute;a de Salud (Estad&iacute;sticas de Defunciones Registradas),
-          CONAPO (Proyecciones de Poblaci&oacute;n), CONEVAL
+      {/* ── 3. Mortality trends ────────────────────────────────────── */}
+      {trendData && trendData.years.length >= 2 ? (
+        <>
+          <SectionHeader title="Tendencias de mortalidad" />
+          <div className="px-[var(--pad-page)] mb-12">
+            <Card large>
+              <div className="mb-4">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Tasa de mortalidad por causa, evolucion historica
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  Tasa por 100 mil habitantes &middot; Nacional &middot; Datos hasta: {trendData.years[trendData.years.length - 1]}
+                </div>
+              </div>
+              <div className="h-[350px]">
+                <MortalityTrendChart data={trendData} />
+              </div>
+              {/* Legend */}
+              <div className="flex flex-wrap gap-4 mt-4">
+                {trendData.series.map((s) => (
+                  <div key={s.cause} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                    <div className="w-3 h-3 rounded-sm" style={{ background: s.color }} />
+                    {s.label}
+                  </div>
+                ))}
+              </div>
+              <div className="border-l-2 border-[var(--accent)] pl-4 mt-5 max-w-[640px]">
+                <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+                  El 2020 muestra un pico dramatico en mortalidad cardiovascular, diabetes y respiratoria &mdash; efecto directo e indirecto de la pandemia de COVID-19. Los homicidios se mantienen relativamente estables. Para 2023, las tasas bajan pero siguen por encima de los niveles pre-pandemia en varias categorias.
+                </p>
+              </div>
+            </Card>
+          </div>
+        </>
+      ) : (
+        <>
+          <SectionHeader title="Tendencias de mortalidad" />
+          <div className="px-[var(--pad-page)] mb-12">
+            <Card large>
+              <div className="text-[13px] text-[var(--text-muted)] py-4">
+                Datos historicos (2018-2023) proximamente. Se esta procesando informacion de multiples anos.
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* ── 4. Diabetes: Mexico's crisis ───────────────────────────── */}
+      {diabetesAgeData.length > 0 && (
+        <>
+          <SectionHeader title="Diabetes: la crisis mexicana" />
+          <div className="px-[var(--pad-page)] mb-12">
+            <Card large className="border-l-2 border-[#EF4444]">
+              <div className="mb-5">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Muertes por diabetes por grupo de edad
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  Defunciones absolutas, 2023 &middot; Nacional &middot; Datos hasta: 2023
+                </div>
+              </div>
+              <HBar
+                data={diabetesAgeData}
+                valueFmt={(v: number) => formatNumber(v)}
+              />
+              <div className="border-l-2 border-[#F39C12] pl-4 mt-5 max-w-[640px]">
+                <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+                  La diabetes mata a {diabetesEntry ? formatNumber(diabetesEntry.deaths) : '110,000'} personas al ano en Mexico.
+                  A diferencia de otros paises, afecta desproporcionadamente a personas en edad productiva:
+                  {' '}{formatNumber(diabetesAgeData.filter((d) => ['35-44 anos', '45-54 anos', '55-64 anos'].includes(d.label)).reduce((s, d) => s + d.value, 0))} muertes
+                  ocurrieron entre los 35 y 64 anos en 2023.
+                </p>
+                <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mt-2" style={{ textWrap: 'pretty' }}>
+                  Segun la ENSANUT 2022, 15.6% de los adultos mexicanos tienen diabetes diagnosticada y 36.9% tienen obesidad &mdash; ambas tasas entre las mas altas del mundo.
+                </p>
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* ── 5. What kills each generation ──────────────────────────── */}
+      {topCauseByAgeSorted.length > 0 && (
+        <>
+          <SectionHeader title="Que mata a cada generacion" />
+          <div className="px-[var(--pad-page)] mb-12">
+            <Card large>
+              <div className="mb-5">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Principal causa de muerte por grupo de edad
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  Nacional, 2023 &middot; Datos hasta: 2023
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                {topCauseByAgeSorted.map((row) => {
+                  const causeLabel = CAUSE_LABELS[row.cause_group] || row.cause_group;
+                  const causeColor = CAUSE_COLORS[row.cause_group] || 'var(--accent)';
+                  return (
+                    <div key={row.age_group} className="flex items-center gap-4">
+                      <div className="w-[72px] shrink-0 text-right text-sm font-semibold text-[var(--text-secondary)] tabular-nums">
+                        {row.age_group}
+                      </div>
+                      <div
+                        className="px-3 py-1.5 rounded-md text-sm font-semibold"
+                        style={{
+                          background: causeColor + '1a',
+                          color: causeColor,
+                          borderLeft: `3px solid ${causeColor}`,
+                        }}
+                      >
+                        {causeLabel}
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] tabular-nums">
+                        {formatNumber(row.deaths)} defunciones
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="border-l-2 border-[var(--accent)] pl-4 mt-5 max-w-[640px]">
+                <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+                  Los homicidios son la principal causa de muerte entre los 15 y 34 anos &mdash; una anomalia en paises de ingreso medio-alto. A partir de los 45, las enfermedades cronicas toman el control: diabetes y cardiovascular dominan hasta los 75+. La transicion de violencia a enfermedad cronica sucede alrededor de los 35-44 anos.
+                </p>
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* ── 6. Health infrastructure ───────────────────────────────── */}
+      {facilityChartData.length > 0 ? (
+        <>
+          <SectionHeader title="Infraestructura de salud" />
+          <div className="px-[var(--pad-page)] mb-12">
+            <Card large>
+              <div className="mb-4">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Unidades de salud por institucion
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  Catalogo CLUES &middot; Secretaria de Salud
+                </div>
+              </div>
+              <HBar
+                data={facilityChartData}
+                valueFmt={(v: number) => formatNumber(v)}
+              />
+              <div className="text-xs text-[var(--text-muted)] mt-4">
+                Fuente: Catalogo de Clave Unica de Establecimientos de Salud (CLUES), Secretaria de Salud.
+              </div>
+            </Card>
+          </div>
+        </>
+      ) : (
+        <>
+          <SectionHeader title="Infraestructura de salud" />
+          <div className="px-[var(--pad-page)] mb-12">
+            <Card large>
+              <div className="text-[13px] text-[var(--text-muted)] py-4">
+                Infraestructura hospitalaria proximamente. Datos del Catalogo CLUES (Secretaria de Salud) en proceso de carga.
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* ── 7. ENSANUT prevalence (static context) ─────────────────── */}
+      <SectionHeader title="Prevalencia de enfermedades cronicas" />
+      <div className="px-[var(--pad-page)] mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+          <Card>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+              Obesidad en adultos
+            </div>
+            <div className="text-2xl font-bold text-white">36.9%</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">
+              ENSANUT 2022 &middot; IMC &ge; 30
+            </div>
+          </Card>
+          <Card>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+              Diabetes diagnosticada
+            </div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: '#F39C12' }}>15.6%</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">
+              ENSANUT 2022 &middot; Adultos 20+
+            </div>
+          </Card>
+          <Card>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+              Hipertension
+            </div>
+            <div className="text-2xl font-bold text-white">30.2%</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">
+              ENSANUT 2022 &middot; Adultos 20+
+            </div>
+          </Card>
+        </div>
+        <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[640px]">
+          <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
+            La ENSANUT 2022 revela que mas de un tercio de los adultos mexicanos tienen obesidad, y casi 1 de cada 6 tiene diabetes diagnosticada. Estas cifras alimentan directamente las tasas de mortalidad por enfermedades cronicas que se observan arriba. Mexico tiene la mayor tasa de obesidad de la OCDE.
+          </p>
         </div>
       </div>
 
+      {/* ── 8. Attribution ─────────────────────────────────────────── */}
+      <div className="px-[var(--pad-page)] mb-10">
+        <div className="text-xs text-[var(--text-muted)] leading-relaxed">
+          Fuentes: INEGI (Estadisticas de Mortalidad 2018-2023), ENSANUT 2022 (INSP), Secretaria de Salud (CLUES), CONEVAL, CONAPO (Proyecciones de Poblacion)
+        </div>
+      </div>
     </>
   );
 }
