@@ -47,7 +47,7 @@ export function LifeExpectancyChart({ data }: { data: SimpleTimeData }) {
   const series = [
     {
       values: data.values,
-      color: 'var(--accent)',
+      color: '#FF9F43',
       label: 'Esperanza de vida',
     },
   ];

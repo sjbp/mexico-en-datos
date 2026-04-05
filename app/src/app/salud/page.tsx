@@ -175,7 +175,7 @@ export default async function SaludPage() {
   const facilityChartData = facilitySummary.slice(0, 8).map((f) => ({
     label: f.institution,
     value: f.count,
-    color: 'var(--accent)',
+    color: '#FF9F43',
   }));
 
   // Life expectancy chart data
