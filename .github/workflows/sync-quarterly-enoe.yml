@@ -1,0 +1,99 @@
+name: Quarterly ENOE Employment Microdata
+
+on:
+  schedule:
+    # 15th of Mar, Jun, Sep, Dec at 10:00 AM CDMX (16:00 UTC)
+    # INEGI publishes ~2 months after quarter ends, so:
+    # Q4 data → available ~Feb → we check Mar 15
+    # Q1 data → available ~May → we check Jun 15
+    # Q2 data → available ~Aug → we check Sep 15
+    # Q3 data → available ~Nov → we check Dec 15
+    - cron: '0 16 15 3,6,9,12 *'
+  workflow_dispatch:
+    inputs:
+      quarter:
+        description: 'Quarter to process (e.g., 2025Q2). Leave empty for auto-detect.'
+        required: false
+        type: string
+
+jobs:
+  sync-enoe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Determine quarter to fetch
+        id: quarter
+        run: |
+          if [ -n "${{ inputs.quarter }}" ]; then
+            echo "target=${{ inputs.quarter }}" >> $GITHUB_OUTPUT
+          else
+            # Auto-detect: current month - 2 months lag, previous quarter
+            uv run python3 -c "
+          from datetime import date, timedelta
+          today = date.today()
+          # Go back ~2 months to find the quarter that should be published
+          target = today - timedelta(days=75)
+          q = (target.month - 1) // 3 + 1
+          print(f'{target.year}Q{q}')
+          " > /tmp/quarter.txt
+            echo "target=$(cat /tmp/quarter.txt)" >> $GITHUB_OUTPUT
+          fi
+          echo "Will process quarter: $(cat /tmp/quarter.txt 2>/dev/null || echo ${{ inputs.quarter }})"
+
+      - name: Check if quarter already processed
+        id: check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          QUARTER="${{ steps.quarter.outputs.target }}"
+          EXISTS=$(uv run python3 -c "
+          import psycopg2, os
+          conn = psycopg2.connect(os.environ['DATABASE_URL'])
+          cur = conn.cursor()
+          cur.execute('SELECT COUNT(*) FROM employment_stats WHERE quarter = %s', ('${QUARTER}'.replace('Q', '/Q'),))
+          print(cur.fetchone()[0])
+          conn.close()
+          ")
+          echo "existing_rows=$EXISTS" >> $GITHUB_OUTPUT
+          if [ "$EXISTS" -gt "0" ]; then
+            echo "Quarter $QUARTER already has $EXISTS rows — skipping"
+          else
+            echo "Quarter $QUARTER not yet processed — will download and process"
+          fi
+
+      - name: Download and process ENOE
+        if: steps.check.outputs.existing_rows == '0'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          QUARTER="${{ steps.quarter.outputs.target }}"
+          echo "Processing ENOE $QUARTER"
+          mkdir -p data/enoe
+          uv run python -m ingest.pipelines.enoe --quarter "$QUARTER" --data-dir data/enoe
+
+      - name: Report results
+        if: steps.check.outputs.existing_rows == '0'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          uv run python3 -c "
+          import psycopg2, os
+          conn = psycopg2.connect(os.environ['DATABASE_URL'])
+          cur = conn.cursor()
+          cur.execute('SELECT quarter, COUNT(*) FROM employment_stats GROUP BY quarter ORDER BY quarter')
+          print('Employment stats by quarter:')
+          for r in cur.fetchall(): print(f'  {r[0]}: {r[1]} rows')
+          conn.close()
+          "
