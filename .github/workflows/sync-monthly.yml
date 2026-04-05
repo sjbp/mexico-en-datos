@@ -1,0 +1,44 @@
+name: Monthly Data Sync (SESNSP Homicides)
+
+on:
+  schedule:
+    # 1st of every month at 8:00 AM Mexico City (14:00 UTC)
+    - cron: '0 14 1 * *'
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  sync-sesnsp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Download SESNSP data
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          mkdir -p data/sesnsp
+          # Download latest state-level incidence CSV
+          curl -L -o data/sesnsp/estatal.csv \
+            "https://raw.githubusercontent.com/lapanquecita/incidencia-delictiva/main/data/estatal.csv" \
+            || echo "SESNSP download failed — will retry next month"
+
+      - name: Process SESNSP homicide data
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -f data/sesnsp/estatal.csv ]; then
+            uv run python -m ingest.pipelines.sesnsp --csv-path data/sesnsp/estatal.csv --full
+          else
+            echo "No SESNSP data file found, skipping"
+          fi
