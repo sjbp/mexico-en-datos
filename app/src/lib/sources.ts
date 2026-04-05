@@ -19,7 +19,7 @@ export const SOURCES: DataSource[] = [
     icon: '\uD83D\uDCCA',
     description:
       'Indicadores económicos, encuestas, censos y microdatos. La principal fuente de estadísticas de México.',
-    datasets: '22 indicadores disponibles',
+    datasets: '14 series',
     updateFreq: 'Quincenal a anual',
     status: 'active',
     url: 'https://www.inegi.org.mx',
@@ -30,18 +30,11 @@ export const SOURCES: DataSource[] = [
     fullName: 'Banco de México',
     icon: '\uD83C\uDFE6',
     description:
-      'Tipo de cambio, tasas de interés, política monetaria, balanza de pagos e indicadores financieros.',
-    datasets: 'Próximamente',
-    updateFreq: 'Diaria',
-    status: 'coming',
+      'Tipo de cambio, tasas de interés, inflación, política monetaria e indicadores financieros.',
+    datasets: '5 series',
+    updateFreq: 'Diaria a quincenal',
+    status: 'active',
     url: 'https://www.banxico.org.mx',
-    plannedDatasets: [
-      'Tipo de cambio (FIX y spot)',
-      'Tasa de interés objetivo',
-      'TIIE a 28 días',
-      'Reservas internacionales',
-      'Balanza de pagos',
-    ],
   },
   {
     slug: 'imss',

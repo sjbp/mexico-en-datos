@@ -12,23 +12,6 @@ export const metadata: Metadata = {
     'Exportaciones, importaciones, inversión extranjera directa, industria manufacturera y el fenómeno del nearshoring en México.',
 };
 
-const SUBSECTIONS = [
-  {
-    title: 'Socios Comerciales',
-    description:
-      'Principales socios comerciales de México: Estados Unidos, China, Canadá. Composición por tipo de bien.',
-  },
-  {
-    title: 'Composición de Exportaciones',
-    description:
-      'Desglose de exportaciones por sector: automotriz, electrónica, agroalimentario, petróleo y manufactura.',
-  },
-  {
-    title: 'Inversión Extranjera Directa',
-    description:
-      'IED por país de origen y sector receptor. Tendencias de nearshoring y nuevas plantas anunciadas.',
-  },
-];
 
 export default async function ComercioPage() {
   const [exportValues, importValues, latestExports, latestImports, igaeIndustrial] =
@@ -180,23 +163,6 @@ export default async function ComercioPage() {
             </span>
           </div>
         </Card>
-      </div>
-
-      {/* Sub-section placeholders */}
-      <SectionHeader title="Secciones planeadas" />
-      <div className="px-[var(--pad-page)] mb-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {SUBSECTIONS.map((section) => (
-            <Card key={section.title} large>
-              <div className="text-base font-semibold text-white tracking-tight mb-1">
-                {section.title}
-              </div>
-              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                {section.description}
-              </p>
-            </Card>
-          ))}
-        </div>
       </div>
 
       {/* Attribution */}

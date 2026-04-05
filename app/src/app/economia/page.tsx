@@ -44,19 +44,19 @@ export default async function EconomiaPage() {
       title: 'Actividades primarias',
       description:
         'Agricultura, ganader\u00eda, pesca y silvicultura.',
-      indicatorId: '736943',
+      indicatorId: '736941',
     },
     {
       title: 'Actividades secundarias',
       description:
         'Miner\u00eda, manufactura, construcci\u00f3n y electricidad.',
-      indicatorId: '736945',
+      indicatorId: '736883',
     },
     {
       title: 'Actividades terciarias',
       description:
         'Comercio, transporte, servicios financieros y gobierno.',
-      indicatorId: '736947',
+      indicatorId: '736895',
     },
   ];
 
@@ -234,7 +234,7 @@ export default async function EconomiaPage() {
                 Explorador de indicadores
               </div>
               <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                Navega los 100+ indicadores econ&oacute;micos disponibles en la plataforma.
+                Navega los 21 indicadores econ&oacute;micos disponibles en la plataforma.
               </p>
             </Card>
           </Link>

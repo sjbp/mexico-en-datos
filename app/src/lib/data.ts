@@ -391,6 +391,27 @@ export async function getLeadingCausesOfDeath(
   }
 }
 
+export async function getCifraNegraByState(
+  year?: number,
+): Promise<(EnvipeStat & { geo_name: string })[]> {
+  try {
+    return await query<EnvipeStat & { geo_name: string }>(
+      `SELECT es.*, ga.name as geo_name
+       FROM envipe_stats es
+       JOIN geographic_areas ga ON ga.code = es.geo_code
+       WHERE es.crime_type = 'total'
+         AND es.geo_code != '00'
+         AND ($1::int IS NULL OR es.year = $1)
+         AND es.cifra_negra IS NOT NULL
+       ORDER BY es.cifra_negra DESC`,
+      [year ?? null]
+    );
+  } catch (error) {
+    console.error('Error fetching cifra negra by state:', error);
+    return [];
+  }
+}
+
 // ── Headlines ───────────────────────────────────────────────────────────
 
 import { SCORECARD, type ScorecardItem } from './scorecard';

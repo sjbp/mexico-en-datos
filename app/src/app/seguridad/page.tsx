@@ -2,7 +2,7 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import Card from '@/components/ui/Card';
 import SectionHeader from '@/components/ui/SectionHeader';
 import HBar from '@/components/charts/HBar';
-import { getEnvipeStats, getCifraNegra, getLatestValue, getIndicatorValuesByState } from '@/lib/data';
+import { getEnvipeStats, getCifraNegra, getCifraNegraByState, getLatestValue, getIndicatorValuesByState } from '@/lib/data';
 
 export const metadata = {
   title: 'Seguridad - Mexico en Datos',
@@ -69,6 +69,26 @@ export default async function SeguridadPage() {
   const cifraNegraTrend = envipeNational
     .filter((s) => s.cifra_negra != null)
     .sort((a, b) => a.year - b.year);
+
+  // Cifra negra by state (latest year)
+  const cifraNegraByStateData = latestYear
+    ? await getCifraNegraByState(latestYear)
+    : [];
+  const topCifraNegraStates = cifraNegraByStateData
+    .slice(0, 10)
+    .map((s) => ({
+      label: s.geo_name,
+      value: Number(s.cifra_negra),
+      color: Number(s.cifra_negra) >= 93 ? '#E74C3C' : Number(s.cifra_negra) >= 90 ? '#E67E22' : '#F1C40F',
+    }));
+  const bottomCifraNegraStates = cifraNegraByStateData
+    .slice(-5)
+    .reverse()
+    .map((s) => ({
+      label: s.geo_name,
+      value: Number(s.cifra_negra),
+      color: '#2ECC71',
+    }));
 
   // Top 10 most dangerous + bottom 5 safest
   const topDangerous = stateHomicides
@@ -335,34 +355,49 @@ export default async function SeguridadPage() {
         </>
       )}
 
-      {/* Proximamente sections */}
-      <SectionHeader title="Proximamente" />
-      <div className="px-[var(--pad-page)] mb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card large>
-            <div className="text-base font-semibold text-white tracking-tight mb-1">
-              Cifra negra por estado
+      {/* Cifra negra by state */}
+      {topCifraNegraStates.length > 0 && (
+        <>
+          <SectionHeader title="Cifra negra por estado" />
+          <div className="px-[var(--pad-page)] mb-10">
+            <Card large>
+              <div className="mb-4">
+                <div className="text-base font-semibold text-white tracking-tight">
+                  Estados con mayor cifra negra
+                </div>
+                <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                  % de delitos no denunciados, ENVIPE {latestYear}
+                </div>
+              </div>
+              <HBar
+                data={topCifraNegraStates}
+                maxVal={100}
+                valueFmt={(v: number) => v.toFixed(1) + '%'}
+              />
+            </Card>
+          </div>
+
+          {bottomCifraNegraStates.length > 0 && (
+            <div className="px-[var(--pad-page)] mb-10">
+              <Card large>
+                <div className="mb-4">
+                  <div className="text-base font-semibold text-white tracking-tight">
+                    Estados con menor cifra negra
+                  </div>
+                  <div className="text-[13px] text-[var(--text-muted)] mt-1">
+                    % de delitos no denunciados, ENVIPE {latestYear}
+                  </div>
+                </div>
+                <HBar
+                  data={bottomCifraNegraStates}
+                  maxVal={100}
+                  valueFmt={(v: number) => v.toFixed(1) + '%'}
+                />
+              </Card>
             </div>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
-              Mapa y ranking de cifra negra por entidad federativa.
-            </p>
-            <div className="text-xs text-[var(--accent)]">
-              Proximamente con datos de ENVIPE
-            </div>
-          </Card>
-          <Card large>
-            <div className="text-base font-semibold text-white tracking-tight mb-1">
-              Percepcion de seguridad
-            </div>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
-              Como se siente la poblacion en las principales ciudades del pais (ENSU trimestral).
-            </p>
-            <div className="text-xs text-[var(--accent)]">
-              Proximamente con datos de ENSU
-            </div>
-          </Card>
-        </div>
-      </div>
+          )}
+        </>
+      )}
 
       {/* Attribution */}
       <div className="px-[var(--pad-page)] mb-6">

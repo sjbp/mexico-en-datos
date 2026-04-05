@@ -31,14 +31,20 @@ export default async function FuenteDetailPage({ params }: PageProps) {
   const source = SOURCES.find((s) => s.slug === slug);
   if (!source) notFound();
 
-  // For INEGI (active), load indicator data
+  // For active sources with indicator data, load indicators
   let indicators: Awaited<ReturnType<typeof getIndicators>> = [];
   let topics: Awaited<ReturnType<typeof getTopicsWithCounts>> = [];
-  if (source.status === 'active' && source.slug === 'inegi') {
+  if (source.status === 'active') {
     [indicators, topics] = await Promise.all([
       getIndicators(),
       getTopicsWithCounts(),
     ]);
+    // Filter indicators by source for specific source pages
+    if (source.slug === 'banxico') {
+      indicators = indicators.filter((i) => i.source === 'banxico');
+    } else if (source.slug === 'inegi') {
+      indicators = indicators.filter((i) => i.source === 'BIE-BISE');
+    }
   }
 
   return (
@@ -78,7 +84,7 @@ export default async function FuenteDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      {source.status === 'active' && source.slug === 'inegi' ? (
+      {source.status === 'active' && indicators.length > 0 ? (
         <>
           <SectionHeader title="Indicadores disponibles" />
           <ExploradorClient indicators={indicators} topics={topics} />

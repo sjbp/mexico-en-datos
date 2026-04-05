@@ -93,7 +93,7 @@ export const SCORECARD: ScorecardItem[] = [
     format: 'percent1',
     isGoodDown: true,
     context: '% de la poblacion',
-    href: '/salud/cobertura',
+    href: '/salud',
   },
   {
     id: 'confianza',

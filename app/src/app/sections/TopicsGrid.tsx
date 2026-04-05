@@ -15,7 +15,7 @@ const TOPICS: TopicConfig[] = [
     name: 'Economia',
     desc: 'PIB, inflacion, IGAE, tipo de cambio, confianza del consumidor y balanza comercial.',
     href: '/economia',
-    highlight: '22 indicadores en tiempo real',
+    highlight: '21 indicadores en tiempo real',
     color: '#FF9F43',
   },
   {
@@ -128,9 +128,6 @@ export default function TopicsGrid() {
         </div>
       </div>
 
-      <p className="text-[12px] text-[var(--text-muted)]">
-        Pr&oacute;ximamente: Educaci&oacute;n, Ingresos y Pobreza, Poblaci&oacute;n
-      </p>
     </div>
   );
 }

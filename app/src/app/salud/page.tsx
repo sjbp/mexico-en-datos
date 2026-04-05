@@ -8,7 +8,7 @@ import { getLeadingCausesOfDeath } from '@/lib/data';
 export const metadata: Metadata = {
   title: 'Salud | M\u00e9xico en Datos',
   description:
-    'Indicadores de salud p\u00fablica en M\u00e9xico: mortalidad, cobertura, infraestructura hospitalaria y m\u00e1s.',
+    'Indicadores de salud p\u00fablica en M\u00e9xico: principales causas de muerte, cobertura de salud y esperanza de vida.',
 };
 
 const CAUSE_LABELS: Record<string, string> = {
@@ -62,8 +62,8 @@ export default async function SaludPage() {
           Salud
         </h1>
         <p className="text-[var(--text-secondary)] text-base leading-relaxed max-w-[640px]">
-          Indicadores de salud p&uacute;blica en M&eacute;xico: mortalidad, cobertura, infraestructura
-          hospitalaria y acceso a servicios. Integramos datos de 6+ fuentes oficiales.
+          Indicadores de salud p&uacute;blica en M&eacute;xico: principales causas de muerte,
+          cobertura de salud y esperanza de vida. Datos de la Secretar&iacute;a de Salud e INEGI.
         </p>
       </div>
 
@@ -134,40 +134,11 @@ export default async function SaludPage() {
         </Card>
       </div>
 
-      {/* Proximamente sections */}
-      <SectionHeader title="Proximamente" />
-      <div className="px-[var(--pad-page)] mb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card large>
-            <div className="text-base font-semibold text-white tracking-tight mb-1">
-              Cobertura de salud
-            </div>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
-              Asegurados IMSS, ISSSTE, IMSS-Bienestar y carencia por acceso a servicios de salud.
-            </p>
-            <div className="text-xs text-[var(--accent)]">
-              Proximamente con datos de IMSS y CONEVAL
-            </div>
-          </Card>
-          <Card large>
-            <div className="text-base font-semibold text-white tracking-tight mb-1">
-              Infraestructura
-            </div>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-2">
-              Cat&aacute;logo de 30,000+ unidades m&eacute;dicas: hospitales, cl&iacute;nicas y centros de salud.
-            </p>
-            <div className="text-xs text-[var(--accent)]">
-              Proximamente con datos de CLUES (Secretar&iacute;a de Salud)
-            </div>
-          </Card>
-        </div>
-      </div>
-
       {/* Attribution */}
       <div className="px-[var(--pad-page)] mb-10">
         <div className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Fuentes: INEGI (Estad&iacute;sticas de Mortalidad), IMSS (Datos Abiertos),
-          CONAPO (Proyecciones de Poblaci&oacute;n), CONEVAL, Secretar&iacute;a de Salud (CLUES)
+          Fuentes: INEGI / Secretar&iacute;a de Salud (Estad&iacute;sticas de Defunciones Registradas),
+          CONAPO (Proyecciones de Poblaci&oacute;n), CONEVAL
         </div>
       </div>
 
