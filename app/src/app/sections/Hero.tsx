@@ -25,26 +25,26 @@ export default function Hero() {
   };
 
   return (
-    <div className="pt-16 pb-4 px-[var(--pad-page)] mb-6">
+    <div className="pt-16 pb-4 px-[var(--pad-page)] mb-6 flex flex-col items-center text-center">
       {/* Bold AI-first headline */}
       <h1 className="text-[44px] font-bold tracking-[-0.03em] leading-[1.15] text-white max-sm:text-3xl mb-3 max-w-[700px]">
         ¿Qu&eacute; quieres saber sobre M&eacute;xico?
       </h1>
-      <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] max-w-[600px] mb-8" style={{ textWrap: 'pretty' }}>
+      <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] max-w-[560px] mb-8" style={{ textWrap: 'pretty' }}>
         Pregunta lo que sea sobre la econom&iacute;a, empleo, seguridad o salud de M&eacute;xico.
         La IA consulta datos oficiales de INEGI, Banxico y m&aacute;s.
       </p>
 
       {/* AI Input — Hex-inspired */}
-      <div className="max-w-[640px] mb-6">
+      <div className="w-full max-w-[640px] mb-6">
         <div className="relative bg-[var(--surface)] border border-[var(--border)] rounded-2xl transition-all focus-within:border-[var(--accent)]/50 focus-within:shadow-[0_0_20px_rgba(255,159,67,0.08)]">
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="¿Cu&aacute;l es la inflaci&oacute;n actual? ¿Qu&eacute; tan seguro es Quer&eacute;taro? ¿De qu&eacute; muere la gente?"
+            placeholder="¿Cuál es la inflación actual? ¿Qué tan seguro es Querétaro? ¿De qué muere la gente?"
             rows={2}
-            className="w-full bg-transparent text-[15px] text-white placeholder:text-[var(--text-muted)] px-5 pt-4 pb-2 resize-none outline-none"
+            className="w-full bg-transparent text-[15px] text-white placeholder:text-[var(--text-muted)] px-5 pt-4 pb-2 resize-none outline-none text-left"
           />
           <div className="flex items-center justify-between px-4 pb-3">
             <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export default function Hero() {
       </div>
 
       {/* Quick suggestion pills */}
-      <div className="flex flex-wrap gap-2 max-w-[640px] mb-8">
+      <div className="flex flex-wrap justify-center gap-2 max-w-[640px] mb-4">
         {[
           '¿Cuál es la inflación actual?',
           'Estado más violento',
