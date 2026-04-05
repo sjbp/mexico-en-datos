@@ -90,3 +90,13 @@ export interface HealthFacility {
   lat: number | null;
   lng: number | null;
 }
+
+export interface EnsanutStat {
+  year: number;
+  geo_code: string;
+  condition: string;           // 'obesity', 'overweight', 'diabetes', 'hypertension', 'hypertension_measured'
+  age_group: string;           // '20+', '20-29', '30-39', etc.
+  sex: string;                 // 'M', 'F', 'all'
+  prevalence_pct: number | null;
+  sample_size: number | null;
+}

@@ -1,5 +1,5 @@
 import { query } from './db';
-import type { Indicator, IndicatorValue, EmploymentStat, EnvipeStat, EnsuStat, MortalityStat, HealthFacility } from './types';
+import type { Indicator, IndicatorValue, EmploymentStat, EnvipeStat, EnsuStat, MortalityStat, HealthFacility, EnsanutStat } from './types';
 
 export async function getIndicators(topic?: string): Promise<Indicator[]> {
   try {
@@ -516,22 +516,66 @@ export async function getTotalDeaths(
   }
 }
 
-// ── ENSANUT stats (graceful if table doesn't exist) ────────────────────
+// ── ENSANUT Health Survey (Scope 4) ───────────────────────────────────
 
 export async function getEnsanutStats(
   condition?: string,
   geo?: string,
-): Promise<Record<string, unknown>[]> {
+  year?: number,
+): Promise<EnsanutStat[]> {
   try {
-    return await query<Record<string, unknown>>(
+    return await query<EnsanutStat>(
       `SELECT * FROM ensanut_stats
        WHERE ($1::text IS NULL OR condition = $1)
          AND ($2::text IS NULL OR geo_code = $2)
-       ORDER BY condition, geo_code`,
-      [condition ?? null, geo ?? null]
+         AND ($3::int IS NULL OR year = $3)
+       ORDER BY year DESC, condition, age_group, sex`,
+      [condition ?? null, geo ?? null, year ?? null]
     );
   } catch (error) {
-    // Table may not exist yet — gracefully return empty
+    console.error('Error fetching ENSANUT stats:', error);
+    return [];
+  }
+}
+
+export async function getEnsanutNationalSummary(
+  year?: number,
+): Promise<EnsanutStat[]> {
+  try {
+    return await query<EnsanutStat>(
+      `SELECT * FROM ensanut_stats
+       WHERE geo_code = '00'
+         AND age_group = '20+'
+         AND sex = 'all'
+         AND ($1::int IS NULL OR year = $1)
+       ORDER BY year DESC, condition`,
+      [year ?? null]
+    );
+  } catch (error) {
+    console.error('Error fetching ENSANUT national summary:', error);
+    return [];
+  }
+}
+
+export async function getEnsanutByState(
+  condition: string,
+  year?: number,
+): Promise<(EnsanutStat & { geo_name: string })[]> {
+  try {
+    return await query<EnsanutStat & { geo_name: string }>(
+      `SELECT es.*, ga.name as geo_name
+       FROM ensanut_stats es
+       JOIN geographic_areas ga ON ga.code = es.geo_code
+       WHERE es.condition = $1
+         AND es.geo_code != '00'
+         AND es.age_group = '20+'
+         AND es.sex = 'all'
+         AND ($2::int IS NULL OR es.year = $2)
+       ORDER BY es.prevalence_pct DESC`,
+      [condition, year ?? null]
+    );
+  } catch (error) {
+    console.error('Error fetching ENSANUT by state:', error);
     return [];
   }
 }

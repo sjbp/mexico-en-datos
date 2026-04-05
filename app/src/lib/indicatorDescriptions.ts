@@ -99,6 +99,37 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
   },
 };
 
+// ── ENSANUT health survey context ─────────────────────────────────────
+// These are not tied to specific indicator IDs but provide context for
+// ENSANUT-derived prevalence data shown in health dashboards.
+
+export const ENSANUT_DESCRIPTIONS: Record<string, { summary: string; context: string }> = {
+  "obesity": {
+    summary: "Porcentaje de adultos (20+) con indice de masa corporal (IMC) >= 30, basado en mediciones antropometricas directas de la ENSANUT.",
+    context: "Mexico tiene una de las tasas de obesidad mas altas del mundo. La ENSANUT mide peso y talla directamente (no autoreportado), lo que la hace la fuente mas confiable. La obesidad es factor de riesgo para diabetes, hipertension y enfermedades cardiovasculares."
+  },
+  "overweight": {
+    summary: "Porcentaje de adultos (20+) con IMC entre 25 y 29.9, basado en mediciones antropometricas de la ENSANUT.",
+    context: "Combinado con obesidad, mas del 75% de los adultos mexicanos tienen sobrepeso u obesidad. El sobrepeso es la antesala de la obesidad y ya implica riesgos metabolicos elevados."
+  },
+  "diabetes": {
+    summary: "Porcentaje de adultos (20+) que reportan haber sido diagnosticados con diabetes por un medico, segun la ENSANUT.",
+    context: "Es prevalencia diagnosticada (autoreportada), no total. Se estima que entre 30-50% de los casos de diabetes en Mexico no estan diagnosticados. Mexico tiene ~12 millones de adultos con diabetes, una de las principales causas de muerte y discapacidad."
+  },
+  "hypertension": {
+    summary: "Porcentaje de adultos (20+) que reportan diagnostico medico de hipertension arterial, segun la ENSANUT.",
+    context: "Al igual que diabetes, solo captura casos diagnosticados. La ENSANUT tambien mide la presion arterial directamente (ver hypertension_measured), lo que revela una prevalencia mayor al incluir casos no diagnosticados."
+  },
+  "hypertension_measured": {
+    summary: "Porcentaje de adultos (20+) con presion arterial >= 140/90 mmHg, medida directamente durante la encuesta ENSANUT (promedio de segunda y tercera lecturas).",
+    context: "Esta medicion directa captura tanto casos diagnosticados como no diagnosticados. La diferencia con la hipertension autoreportada revela la brecha de diagnostico. El protocolo usa el promedio de las lecturas 2 y 3 para mayor precision."
+  },
+};
+
 export function getIndicatorDescription(id: string): { summary: string; context: string; staleWarning?: string } | null {
   return INDICATOR_DESCRIPTIONS[id] ?? null;
+}
+
+export function getEnsanutDescription(condition: string): { summary: string; context: string } | null {
+  return ENSANUT_DESCRIPTIONS[condition] ?? null;
 }
