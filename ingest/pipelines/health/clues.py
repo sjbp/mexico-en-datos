@@ -49,51 +49,48 @@ load_dotenv()
 
 logger = logging.getLogger("ingest.pipelines.health.clues")
 
-CLUES_URL = "http://www.dgis.salud.gob.mx/descargas/csv/clues.csv"
+CLUES_URL = "http://www.dgis.salud.gob.mx/descargas/datosabiertos/recursosSalud/CLUES_2024.csv"
+CLUES_URL_ALT = "http://www.dgis.salud.gob.mx/descargas/csv/clues.csv"
 
-# Normalize raw institution names to our categories
+# Map CLAVE DE LA INSTITUCION codes to readable names
 INSTITUTION_MAP: dict[str, str] = {
-    "IMSS": "IMSS",
-    "ISSSTE": "ISSSTE",
+    "IMS": "IMSS",
+    "IST": "ISSSTE",
     "SSA": "SSA",
-    "IMSS-BIENESTAR": "IMSS-Bienestar",
-    "INSABI": "IMSS-Bienestar",  # Transitioned in 2023
-    "PEMEX": "PEMEX",
-    "SEDENA": "SEDENA",
-    "SEMAR": "SEMAR",
+    "IMB": "IMSS-Bienestar",
+    "IMO": "IMSS-Bienestar",       # IMSS-Oportunidades → IMSS-Bienestar
+    "PMX": "PEMEX",
+    "SDN": "SEDENA",
+    "SMA": "SEMAR",
     "DIF": "DIF",
-    "UNIVERSITARIO": "Universitario",
-    "PRIVADA": "Privada",
-    "CRUZ ROJA": "Cruz Roja",
+    "HUN": "Universitario",
+    "CRO": "Cruz Roja",
+    "CIJ": "CIJ",                   # Centros de Integración Juvenil
+    "SMP": "Privada",               # Sector Médico Privado
+    "SME": "Estatal",               # Servicios Médicos Estatales
+    "SMM": "Municipal",             # Servicios Médicos Municipales
+    "SPC": "Protección Civil",
+    "SCT": "SCT",
+    "PGR": "PGR/FGR",
+    "FGE": "FGR",                   # Fiscalía General del Estado
 }
 
+# Map NOMBRE TIPO ESTABLECIMIENTO to our categories
 FACILITY_TYPE_MAP: dict[str, str] = {
-    "HOSPITAL GENERAL": "hospital",
-    "HOSPITAL ESPECIALIZADO": "hospital",
-    "HOSPITAL PSIQUIATRICO": "hospital",
-    "HOSPITAL INTEGRAL": "hospital",
-    "CENTRO DE SALUD": "health_center",
-    "CENTRO DE SALUD URBANO": "health_center",
-    "CENTRO DE SALUD RURAL": "health_center",
-    "UNIDAD DE MEDICINA FAMILIAR": "clinic",
-    "CLINICA DE MEDICINA FAMILIAR": "clinic",
-    "CONSULTORIO": "clinic",
-    "LABORATORIO": "lab",
-    "FARMACIA": "pharmacy",
+    "HOSPITALIZ": "hospital",        # Matches HOSPITALIZACIÓN (with accent)
+    "CONSULTA EXTERNA": "clinic",
+    "ASISTENCIA SOCIAL": "social_assistance",
+    "APOYO": "support",
 }
 
 
-def normalize_institution(raw: str) -> str:
-    """Map raw institution name to standard category."""
-    raw_upper = raw.strip().upper()
-    for key, value in INSTITUTION_MAP.items():
-        if key in raw_upper:
-            return value
-    return "Otra"
+def normalize_institution(code: str) -> str:
+    """Map institution code (CLAVE DE LA INSTITUCION) to readable name."""
+    return INSTITUTION_MAP.get(code.strip().upper(), "Otra")
 
 
 def normalize_facility_type(raw: str) -> str:
-    """Map raw facility type to standard category."""
+    """Map NOMBRE TIPO ESTABLECIMIENTO to standard category."""
     raw_upper = raw.strip().upper()
     for key, value in FACILITY_TYPE_MAP.items():
         if key in raw_upper:
@@ -105,7 +102,10 @@ def download_clues(cache_dir: Path | None = None) -> Path | None:
     """Download CLUES CSV catalog.
 
     Returns path to downloaded CSV, or None if download fails.
+    Tries primary URL first, then alternative. Also checks for
+    a pre-downloaded file at data/clues/CLUES_2024.csv.
     """
+    import ssl
     import urllib.request
 
     if cache_dir is None:
@@ -113,51 +113,85 @@ def download_clues(cache_dir: Path | None = None) -> Path | None:
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     csv_path = cache_dir / "clues.csv"
+
+    # Check for pre-downloaded file
+    predownloaded = Path("data/clues/CLUES_2024.csv")
+    if predownloaded.exists():
+        logger.info("Using pre-downloaded CLUES CSV: %s", predownloaded)
+        return predownloaded
+
     if csv_path.exists():
         logger.info("Using cached CLUES CSV: %s", csv_path)
         return csv_path
 
-    try:
-        logger.info("Downloading CLUES catalog from %s", CLUES_URL)
-        urllib.request.urlretrieve(CLUES_URL, csv_path)
-        return csv_path
-    except Exception:
-        logger.exception("Failed to download CLUES catalog")
-        return None
+    # DGIS server often has SSL cert issues — use unverified context
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    for url in [CLUES_URL, CLUES_URL_ALT]:
+        try:
+            logger.info("Downloading CLUES catalog from %s", url)
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, context=ctx) as resp, open(csv_path, "wb") as out:
+                out.write(resp.read())
+            return csv_path
+        except Exception:
+            logger.warning("Failed to download from %s", url)
+
+    logger.error("Could not download CLUES catalog from any source")
+    return None
 
 
 def process_clues(csv_path: Path) -> list[dict[str, Any]]:
-    """Parse CLUES CSV and return list of health_facilities rows."""
+    """Parse CLUES CSV and return list of health_facilities rows.
+
+    CSV columns (2024 format):
+        CLUES, NOMBRE DE LA ENTIDAD, CLAVE DE LA ENTIDAD,
+        NOMBRE DEL MUNICIPIO, CLAVE DEL MUNICIPIO,
+        NOMBRE DE LA LOCALIDAD, CLAVE DE LA LOCALIDAD,
+        NOMBRE DE LA INSTITUCION, CLAVE DE LA INSTITUCION,
+        NOMBRE TIPO ESTABLECIMIENTO, NOMBRE DE TIPOLOGIA,
+        CLAVE DE TIPOLOGIA, NOMBRE DE LA UNIDAD,
+        ESTATUS DE OPERACION, AÑO CIERRE
+    """
     rows = []
     with open(csv_path, encoding="latin-1") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            # Skip inactive facilities
-            estatus = row.get("ESTATUS", "").strip().upper()
-            if estatus and "ACTIV" not in estatus:
+            # Only keep currently operating facilities
+            estatus = row.get("ESTATUS DE OPERACION", "").strip().upper()
+            if estatus != "EN OPERACION":
                 continue
 
             clues_id = row.get("CLUES", "").strip()
             if not clues_id:
                 continue
 
-            ent = row.get("CVE_ENT", "00").strip().zfill(2)
-            mun = row.get("CVE_MUN", "000").strip().zfill(3)
-            geo_code = f"{ent}{mun}"
+            # geo_code = state code (2-digit) for state-level aggregation
+            ent = row.get("CLAVE DE LA ENTIDAD", "00").strip().zfill(2)
 
-            lat = row.get("LATITUD", "").strip()
-            lng = row.get("LONGITUD", "").strip()
+            # Build address from locality + municipality + state
+            locality = row.get("NOMBRE DE LA LOCALIDAD", "").strip()
+            municipality = row.get("NOMBRE DEL MUNICIPIO", "").strip()
+            state = row.get("NOMBRE DE LA ENTIDAD", "").strip()
+            address_parts = [p for p in [locality, municipality, state] if p]
+            address = ", ".join(address_parts)
 
             rows.append({
                 "clues_id": clues_id,
-                "name": row.get("NOMBRE", "").strip(),
-                "institution": normalize_institution(row.get("INSTITUCION", "")),
-                "facility_type": normalize_facility_type(row.get("TIPOLOGIA", "")),
-                "geo_code": geo_code,
-                "address": row.get("DOMICILIO", "").strip(),
-                "lat": float(lat) if lat else None,
-                "lng": float(lng) if lng else None,
-                "services": None,  # populated from separate CLUES services dataset
+                "name": row.get("NOMBRE DE LA UNIDAD", "").strip(),
+                "institution": normalize_institution(
+                    row.get("CLAVE DE LA INSTITUCION", "")
+                ),
+                "facility_type": normalize_facility_type(
+                    row.get("NOMBRE TIPO ESTABLECIMIENTO", "")
+                ),
+                "geo_code": ent,
+                "address": address,
+                "lat": None,  # Not in 2024 CSV; available via separate geo dataset
+                "lng": None,
+                "services": None,
                 "last_updated": None,
             })
 
@@ -202,6 +236,8 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument("--full", action="store_true", help="Full reload of CLUES catalog.")
     parser.add_argument("--dry-run", action="store_true", help="Don't write to DB.")
+    parser.add_argument("--csv", type=str, help="Path to pre-downloaded CLUES CSV file.")
+    parser.add_argument("--db-url", type=str, help="Database URL (overrides DATABASE_URL env var).")
     parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args(argv)
 
@@ -211,10 +247,16 @@ def main(argv: list[str] | None = None) -> None:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    csv_path = download_clues()
-    if csv_path is None:
-        logger.error("No CLUES data available.")
-        return
+    if args.csv:
+        csv_path = Path(args.csv)
+        if not csv_path.exists():
+            logger.error("CSV file not found: %s", csv_path)
+            return
+    else:
+        csv_path = download_clues()
+        if csv_path is None:
+            logger.error("No CLUES data available.")
+            return
 
     rows = process_clues(csv_path)
 
@@ -222,7 +264,8 @@ def main(argv: list[str] | None = None) -> None:
         logger.info("[DRY RUN] Would upsert %d facilities", len(rows))
         return
 
-    conn = psycopg2.connect(os.getenv("DATABASE_URL", ""))
+    db_url = args.db_url or os.getenv("DATABASE_URL", "")
+    conn = psycopg2.connect(db_url)
     try:
         upsert_facilities(conn, rows)
     finally:

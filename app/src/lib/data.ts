@@ -372,6 +372,44 @@ export async function getHealthFacilities(
   }
 }
 
+export async function getHealthFacilitiesByState(): Promise<
+  { geo_code: string; geo_name: string; institution: string; count: number }[]
+> {
+  try {
+    return await query<{
+      geo_code: string;
+      geo_name: string;
+      institution: string;
+      count: number;
+    }>(
+      `SELECT hf.geo_code, ga.name AS geo_name, hf.institution, COUNT(*)::int AS count
+       FROM health_facilities hf
+       JOIN geographic_areas ga ON ga.code = hf.geo_code
+       GROUP BY hf.geo_code, ga.name, hf.institution
+       ORDER BY ga.name, count DESC`
+    );
+  } catch (error) {
+    console.error('Error fetching health facilities by state:', error);
+    return [];
+  }
+}
+
+export async function getHealthFacilitySummary(): Promise<
+  { institution: string; count: number }[]
+> {
+  try {
+    return await query<{ institution: string; count: number }>(
+      `SELECT institution, COUNT(*)::int AS count
+       FROM health_facilities
+       GROUP BY institution
+       ORDER BY count DESC`
+    );
+  } catch (error) {
+    console.error('Error fetching health facility summary:', error);
+    return [];
+  }
+}
+
 export async function getLeadingCausesOfDeath(
   year: number,
   geo: string = '00',
@@ -387,6 +425,146 @@ export async function getLeadingCausesOfDeath(
     );
   } catch (error) {
     console.error('Error fetching leading causes of death:', error);
+    return [];
+  }
+}
+
+// ── Mortality by age group for a specific cause ────────────────────────
+
+export async function getMortalityByAge(
+  cause: string,
+  year: number = 2023,
+  geo: string = '00',
+): Promise<MortalityStat[]> {
+  try {
+    return await query<MortalityStat>(
+      `SELECT * FROM mortality_stats
+       WHERE cause_group = $1 AND year = $2 AND geo_code = $3
+         AND sex = 'all' AND age_group NOT IN ('all')
+       ORDER BY age_group`,
+      [cause, year, geo]
+    );
+  } catch (error) {
+    console.error('Error fetching mortality by age:', error);
+    return [];
+  }
+}
+
+// ── Mortality trend across years for a cause (national, all ages) ──────
+
+export async function getMortalityTrend(
+  cause: string,
+  geo: string = '00',
+): Promise<MortalityStat[]> {
+  try {
+    return await query<MortalityStat>(
+      `SELECT * FROM mortality_stats
+       WHERE cause_group = $1 AND geo_code = $2
+         AND age_group = 'all' AND sex = 'all'
+       ORDER BY year`,
+      [cause, geo]
+    );
+  } catch (error) {
+    console.error('Error fetching mortality trend:', error);
+    return [];
+  }
+}
+
+// ── Top cause of death per age group ───────────────────────────────────
+
+export async function getTopCauseByAge(
+  year: number = 2023,
+  geo: string = '00',
+): Promise<{ age_group: string; cause_group: string; deaths: number; rate_per_100k: number | null }[]> {
+  try {
+    return await query<{ age_group: string; cause_group: string; deaths: number; rate_per_100k: number | null }>(
+      `WITH ranked AS (
+         SELECT age_group, cause_group, deaths, rate_per_100k,
+                ROW_NUMBER() OVER (PARTITION BY age_group ORDER BY deaths DESC) as rn
+         FROM mortality_stats
+         WHERE year = $1 AND geo_code = $2 AND sex = 'all'
+           AND age_group NOT IN ('all', '0-4', '5-14')
+       )
+       SELECT age_group, cause_group, deaths, rate_per_100k
+       FROM ranked WHERE rn = 1
+       ORDER BY age_group`,
+      [year, geo]
+    );
+  } catch (error) {
+    console.error('Error fetching top cause by age:', error);
+    return [];
+  }
+}
+
+// ── Total deaths summary ───────────────────────────────────────────────
+
+export async function getTotalDeaths(
+  year: number = 2023,
+  geo: string = '00',
+): Promise<number> {
+  try {
+    const rows = await query<{ total: number }>(
+      `SELECT SUM(deaths)::int as total FROM mortality_stats
+       WHERE year = $1 AND geo_code = $2
+         AND age_group = 'all' AND sex = 'all'`,
+      [year, geo]
+    );
+    return rows[0]?.total ?? 0;
+  } catch (error) {
+    console.error('Error fetching total deaths:', error);
+    return 0;
+  }
+}
+
+// ── ENSANUT stats (graceful if table doesn't exist) ────────────────────
+
+export async function getEnsanutStats(
+  condition?: string,
+  geo?: string,
+): Promise<Record<string, unknown>[]> {
+  try {
+    return await query<Record<string, unknown>>(
+      `SELECT * FROM ensanut_stats
+       WHERE ($1::text IS NULL OR condition = $1)
+         AND ($2::text IS NULL OR geo_code = $2)
+       ORDER BY condition, geo_code`,
+      [condition ?? null, geo ?? null]
+    );
+  } catch (error) {
+    // Table may not exist yet — gracefully return empty
+    return [];
+  }
+}
+
+// ── Health facility summary ────────────────────────────────────────────
+
+export async function getHealthFacilitySummary(): Promise<{ institution: string; count: number }[]> {
+  try {
+    return await query<{ institution: string; count: number }>(
+      `SELECT institution, COUNT(*)::int as count
+       FROM health_facilities
+       GROUP BY institution
+       ORDER BY count DESC`
+    );
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function getHealthFacilitiesByState(
+  institution?: string,
+): Promise<{ geo_name: string; count: number }[]> {
+  try {
+    return await query<{ geo_name: string; count: number }>(
+      `SELECT ga.name as geo_name, COUNT(*)::int as count
+       FROM health_facilities hf
+       JOIN geographic_areas ga ON ga.code = LEFT(hf.geo_code, 2)
+       WHERE ($1::text IS NULL OR hf.institution = $1)
+       GROUP BY ga.name
+       ORDER BY count DESC`,
+      [institution ?? null]
+    );
+  } catch (error) {
     return [];
   }
 }
