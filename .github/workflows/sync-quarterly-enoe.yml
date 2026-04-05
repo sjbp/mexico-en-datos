@@ -99,3 +99,8 @@ jobs:
           for r in cur.fetchall(): print(f'  {r[0]}: {r[1]} rows')
           conn.close()
           "
+
+      - name: Validate data integrity
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run python -m ingest.validate

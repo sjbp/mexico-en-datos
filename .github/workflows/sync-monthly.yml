@@ -44,3 +44,8 @@ jobs:
           else
             echo "No SESNSP data file found, skipping"
           fi
+
+      - name: Validate data integrity
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run python -m ingest.validate
