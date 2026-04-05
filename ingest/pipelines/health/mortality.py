@@ -252,12 +252,26 @@ def download_microdata(year: int, cache_dir: Path | None = None) -> Path:
     logger.info("Extracting %s", zip_path)
     with zipfile.ZipFile(zip_path, "r") as zf:
         csv_names = [n for n in zf.namelist() if n.lower().endswith(".csv")]
-        if not csv_names:
-            raise FileNotFoundError(f"No CSV found in ZIP for year {year}")
-        zf.extract(csv_names[0], cache_dir)
-        extracted = cache_dir / csv_names[0]
-        if extracted != csv_path:
-            extracted.rename(csv_path)
+        if csv_names:
+            zf.extract(csv_names[0], cache_dir)
+            extracted = cache_dir / csv_names[0]
+            if extracted != csv_path:
+                extracted.rename(csv_path)
+        else:
+            # Handle nested ZIPs (common in DGIS downloads)
+            inner_zips = [n for n in zf.namelist() if n.lower().endswith(".zip")]
+            if not inner_zips:
+                raise FileNotFoundError(f"No CSV or nested ZIP found in archive for year {year}")
+            logger.info("Found nested ZIP: %s — extracting inner archive", inner_zips[0])
+            inner_data = zf.read(inner_zips[0])
+            with zipfile.ZipFile(io.BytesIO(inner_data), "r") as inner_zf:
+                inner_csvs = [n for n in inner_zf.namelist() if n.lower().endswith(".csv")]
+                if not inner_csvs:
+                    raise FileNotFoundError(f"No CSV found in nested ZIP for year {year}")
+                inner_zf.extract(inner_csvs[0], cache_dir)
+                extracted = cache_dir / inner_csvs[0]
+                if extracted != csv_path:
+                    extracted.rename(csv_path)
 
     return csv_path
 
@@ -281,7 +295,9 @@ def process_year(year: int, *, dry_run: bool = False) -> list[dict[str, Any]]:
 
     with open(csv_path, encoding="latin-1") as f:
         reader = csv.DictReader(f)
-        for row in reader:
+        for raw_row in reader:
+            # Normalise column names to lowercase (DGIS uses uppercase, INEGI lowercase)
+            row = {k.lower(): v for k, v in raw_row.items()}
             icd_code = row.get("causa_def", "").strip()
             classification = classify_icd10(icd_code)
             if classification is None:
