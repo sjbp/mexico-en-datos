@@ -41,7 +41,7 @@ ENOE_COLUMNS = {
     "hours_worked": "hrsocup",     # Hours worked per week
     "contract_type": "tip_con",    # Contract type (1=written, 2=verbal/none → informal)
     "locality_size": "t_loc",      # Locality size category
-    "state": "ent",               # State code (01-32)
+    "state": "ent",               # State code (01-32). Also try "cve_ent" (varies by quarter)
     "class_activity": "clase1",    # 1=employed, 2=unemployed
     "class_subactivity": "clase2", # Subclassification (underemployed, etc.)
     "education": "cs_p13_1",       # Education level
@@ -113,7 +113,23 @@ def download_enoe(quarter: str, dest_dir: str | None = None) -> Path:
 
     logger.info("Downloading ENOE microdata from %s", url)
     urllib.request.urlretrieve(url, zip_path)
-    logger.info("Downloaded to %s", zip_path)
+    logger.info("Downloaded to %s (%d bytes)", zip_path, zip_path.stat().st_size)
+
+    # Validate it's actually a ZIP (INEGI returns 200 + HTML error page for missing files)
+    if zip_path.stat().st_size < 100_000:  # Real ENOE ZIPs are 20MB+
+        zip_path.unlink()
+        raise FileNotFoundError(
+            f"ENOE {quarter} not available on INEGI — downloaded file is too small "
+            f"({zip_path.stat().st_size if zip_path.exists() else 'deleted'} bytes). "
+            f"The quarter may not have been published yet."
+        )
+
+    if not zipfile.is_zipfile(zip_path):
+        zip_path.unlink()
+        raise FileNotFoundError(
+            f"ENOE {quarter} download is not a valid ZIP file — INEGI may have "
+            f"returned an error page. The quarter may not be available yet."
+        )
 
     # Extract
     extract_dir = dest_path / f"{year}trim{q}"
@@ -346,10 +362,15 @@ def process_microdata(csv_dir: Path, quarter: str) -> list[dict[str, Any]]:
         stats = aggregate_by_dimension(df, dim, "00", quarter_label, quarter_date)
         all_stats.extend(stats)
 
-    # State-level aggregates
-    col = ENOE_COLUMNS
-    if col["state"] in df.columns:
-        for state_code, state_df in df.groupby(col["state"], observed=True):
+    # State-level aggregates — column name varies by quarter ("ent" or "cve_ent")
+    state_col = None
+    for candidate in [ENOE_COLUMNS["state"], "cve_ent", "ent"]:
+        if candidate in df.columns:
+            state_col = candidate
+            break
+
+    if state_col is not None:
+        for state_code, state_df in df.groupby(state_col, observed=True):
             geo = f"{int(state_code):02d}"
             for dim in dimensions:
                 logger.info("Aggregating dimension=%s geo=%s", dim, geo)
