@@ -395,7 +395,7 @@ export default function ChatPanel() {
                     if (dataPart.type === 'data-timeseries') {
                       const d = dataPart.data;
                       return (
-                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 max-w-[340px]">
+                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
                             {d.label}
                           </div>
@@ -417,7 +417,7 @@ export default function ChatPanel() {
                     if (dataPart.type === 'data-scatter') {
                       const d = dataPart.data;
                       return (
-                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 max-w-[340px]">
+                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
                           {d.title && (
                             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
                               {d.title}

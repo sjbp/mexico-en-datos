@@ -209,8 +209,8 @@ export default function TimeSeries({
       const s = series[0];
       setTooltip({
         visible: true,
-        x: e.clientX,
-        y: e.clientY,
+        x: mx,
+        y: e.clientY - rect.top,
         title: (periods && periods[idx]) || labels[idx] || '',
         value: s.values[idx].toFixed(valueDecimals) + yUnit,
         detail: s.label,
@@ -232,10 +232,10 @@ export default function TimeSeries({
       />
       {tooltip.visible && (
         <div
-          className="fixed pointer-events-none bg-[var(--surface)] border border-[var(--border)] rounded-lg px-4 py-3 text-[13px] leading-relaxed max-w-[300px] z-[100] shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
+          className="absolute pointer-events-none bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12px] leading-relaxed max-w-[240px] z-[100] shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
           style={{
-            left: Math.min(tooltip.x + 12, (typeof window !== 'undefined' ? window.innerWidth : 1000) - 220),
-            top: tooltip.y - 70,
+            left: tooltip.x + 12,
+            top: tooltip.y - 60,
           }}
         >
           <div className="font-bold text-sm text-white mb-1">{tooltip.title}</div>

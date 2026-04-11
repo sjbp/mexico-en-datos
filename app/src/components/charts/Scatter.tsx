@@ -195,8 +195,8 @@ export default function Scatter({
       const p = points[nearest];
       setTooltip({
         visible: true,
-        x: e.clientX,
-        y: e.clientY,
+        x: mx,
+        y: my,
         label: p.label,
         xVal: p.x.toFixed(xDecimals) + xUnit,
         yVal: p.y.toFixed(yDecimals) + yUnit,
@@ -222,10 +222,10 @@ export default function Scatter({
       />
       {tooltip.visible && (
         <div
-          className="fixed pointer-events-none bg-[var(--surface)] border border-[var(--border)] rounded-lg px-4 py-3 text-[13px] leading-relaxed max-w-[300px] z-[100] shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
+          className="absolute pointer-events-none bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12px] leading-relaxed max-w-[240px] z-[100] shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
           style={{
-            left: Math.min(tooltip.x + 12, (typeof window !== 'undefined' ? window.innerWidth : 1000) - 220),
-            top: tooltip.y - 70,
+            left: tooltip.x + 12,
+            top: tooltip.y - 60,
           }}
         >
           <div className="font-semibold text-[var(--text-primary)]">{tooltip.label}</div>
