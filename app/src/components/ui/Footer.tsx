@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Footer() {
   return (
     <div className="pt-12 border-t border-[var(--border)] mx-[var(--pad-page)]">
@@ -8,9 +10,8 @@ export default function Footer() {
           conforme se publican nuevas cifras.
         </p>
         <div className="flex gap-6">
-          <a href="#" className="text-[var(--text-muted)] underline decoration-white/15 underline-offset-[2.5px] hover:text-[var(--accent)] hover:decoration-[var(--accent)] transition-colors text-sm">GitHub</a>
-          <a href="#" className="text-[var(--text-muted)] underline decoration-white/15 underline-offset-[2.5px] hover:text-[var(--accent)] hover:decoration-[var(--accent)] transition-colors text-sm">API</a>
-          <a href="#" className="text-[var(--text-muted)] underline decoration-white/15 underline-offset-[2.5px] hover:text-[var(--accent)] hover:decoration-[var(--accent)] transition-colors text-sm">Metodolog&iacute;a</a>
+          <a href="https://github.com/sjbp/mexico-en-datos" target="_blank" rel="noopener noreferrer" className="text-[var(--text-muted)] underline decoration-white/15 underline-offset-[2.5px] hover:text-[var(--accent)] hover:decoration-[var(--accent)] transition-colors text-sm">GitHub</a>
+          <Link href="/preguntas-frecuentes" className="text-[var(--text-muted)] underline decoration-white/15 underline-offset-[2.5px] hover:text-[var(--accent)] hover:decoration-[var(--accent)] transition-colors text-sm">Preguntas frecuentes</Link>
         </div>
       </div>
     </div>
