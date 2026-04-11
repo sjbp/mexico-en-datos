@@ -1,26 +1,18 @@
 'use client';
 
-import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type FormEvent, type KeyboardEvent } from 'react';
 import Link from 'next/link';
+import { useChat } from '@ai-sdk/react';
 import { useChatPanel } from './ChatProvider';
 import Sparkline from '@/components/charts/Sparkline';
 import HBar from '@/components/charts/HBar';
 import TimeSeries from '@/components/charts/TimeSeries';
-
-type Block =
-  | { type: 'text'; content: string }
-  | { type: 'sparkline'; data: { values: number[]; label: string; color?: string } }
-  | { type: 'hbar'; data: { items: { label: string; value: number; color?: string }[]; valueFmt?: string } }
-  | { type: 'timeseries'; data: { values: number[]; labels: string[]; periods: string[]; label: string; color?: string; yUnit?: string } };
-
-type UserMessage = { role: 'user'; content: string };
-type AssistantMessage = { role: 'assistant'; blocks: Block[] };
-type Message = UserMessage | AssistantMessage;
+import Scatter from '@/components/charts/Scatter';
+import DotStrip from '@/components/charts/DotStrip';
 
 // ── Simple Markdown renderer ────────────────────────────────────────────
 
 function renderMarkdown(text: string) {
-  // Split into blocks by double newlines
   const blocks = text.split(/\n\n+/);
   const elements: React.ReactNode[] = [];
 
@@ -31,7 +23,6 @@ function renderMarkdown(text: string) {
     // Table detection
     if (block.includes('|') && block.split('\n').length >= 2) {
       const lines = block.split('\n').filter((l) => l.trim());
-      // Check if second line is a separator
       if (lines.length >= 2 && /^[\s|:-]+$/.test(lines[1])) {
         const headers = lines[0]
           .split('|')
@@ -79,7 +70,7 @@ function renderMarkdown(text: string) {
       }
     }
 
-    // Headers — render as bold text (not oversized headers in chat context)
+    // Headers -- render as bold text
     const headerMatch = block.match(/^#{1,4}\s+(.+)$/);
     if (headerMatch) {
       elements.push(
@@ -128,28 +119,23 @@ function renderMarkdown(text: string) {
 }
 
 function renderInline(text: string): React.ReactNode[] {
-  // Process inline markdown: bold, links, inline code
   const parts: React.ReactNode[] = [];
-  // Regex for: **bold**, [text](url), `code`
   const regex = /(\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)|`([^`]+)`)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(text)) !== null) {
-    // Text before match
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
 
     if (match[2]) {
-      // Bold
       parts.push(
         <strong key={match.index} className="font-semibold">
           {match[2]}
         </strong>,
       );
     } else if (match[3] && match[4]) {
-      // Link
       const href = match[4];
       if (href.startsWith('/')) {
         parts.push(
@@ -175,7 +161,6 @@ function renderInline(text: string): React.ReactNode[] {
         );
       }
     } else if (match[5]) {
-      // Inline code
       parts.push(
         <code
           key={match.index}
@@ -189,7 +174,6 @@ function renderInline(text: string): React.ReactNode[] {
     lastIndex = match.index + match[0].length;
   }
 
-  // Remaining text
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
   }
@@ -210,17 +194,18 @@ const SUGGESTIONS = [
 
 export default function ChatPanel() {
   const { isOpen, close, _registerSubmit, _pendingMessage, _clearPending } = useChatPanel();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { messages, sendMessage: chatSendMessage, status } = useChat();
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const sendMessageRef = useRef<(msg: string) => void>(undefined);
 
+  const isLoading = status === 'submitted' || status === 'streaming';
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages, status]);
 
   // Auto-focus input when panel opens
   useEffect(() => {
@@ -238,6 +223,15 @@ export default function ChatPanel() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, close]);
 
+  const sendMessage = useCallback((content: string) => {
+    if (!content.trim() || isLoading) return;
+    chatSendMessage({ text: content.trim() });
+    setInput('');
+  }, [chatSendMessage, isLoading]);
+
+  // Keep ref in sync for external callers
+  sendMessageRef.current = sendMessage;
+
   // Register submit handler so Hero can send messages directly
   useEffect(() => {
     _registerSubmit((msg: string) => sendMessageRef.current?.(msg));
@@ -245,70 +239,11 @@ export default function ChatPanel() {
 
   // Process pending messages from Hero
   useEffect(() => {
-    if (_pendingMessage && isOpen && !loading) {
+    if (_pendingMessage && isOpen && !isLoading) {
       sendMessageRef.current?.(_pendingMessage);
       _clearPending();
     }
-  }, [_pendingMessage, isOpen, loading, _clearPending]);
-
-  async function sendMessage(content: string) {
-    if (!content.trim() || loading) return;
-
-    const userMessage: UserMessage = { role: 'user', content: content.trim() };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInput('');
-    setLoading(true);
-
-    try {
-      // Serialize messages for the API: assistant blocks → text-only content
-      const apiMessages = newMessages.map((m) => {
-        if (m.role === 'user') return { role: m.role, content: m.content };
-        // For assistant messages, extract text blocks for conversation history
-        const textContent = m.blocks
-          .filter((b): b is Block & { type: 'text' } => b.type === 'text')
-          .map((b) => b.content)
-          .join('\n');
-        return { role: m.role, content: textContent };
-      });
-
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-      if (data.blocks) {
-        // New format
-        setMessages((prev) => [...prev, { role: 'assistant', blocks: data.blocks }]);
-      } else if (data.response) {
-        // Old format fallback
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', blocks: [{ type: 'text', content: data.response }] },
-        ]);
-      }
-    } catch (err) {
-      console.error('Chat error:', err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          blocks: [{ type: 'text', content: 'Lo siento, ocurrió un error al procesar tu consulta. Intenta de nuevo.' }],
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Keep ref in sync for external callers
-  sendMessageRef.current = sendMessage;
+  }, [_pendingMessage, isOpen, isLoading, _clearPending]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -320,6 +255,14 @@ export default function ChatPanel() {
       e.preventDefault();
       sendMessage(input);
     }
+  }
+
+  // Extract user text from message parts
+  function getUserText(msg: { parts: Array<{ type: string; text?: string }> }): string {
+    return msg.parts
+      .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+      .map((p) => p.text)
+      .join('');
   }
 
   return (
@@ -374,7 +317,7 @@ export default function ChatPanel() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {messages.length === 0 && !loading && (
+          {messages.length === 0 && !isLoading && (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
               <p className="text-[14px] text-[var(--text-secondary)] mb-1">
                 Pregunta lo que quieras sobre los datos de M&eacute;xico
@@ -396,66 +339,117 @@ export default function ChatPanel() {
             </div>
           )}
 
-          {messages.map((msg, i) => (
+          {messages.map((msg) => (
             <div
-              key={i}
+              key={msg.id}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'user' ? (
                 <div className="max-w-[90%] rounded-xl px-3.5 py-2.5 bg-[var(--accent)]/15 text-[var(--text-primary)]">
-                  <p className="text-[13px] leading-relaxed">{msg.content}</p>
+                  <p className="text-[13px] leading-relaxed">{getUserText(msg)}</p>
                 </div>
               ) : (
                 <div className="max-w-[90%] flex flex-col gap-2">
-                  {msg.blocks.map((block, bi) => {
-                    if (block.type === 'text') {
+                  {msg.parts.map((part, pi) => {
+                    if (part.type === 'text' && part.text) {
                       return (
-                        <div key={bi} className="rounded-xl px-3.5 py-2.5 bg-white/[0.04] text-[var(--text-primary)]">
-                          <div className="chat-markdown">{renderMarkdown(block.content)}</div>
+                        <div key={pi} className="rounded-xl px-3.5 py-2.5 bg-white/[0.04] text-[var(--text-primary)]">
+                          <div className="chat-markdown">{renderMarkdown(part.text)}</div>
                         </div>
                       );
                     }
-                    if (block.type === 'sparkline') {
+
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const dataPart = part as any;
+
+                    if (dataPart.type === 'data-sparkline') {
+                      const d = dataPart.data;
                       return (
-                        <div key={bi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
-                            {block.data.label}
+                            {d.label}
                           </div>
-                          <Sparkline values={block.data.values} width={280} height={40} color={block.data.color} />
+                          <Sparkline values={d.values} width={280} height={40} color={d.color} />
                         </div>
                       );
                     }
-                    if (block.type === 'hbar') {
-                      const fmt = block.data.valueFmt;
+
+                    if (dataPart.type === 'data-hbar') {
+                      const d = dataPart.data;
+                      const fmt = d.valueFmt;
                       return (
-                        <div key={bi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+                          {d.title && (
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+                              {d.title}
+                            </div>
+                          )}
                           <HBar
-                            data={block.data.items}
+                            data={d.items}
                             valueFmt={fmt ? (v: number) => v.toFixed(1) + fmt : undefined}
                           />
                         </div>
                       );
                     }
-                    if (block.type === 'timeseries') {
+
+                    if (dataPart.type === 'data-timeseries') {
+                      const d = dataPart.data;
                       return (
-                        <div key={bi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 max-w-[340px]">
+                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 max-w-[340px]">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
-                            {block.data.label}
+                            {d.label}
                           </div>
                           <TimeSeries
                             series={[{
-                              values: block.data.values,
-                              color: block.data.color || '#FF9F43',
-                              label: block.data.label,
+                              values: d.values,
+                              color: d.color || '#FF9F43',
+                              label: d.label,
                             }]}
-                            labels={block.data.labels}
-                            periods={block.data.periods}
-                            yUnit={block.data.yUnit || ''}
-                            labelStep={Math.max(1, Math.floor(block.data.labels.length / 4))}
+                            labels={d.labels}
+                            periods={d.periods}
+                            yUnit={d.yUnit || ''}
+                            labelStep={Math.max(1, Math.floor(d.labels.length / 4))}
                           />
                         </div>
                       );
                     }
+
+                    if (dataPart.type === 'data-scatter') {
+                      const d = dataPart.data;
+                      return (
+                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3 max-w-[340px]">
+                          {d.title && (
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+                              {d.title}
+                            </div>
+                          )}
+                          <Scatter
+                            points={d.points}
+                            xLabel={d.xLabel}
+                            yLabel={d.yLabel}
+                            xUnit={d.xUnit}
+                            yUnit={d.yUnit}
+                            xDecimals={d.xDecimals}
+                            yDecimals={d.yDecimals}
+                          />
+                        </div>
+                      );
+                    }
+
+                    if (dataPart.type === 'data-dotstrip') {
+                      const d = dataPart.data;
+                      return (
+                        <div key={pi} className="mt-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-3">
+                          {d.title && (
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
+                              {d.title}
+                            </div>
+                          )}
+                          <DotStrip points={d.points} unit={d.unit} />
+                        </div>
+                      );
+                    }
+
                     return null;
                   })}
                 </div>
@@ -463,17 +457,34 @@ export default function ChatPanel() {
             </div>
           ))}
 
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-white/[0.04] rounded-xl px-3.5 py-2.5">
-                <div className="flex items-center gap-2 text-[13px] text-[var(--text-muted)]">
-                  <span className="inline-flex gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-[pulse_1s_ease-in-out_infinite]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-[pulse_1s_ease-in-out_0.2s_infinite]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-[pulse_1s_ease-in-out_0.4s_infinite]" />
-                  </span>
-                  Consultando datos...
+          {/* Loading indicator: show until visible text appears */}
+          {(() => {
+            const lastMsg = messages[messages.length - 1];
+            const hasVisibleText = lastMsg?.role === 'assistant' &&
+              lastMsg.parts.some((p: { type: string; text?: string }) => p.type === 'text' && p.text);
+            const showDots = status === 'submitted' || (status === 'streaming' && !hasVisibleText);
+            if (!showDots) return null;
+            return (
+              <div className="flex justify-start">
+                <div className="bg-white/[0.04] rounded-xl px-3.5 py-2.5">
+                  <div className="flex items-center gap-2 text-[13px] text-[var(--text-muted)]">
+                    <span className="inline-flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-[pulse_1s_ease-in-out_infinite]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-[pulse_1s_ease-in-out_0.2s_infinite]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-[pulse_1s_ease-in-out_0.4s_infinite]" />
+                    </span>
+                    Consultando datos...
+                  </div>
                 </div>
+              </div>
+            );
+          })()}
+
+          {/* Error state */}
+          {status === 'error' && (
+            <div className="flex justify-start">
+              <div className="rounded-xl px-3.5 py-2.5 bg-white/[0.04] text-[var(--text-primary)]">
+                <p className="text-[13px]">Lo siento, ocurri&oacute; un error al procesar tu consulta. Intenta de nuevo.</p>
               </div>
             </div>
           )}
@@ -494,12 +505,12 @@ export default function ChatPanel() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe tu pregunta..."
-              disabled={loading}
+              disabled={isLoading}
               className="flex-1 bg-transparent text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={!input.trim() || loading}
+              disabled={!input.trim() || isLoading}
               className="w-7 h-7 flex items-center justify-center rounded-lg bg-[var(--accent)] text-black disabled:opacity-30 transition-opacity cursor-pointer shrink-0"
               aria-label="Enviar"
             >

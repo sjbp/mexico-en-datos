@@ -9,14 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.82.0",
+    "@ai-sdk/anthropic": "^3.0.68",
+    "@ai-sdk/react": "^3.0.154",
     "@neondatabase/serverless": "^1.0.2",
     "@vercel/analytics": "^2.0.1",
+    "ai": "^6.0.152",
     "autoprefixer": "^10.4.27",
     "next": "^16.2.1",
     "postcss": "^8.5.8",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20",
