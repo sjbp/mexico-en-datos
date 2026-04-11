@@ -15,7 +15,6 @@ const topics = [
 
 const navItems = [
   { label: 'Panorama', href: '/' },
-  { label: 'Fuentes', href: '/fuentes' },
 ];
 
 export default function NavBar() {
@@ -118,6 +117,17 @@ export default function NavBar() {
               </div>
             )}
           </div>
+
+          <Link
+            href="/fuentes"
+            className={`px-3 py-1.5 text-[13px] rounded-md no-underline transition-colors ${
+              isActive('/fuentes')
+                ? 'text-white bg-white/[0.08]'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-white/[0.04]'
+            }`}
+          >
+            Fuentes
+          </Link>
         </div>
 
         {/* Right side: AI CTA (desktop) + hamburger (mobile) */}
@@ -177,6 +187,18 @@ export default function NavBar() {
               <span>{topic.label}</span>
             </Link>
           ))}
+
+          <Link
+            href="/fuentes"
+            className={`flex items-center gap-3 px-3 py-2.5 text-[14px] rounded-lg no-underline transition-colors ${
+              isActive('/fuentes')
+                ? 'text-white bg-white/[0.08]'
+                : 'text-[var(--text-muted)] hover:text-white'
+            }`}
+          >
+            <span>📋</span>
+            <span>Fuentes</span>
+          </Link>
 
           <div className="mt-4 pt-4 border-t border-[var(--border)]">
             <button
