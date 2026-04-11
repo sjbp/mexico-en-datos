@@ -26,24 +26,23 @@ export default function Hero() {
 
   return (
     <div className="pt-16 pb-4 px-[var(--pad-page)] mb-6 flex flex-col items-center text-center">
-      {/* Bold AI-first headline */}
+      {/* Headline */}
       <h1 className="text-[44px] font-bold tracking-[-0.03em] leading-[1.15] text-white max-sm:text-3xl mb-3 max-w-[700px]">
         ¿Qu&eacute; quieres saber sobre M&eacute;xico?
       </h1>
-      <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] max-w-[560px] mb-8" style={{ textWrap: 'pretty' }}>
-        Pregunta lo que sea sobre la econom&iacute;a, empleo, seguridad o salud de M&eacute;xico.
-        La IA consulta datos oficiales de INEGI, Banxico y m&aacute;s.
+      <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] max-w-[480px] mb-8">
+        Datos oficiales de INEGI, Banxico, CONEVAL y m&aacute;s, con gr&aacute;ficas generadas por IA.
       </p>
 
-      {/* AI Input — Hex-inspired */}
+      {/* AI Input */}
       <div className="w-full max-w-[640px] mb-6">
         <div className="relative bg-[var(--surface)] border border-[var(--border)] rounded-2xl transition-all focus-within:border-[var(--accent)]/50 focus-within:shadow-[0_0_20px_rgba(255,159,67,0.08)]">
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="¿Cuál es la inflación actual? ¿Qué tan seguro es Querétaro? ¿De qué muere la gente?"
-            rows={2}
+            placeholder="Pregunta sobre M&eacute;xico..."
+            rows={1}
             className="w-full bg-transparent text-[15px] text-white placeholder:text-[var(--text-muted)] px-5 pt-4 pb-2 resize-none outline-none text-left"
           />
           <div className="flex items-center justify-between px-4 pb-3">
@@ -53,9 +52,6 @@ export default function Hero() {
                   <path d="M12 3L14.5 8.5L20 9.27L16 13.14L16.94 18.63L12 16L7.06 18.63L8 13.14L4 9.27L9.5 8.5L12 3Z" />
                 </svg>
                 IA
-              </span>
-              <span className="text-[11px] text-[var(--text-muted)]">
-                Datos en tiempo real de fuentes oficiales
               </span>
             </div>
             <button
@@ -72,13 +68,15 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Quick suggestion pills */}
+      {/* Suggestion pills */}
       <div className="flex flex-wrap justify-center gap-2 max-w-[640px] mb-4">
         {[
-          '¿Cuál es la inflación actual?',
-          'Estado más violento',
-          'Causas de muerte',
-          'Informalidad por sector',
+          'Inflaci\u00f3n actual',
+          'Ingreso vs informalidad por sector',
+          'Homicidios por estado',
+          'Cifra negra vs confianza policial',
+          'Principales causas de muerte',
+          'Tipo de cambio',
         ].map((q) => (
           <button
             key={q}

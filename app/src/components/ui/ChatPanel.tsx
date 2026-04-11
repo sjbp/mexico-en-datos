@@ -184,12 +184,12 @@ function renderInline(text: string): React.ReactNode[] {
 // ── Chat panel component ────────────────────────────────────────────────
 
 const SUGGESTIONS = [
-  { emoji: '\u{1F4C8}', text: '\u00BFC\u00F3mo ha evolucionado la inflaci\u00F3n?' },
-  { emoji: '\u{1F5FA}\uFE0F', text: '\u00BFCu\u00E1l es el estado m\u00E1s violento?' },
-  { emoji: '\u{1F4BC}', text: 'Informalidad por sector econ\u00F3mico' },
+  { emoji: '\u{1F4C8}', text: 'Evoluci\u00f3n de la inflaci\u00f3n' },
+  { emoji: '\u{1F4BC}', text: 'Ingreso vs informalidad por sector' },
+  { emoji: '\u{1F5FA}\uFE0F', text: 'Homicidios por estado' },
+  { emoji: '\u{1F512}', text: 'Cifra negra vs confianza policial' },
   { emoji: '\u{1F480}', text: 'Principales causas de muerte' },
-  { emoji: '\u{1F512}', text: '\u00BFQu\u00E9 delitos tienen mayor cifra negra?' },
-  { emoji: '\u{1F4B1}', text: '\u00BFCu\u00E1l es el tipo de cambio hoy?' },
+  { emoji: '\u{1F4B1}', text: 'Tipo de cambio' },
 ];
 
 export default function ChatPanel() {
@@ -320,10 +320,10 @@ export default function ChatPanel() {
           {messages.length === 0 && !isLoading && (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
               <p className="text-[14px] text-[var(--text-secondary)] mb-1">
-                Pregunta lo que quieras sobre los datos de M&eacute;xico
+                Pregunta sobre M&eacute;xico
               </p>
               <p className="text-[12px] text-[var(--text-muted)] mb-6">
-                Econom&iacute;a, empleo, seguridad, salud y m&aacute;s
+                Datos oficiales con gr&aacute;ficas generadas por IA
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {SUGGESTIONS.map((s) => (
