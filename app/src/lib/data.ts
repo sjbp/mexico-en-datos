@@ -85,6 +85,47 @@ export async function getTopicsWithCounts(): Promise<{ topic: string; count: num
   }
 }
 
+/** Latest data date per source — for SourcesGrid "last updated" labels. */
+export async function getSourceLastUpdated(): Promise<Record<string, string>> {
+  try {
+    const rows = await query<{ source: string; latest: string }>(`
+      SELECT i.source, MAX(iv.period_date)::text AS latest
+      FROM indicator_values iv
+      JOIN indicators i ON i.id = iv.indicator_id
+      WHERE i.source IS NOT NULL
+      GROUP BY i.source
+    `);
+    const map: Record<string, string> = {};
+    for (const r of rows) map[r.source] = r.latest;
+
+    // Non-indicator tables
+    const [empRow] = await query<{ latest: string }>(
+      `SELECT MAX(quarter_date)::text AS latest FROM employment_stats`
+    );
+    if (empRow?.latest) map['ENOE'] = empRow.latest;
+
+    const [envRow] = await query<{ latest: string }>(
+      `SELECT MAX(year)::text AS latest FROM envipe_stats`
+    );
+    if (envRow?.latest) map['ENVIPE'] = envRow.latest;
+
+    const [mortRow] = await query<{ latest: string }>(
+      `SELECT MAX(year)::text AS latest FROM mortality_stats`
+    );
+    if (mortRow?.latest) map['Sec. Salud'] = mortRow.latest;
+
+    const [ensaRow] = await query<{ latest: string }>(
+      `SELECT MAX(year)::text AS latest FROM ensanut_stats`
+    );
+    if (ensaRow?.latest) map['ENSANUT'] = ensaRow.latest;
+
+    return map;
+  } catch (error) {
+    console.error('Error fetching source last updated:', error);
+    return {};
+  }
+}
+
 export async function getIndicatorValuesByState(
   id: string,
   options?: { latest?: boolean },

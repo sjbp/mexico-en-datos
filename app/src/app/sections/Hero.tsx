@@ -31,7 +31,7 @@ export default function Hero() {
         ¿Qu&eacute; quieres saber sobre M&eacute;xico?
       </h1>
       <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] max-w-[480px] mb-8">
-        Datos oficiales de INEGI, Banxico, CONEVAL y m&aacute;s, con gr&aacute;ficas generadas por IA.
+        Datos oficiales de INEGI, Banxico, CONEVAL y m&aacute;s.
       </p>
 
       {/* AI Input */}
