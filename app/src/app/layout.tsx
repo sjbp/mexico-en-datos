@@ -6,10 +6,40 @@ import Footer from "@/components/ui/Footer";
 import { ChatProvider } from "@/components/ui/ChatProvider";
 import ChatPanel from "@/components/ui/ChatPanel";
 
+const SITE_URL = 'https://datamx.sebastian.mx';
+
 export const metadata: Metadata = {
-  title: "México en Datos — Estadísticas públicas de México",
+  title: {
+    default: 'M\u00e9xico en Datos \u2014 Estad\u00edsticas p\u00fablicas de M\u00e9xico',
+    template: '%s | M\u00e9xico en Datos',
+  },
   description:
-    "Explora datos de INEGI, Secretaría de Salud, IMSS, CONAPO y más. Indicadores económicos, empleo, salud, seguridad y demografía de México en un solo lugar.",
+    'Explora datos oficiales de INEGI, Banxico, ENOE, ENVIPE y m\u00e1s. Indicadores econ\u00f3micos, empleo, seguridad y salud de M\u00e9xico con gr\u00e1ficas interactivas y un asistente de IA.',
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'M\u00e9xico en Datos',
+    description: 'Datos oficiales de M\u00e9xico: econom\u00eda, empleo, seguridad y salud. Gr\u00e1ficas interactivas y asistente de IA.',
+    url: SITE_URL,
+    siteName: 'M\u00e9xico en Datos',
+    locale: 'es_MX',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'M\u00e9xico en Datos',
+    description: 'Datos oficiales de M\u00e9xico con gr\u00e1ficas interactivas y asistente de IA.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  keywords: [
+    'M\u00e9xico datos', 'INEGI', 'Banxico', 'inflaci\u00f3n M\u00e9xico', 'PIB M\u00e9xico',
+    'desempleo M\u00e9xico', 'tipo de cambio', 'cifra negra', 'informalidad laboral',
+    'estad\u00edsticas M\u00e9xico', 'datos abiertos M\u00e9xico', 'ENOE', 'ENVIPE',
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
