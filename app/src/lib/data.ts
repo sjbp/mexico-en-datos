@@ -719,12 +719,17 @@ async function resolveStatic(item: ScorecardItem): Promise<HeadlineResult> {
     }
   }
 
+  // Compute change from the last two sparkline values if available
+  const change = sparkValues.length >= 2
+    ? sparkValues[sparkValues.length - 1] - sparkValues[sparkValues.length - 2]
+    : 0;
+
   return {
     id: item.id,
     label: item.label,
     value: formatScorecardValue(item.staticValue!, item.format),
-    change: 0,
-    changePeriod: '',
+    change,
+    changePeriod: item.staticPeriod ? `\u00b7 ${item.staticPeriod}` : '',
     sub: item.staticPeriod ?? item.context,
     sparkValues,
     isGoodDown: item.isGoodDown,
