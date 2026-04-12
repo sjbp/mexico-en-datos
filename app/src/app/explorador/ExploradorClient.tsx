@@ -20,10 +20,10 @@ export default function ExploradorClient({ indicators, topics, initialTopic }: E
 
   const tabs = useMemo(() => {
     return [
-      { id: 'todos', label: 'Todos' },
-      ...topics.map((t) => ({ id: t.topic, label: fmtTopic(t.topic) })),
+      { id: 'todos', label: 'Todos', count: indicators.length },
+      ...topics.map((t) => ({ id: t.topic, label: fmtTopic(t.topic), count: t.count })),
     ];
-  }, [topics]);
+  }, [topics, indicators.length]);
 
   const filtered = useMemo(() => {
     return indicators.filter((ind) => {
@@ -71,7 +71,7 @@ export default function ExploradorClient({ indicators, topics, initialTopic }: E
                 : 'bg-transparent text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--accent)]/40 hover:text-[var(--text-secondary)]'
             }`}
           >
-            {tab.label}
+            {tab.label} ({tab.count})
           </button>
         ))}
       </div>
