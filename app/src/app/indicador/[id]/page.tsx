@@ -77,7 +77,7 @@ export default async function IndicadorPage({
         </Link>
 
         <h1 className="text-3xl font-bold tracking-tight text-white mb-3">
-          {indicator.name_es}
+          {indicator.name_es.replace(/\s*\(.*\)$/, '')}
         </h1>
 
         {/* Metadata row */}

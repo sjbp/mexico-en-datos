@@ -12,9 +12,9 @@ interface SerializedValue {
 }
 
 const RANGE_OPTIONS = [
-  { id: '1a', label: '1A', months: 12 },
-  { id: '5a', label: '5A', months: 60 },
-  { id: '10a', label: '10A', months: 120 },
+  { id: '1a', label: '1A', months: 18 },
+  { id: '5a', label: '5A', months: 66 },
+  { id: '10a', label: '10A', months: 126 },
   { id: 'max', label: 'Max', months: Infinity },
 ];
 
@@ -41,9 +41,14 @@ export default function IndicadorClient({
     if (rangeConfig.months === Infinity) return allValues;
     const cutoffDate = new Date();
     cutoffDate.setMonth(cutoffDate.getMonth() - rangeConfig.months);
-    return allValues.filter(
+    const filtered = allValues.filter(
       (v) => new Date(v.period_date) >= cutoffDate
     );
+    // Ensure at least 4 data points (important for quarterly indicators)
+    if (filtered.length < 4 && allValues.length >= 4) {
+      return allValues.slice(-Math.min(8, allValues.length));
+    }
+    return filtered.length > 0 ? filtered : allValues.slice(-4);
   }, [allValues, rangeConfig.months]);
 
   const numericValues = useMemo(
@@ -53,26 +58,29 @@ export default function IndicadorClient({
 
   const labels = useMemo(() => {
     return filteredValues.map((v, i) => {
-      // Use period string directly for readable labels
-      const p = v.period;
-      const date = new Date(v.period_date);
-      const year = date.getFullYear();
-      const month = date.getMonth();
+      const p = v.period; // e.g. "2024/Q1", "2024/03"
 
-      // First point always gets a label
-      if (i === 0) return p.includes('Q') ? `${year} ${p.split('/')[1]}` : String(year);
-
-      // Quarterly: show every quarter
-      if (frequency === 'quarterly') {
-        return p.includes('Q') ? `${year} ${p.split('/')[1]}` : String(year);
+      // Quarterly: parse from period string (avoids timezone bugs with Date)
+      if (p.includes('Q')) {
+        const [yr, q] = p.split('/');
+        return `${yr} ${q}`;
       }
 
-      // Monthly/biweekly: show year at January
-      if (month === 0) return String(year);
+      // Monthly/biweekly: parse year from period string, show at January
+      const yearMatch = p.match(/^(\d{4})/);
+      const monthMatch = p.match(/\/(\d{2})$/);
+      if (yearMatch && monthMatch) {
+        const yr = yearMatch[1];
+        const mo = parseInt(monthMatch[1], 10);
+        if (i === 0 || mo === 1) return yr;
+        return '';
+      }
 
+      // Fallback
+      if (i === 0) return p;
       return '';
     });
-  }, [filteredValues, frequency]);
+  }, [filteredValues]);
 
   // Full period strings for tooltip display
   const periods = useMemo(
