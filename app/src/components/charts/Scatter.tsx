@@ -210,6 +210,29 @@ export default function Scatter({
     setTooltip((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  const handleTouch = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    const geo = geoRef.current;
+    if (!canvas || !geo || points.length < 2) return;
+    const touch = e.touches[0];
+    if (!touch) { setTooltip((prev) => ({ ...prev, visible: false })); return; }
+    const rect = canvas.getBoundingClientRect();
+    const mx = touch.clientX - rect.left;
+    const my = touch.clientY - rect.top;
+    let minDist = Infinity;
+    let nearest = -1;
+    points.forEach((p, i) => {
+      const px = geo.padL + ((p.x - geo.xMin) / (geo.xMax - geo.xMin)) * geo.cw;
+      const py = geo.padT + geo.ch - ((p.y - geo.yMin) / (geo.yMax - geo.yMin)) * geo.ch;
+      const dist = Math.sqrt((mx - px) ** 2 + (my - py) ** 2);
+      if (dist < minDist) { minDist = dist; nearest = i; }
+    });
+    if (nearest >= 0 && minDist < 40) {
+      const p = points[nearest];
+      setTooltip({ visible: true, x: mx, y: my, label: p.label, xVal: p.x.toFixed(xDecimals) + xUnit, yVal: p.y.toFixed(yDecimals) + yUnit });
+    }
+  }, [points, xDecimals, yDecimals, xUnit, yUnit]);
+
   if (!points || points.length < 2) return null;
 
   return (
@@ -217,8 +240,12 @@ export default function Scatter({
       <canvas
         ref={canvasRef}
         className="block w-full"
+        style={{ touchAction: 'pan-y' }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouch}
+        onTouchMove={handleTouch}
+        onTouchEnd={() => setTooltip((prev) => ({ ...prev, visible: false }))}
       />
       {tooltip.visible && (
         <div

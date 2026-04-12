@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
@@ -8,6 +8,13 @@ import { ChatProvider } from "@/components/ui/ChatProvider";
 import ChatPanel from "@/components/ui/ChatPanel";
 
 const SITE_URL = 'https://datamx.sebastian.mx';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   title: {

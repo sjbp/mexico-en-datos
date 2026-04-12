@@ -30,8 +30,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const submitRef = useRef<((msg: string) => void) | null>(null);
 
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
+  const open = useCallback(() => {
+    setIsOpen(true);
+    document.body.style.overflow = 'hidden';
+  }, []);
+  const close = useCallback(() => {
+    setIsOpen(false);
+    document.body.style.overflow = '';
+  }, []);
 
   const sendMessage = useCallback((message: string) => {
     setIsOpen(true);

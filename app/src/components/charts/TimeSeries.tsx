@@ -222,13 +222,37 @@ export default function TimeSeries({
     setTooltip((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  const handleTouch = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    const geo = geoRef.current;
+    if (!canvas || !geo || !series.length) return;
+    const touch = e.touches[0];
+    if (!touch) { setTooltip((prev) => ({ ...prev, visible: false })); return; }
+    const rect = canvas.getBoundingClientRect();
+    const mx = touch.clientX - rect.left;
+    const idx = Math.round(((mx - geo.padL) / geo.cw) * (geo.n - 1));
+    if (idx >= 0 && idx < geo.n) {
+      const s = series[0];
+      setTooltip({
+        visible: true, x: mx, y: touch.clientY - rect.top,
+        title: (periods && periods[idx]) || labels[idx] || '',
+        value: s.values[idx].toFixed(valueDecimals) + yUnit,
+        detail: s.label,
+      });
+    }
+  }, [series, labels, periods, valueDecimals, yUnit]);
+
   return (
     <div ref={containerRef} className="relative">
       <canvas
         ref={canvasRef}
         className="block w-full"
+        style={{ touchAction: 'pan-y' }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouch}
+        onTouchMove={handleTouch}
+        onTouchEnd={() => setTooltip((prev) => ({ ...prev, visible: false }))}
       />
       {tooltip.visible && (
         <div

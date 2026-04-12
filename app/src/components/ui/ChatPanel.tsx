@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, type FormEvent, type KeyboardEvent } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
 import { useChatPanel } from './ChatProvider';
 import Sparkline from '@/components/charts/Sparkline';
@@ -199,8 +200,15 @@ export default function ChatPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const sendMessageRef = useRef<(msg: string) => void>(undefined);
+  const pathname = usePathname();
 
   const isLoading = status === 'submitted' || status === 'streaming';
+
+  // Close panel on route change
+  useEffect(() => {
+    if (isOpen) close();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -280,6 +288,7 @@ export default function ChatPanel() {
         className={`fixed top-0 right-0 bottom-0 z-[70] w-full max-w-[520px] bg-[#0a0a0a] border-l border-[var(--border)] flex flex-col transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{ touchAction: 'pan-y' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
@@ -316,7 +325,7 @@ export default function ChatPanel() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 max-sm:px-3 space-y-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 max-sm:px-3 space-y-4" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
           {messages.length === 0 && !isLoading && (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
               <p className="text-[14px] text-[var(--text-secondary)] mb-1">
