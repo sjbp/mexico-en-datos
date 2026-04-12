@@ -19,7 +19,7 @@ jobs:
     # - Owner PR review comments (inline)
     if: |
       github.event_name == 'issues' ||
-      (github.event_name == 'issue_comment' && !github.event.issue.pull_request && github.event.comment.user.login == github.repository_owner) ||
+      (github.event_name == 'issue_comment' && github.event.comment.user.login == github.repository_owner) ||
       (github.event_name == 'pull_request_review_comment' && github.event.comment.user.login == github.repository_owner) ||
       (github.event_name == 'pull_request_review' && github.event.review.user.login == github.repository_owner)
     runs-on: ubuntu-latest
