@@ -12,6 +12,10 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
     summary: "Tasa de interes objetivo de politica monetaria, fijada por la Junta de Gobierno de Banxico.",
     context: "Afecta directamente hipotecas, ahorro y credito. Banxico la ajusta para controlar la inflacion. Subidas encarecen el credito; recortes lo abaratan. Se decide en juntas aproximadamente cada 6 semanas."
   },
+  "SF283": {
+    summary: "Tasa de Interes Interbancaria de Equilibrio a 28 dias, referencia para creditos y productos financieros en Mexico.",
+    context: "La TIIE es la tasa a la que los bancos se prestan entre si. Es la base para la mayoria de creditos hipotecarios y empresariales en Mexico (ej: TIIE + 4 puntos). Sigue de cerca la tasa objetivo de Banxico pero refleja condiciones reales del mercado interbancario."
+  },
   "SP1": {
     summary: "Indice Nacional de Precios al Consumidor, base segunda quincena de julio 2018 = 100. Serie de Banxico.",
     context: "Mismo indice que publica INEGI pero a traves de Banxico, que suele mantener la serie mas actualizada. Mide el costo de una canasta representativa de bienes y servicios."

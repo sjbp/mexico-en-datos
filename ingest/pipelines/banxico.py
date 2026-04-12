@@ -62,6 +62,13 @@ BANXICO_SERIES = [
         "unit": "percent",
         "frequency": "monthly",
     },
+    {
+        "id": "SF283",
+        "name_es": "TIIE a 28 días",
+        "topic": "financial",
+        "unit": "percent",
+        "frequency": "daily",
+    },
 ]
 
 
