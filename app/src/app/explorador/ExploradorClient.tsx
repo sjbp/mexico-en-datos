@@ -19,9 +19,10 @@ export default function ExploradorClient({ indicators, topics, initialTopic }: E
   const [activeTab, setActiveTab] = useState(initialTopic || 'todos');
 
   const tabs = useMemo(() => {
+    const totalCount = topics.reduce((sum, t) => sum + t.count, 0);
     return [
-      { id: 'todos', label: 'Todos' },
-      ...topics.map((t) => ({ id: t.topic, label: fmtTopic(t.topic) })),
+      { id: 'todos', label: `Todos (${totalCount})` },
+      ...topics.map((t) => ({ id: t.topic, label: `${fmtTopic(t.topic)} (${t.count})` })),
     ];
   }, [topics]);
 
