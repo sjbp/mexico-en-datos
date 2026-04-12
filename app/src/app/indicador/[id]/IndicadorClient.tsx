@@ -58,27 +58,32 @@ export default function IndicadorClient({
 
   const labels = useMemo(() => {
     return filteredValues.map((v, i) => {
-      const p = v.period; // e.g. "2024/Q1", "2024/03"
+      const p = v.period; // e.g. "2024/Q1", "2024/03", "2024-01-15"
 
-      // Quarterly: parse from period string (avoids timezone bugs with Date)
+      // Quarterly: "YYYY/QN" — label every quarter (TimeSeries handles spacing)
       if (p.includes('Q')) {
         const [yr, q] = p.split('/');
         return `${yr} ${q}`;
       }
 
-      // Monthly/biweekly: parse year from period string, show at January
-      const yearMatch = p.match(/^(\d{4})/);
-      const monthMatch = p.match(/\/(\d{2})$/);
-      if (yearMatch && monthMatch) {
-        const yr = yearMatch[1];
-        const mo = parseInt(monthMatch[1], 10);
-        if (i === 0 || mo === 1) return yr;
-        return '';
+      // Monthly/biweekly: "YYYY/MM" (INEGI format)
+      const slashMonth = p.match(/^(\d{4})\/(\d{2})$/);
+      if (slashMonth) {
+        const yr = slashMonth[1];
+        const mo = parseInt(slashMonth[2], 10);
+        return (i === 0 || mo === 1) ? yr : '';
+      }
+
+      // Daily: "YYYY-MM-DD" (Banxico ISO format)
+      const isoDate = p.match(/^(\d{4})-(\d{2})-\d{2}$/);
+      if (isoDate) {
+        const yr = isoDate[1];
+        const mo = parseInt(isoDate[2], 10);
+        return (i === 0 || mo === 1) ? yr : '';
       }
 
       // Fallback
-      if (i === 0) return p;
-      return '';
+      return i === 0 ? p : '';
     });
   }, [filteredValues]);
 
