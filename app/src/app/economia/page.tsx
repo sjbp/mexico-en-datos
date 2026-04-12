@@ -154,7 +154,7 @@ export default async function EconomiaPage() {
 
       {/* IGAE trend */}
       <SectionHeader
-        title="IGAE: Actividad econ\u00f3mica"
+        title="IGAE: Actividad econ&oacute;mica"
         linkText="Ver indicador"
         linkHref="/indicador/736939"
       />
@@ -215,7 +215,7 @@ export default async function EconomiaPage() {
       </div>
 
       {/* Sub-page links */}
-      <SectionHeader title="Explora m\u00e1s" />
+      <SectionHeader title="Explora m&aacute;s" />
       <div className="px-[var(--pad-page)] mb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Link href="/comercio">
