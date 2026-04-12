@@ -58,26 +58,40 @@ export default function IndicadorClient({
 
   const labels = useMemo(() => {
     return filteredValues.map((v, i) => {
-      const p = v.period; // e.g. "2024/Q1", "2024/03"
+      const p = v.period; // e.g. "2024/Q1", "2024/03", "2024-03-15"
 
-      // Quarterly: parse from period string (avoids timezone bugs with Date)
+      // Quarterly: show at Q1 each year and first point
       if (p.includes('Q')) {
         const [yr, q] = p.split('/');
-        return `${yr} ${q}`;
+        if (i === 0 || q === 'Q1') return `${yr} Q1`;
+        return filteredValues.length <= 8 ? `${yr} ${q}` : '';
       }
 
-      // Monthly/biweekly: parse year from period string, show at January
-      const yearMatch = p.match(/^(\d{4})/);
-      const monthMatch = p.match(/\/(\d{2})$/);
-      if (yearMatch && monthMatch) {
-        const yr = yearMatch[1];
-        const mo = parseInt(monthMatch[1], 10);
+      // Daily ISO date (YYYY-MM-DD): show year at year boundaries
+      const isoMatch = p.match(/^(\d{4})-(\d{2})-\d{2}$/);
+      if (isoMatch) {
+        const yr = isoMatch[1];
+        const prevYr = i > 0 ? filteredValues[i - 1].period.slice(0, 4) : null;
+        if (i === 0 || yr !== prevYr) return yr;
+        return '';
+      }
+
+      // Monthly (YYYY/MM): show year at January or first point
+      const monthlyMatch = p.match(/^(\d{4})\/(\d{2})$/);
+      if (monthlyMatch) {
+        const yr = monthlyMatch[1];
+        const mo = parseInt(monthlyMatch[2], 10);
         if (i === 0 || mo === 1) return yr;
         return '';
       }
 
-      // Fallback
-      if (i === 0) return p;
+      // Annual (YYYY): show every year
+      if (/^\d{4}$/.test(p)) return p;
+
+      // Generic: show year at year changes
+      const yr = p.slice(0, 4);
+      const prevYr = i > 0 ? filteredValues[i - 1].period.slice(0, 4) : null;
+      if (i === 0 || yr !== prevYr) return yr;
       return '';
     });
   }, [filteredValues]);
@@ -95,7 +109,12 @@ export default function IndicadorClient({
   const valRange = maxVal - Math.min(minVal, 0);
   const yStep = valRange > 200 ? 50 : valRange > 50 ? 10 : valRange > 10 ? 5 : valRange > 4 ? 2 : 1;
   const yMin = minVal < 0 ? Math.floor(minVal / yStep) * yStep : undefined;
-  const labelStep = filteredValues.length > 60 ? 12 : filteredValues.length > 24 ? 6 : 3;
+  const hasIsoDates = filteredValues.length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(filteredValues[0].period);
+  const labelStep = hasIsoDates ? 1
+    : filteredValues.length > 60 ? 12
+    : filteredValues.length > 24 ? 6
+    : filteredValues.length > 8 ? 3
+    : 1;
 
   const series = [
     {
