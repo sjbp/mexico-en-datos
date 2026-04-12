@@ -2,18 +2,16 @@ name: Claude Code Agent
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened]
   issue_comment:
     types: [created]
 
 jobs:
   agent:
-    # Only run when:
-    # - Issue has 'agent' label (new issue or just labeled)
-    # - Or a comment is made on an 'agent'-labeled issue by the repo owner
+    # Run on every new issue, or owner comments on any issue
     if: |
-      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'agent')) ||
-      (github.event_name == 'issue_comment' && contains(github.event.issue.labels.*.name, 'agent') && github.event.comment.user.login == github.repository_owner)
+      github.event_name == 'issues' ||
+      (github.event_name == 'issue_comment' && github.event.comment.user.login == github.repository_owner)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -31,6 +29,22 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: claude-sonnet-4-20250514
+          custom_instructions: |
+            You are an agent maintaining México en Datos (datamx.sebastian.mx), a public data platform.
+
+            TRIAGE EVERY ISSUE before writing any code. Classify it:
+
+            1. SPAM/JUNK/OFF-TOPIC — Reply politely that this repo is for México en Datos issues, close the issue.
+
+            2. UNCLEAR — Reply asking for clarification. Don't write code. Examples: vague bug reports without reproduction steps, feature requests without enough detail.
+
+            3. CLEAR + LOW RISK (bug fixes, new series to existing pipeline, description/translation fixes, CSS fixes) — Go ahead and implement. Create a branch, make the fix, open a PR. Follow CLAUDE.md.
+
+            4. CLEAR + MEDIUM RISK (new components, chat tool changes, prompt changes) — Implement in a PR with a thorough description of what changed and why.
+
+            5. CLEAR + HIGH RISK (new data sources, DB schema changes, architectural changes) — Do NOT write code. Instead, comment with a research proposal: what data, what API/format, what schema, what frontend, estimated complexity. Wait for owner approval before implementing.
+
+            Always read CLAUDE.md and BRAND.md before starting work. Always run `cd app && npx next build` to verify your changes compile.
           allowed_tools: |
             Bash(npm install:*),Bash(npx next build:*),Bash(uv run:*),Bash(git:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(curl:*)
             Read,Write,Edit,Glob,Grep
