@@ -14,7 +14,7 @@ export default function Footer() {
           <p className="text-[12px] text-[var(--text-muted)]/60">
             Hecho por{' '}
             <a href="https://www.linkedin.com/in/sebastianjbp/" target="_blank" rel="noopener noreferrer" className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">
-              Sebasti&aacute;n Blanco
+              Sebasti&aacute;n
             </a>
           </p>
         </div>
@@ -27,7 +27,7 @@ export default function Footer() {
             href="https://buymeacoffee.com/datamx"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors mt-1"
+            className="inline-flex items-center gap-1.5 text-[12px] text-[var(--accent)] hover:brightness-125 transition-all mt-1"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3" />
