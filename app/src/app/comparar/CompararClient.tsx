@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card';
 import { seriesColor } from '@/lib/colors';
 import type { Indicator, IndicatorValue } from '@/lib/types';
 import { getIndicatorDescription } from '@/lib/indicatorDescriptions';
+import { fmtTopic } from '@/lib/format';
 
 const MAX_SELECTED = 3;
 
@@ -127,13 +128,10 @@ export default function CompararClient({ indicators }: CompararClientProps) {
           </div>
           <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto">
             {Object.entries(grouped).map(([topic, inds]) => {
-              const topicDisplay = topic
-                .replace(/_/g, ' ')
-                .replace(/\b\w/g, (c) => c.toUpperCase());
               return (
                 <div key={topic}>
                   <div className="text-xs font-semibold text-[var(--text-secondary)] mb-2">
-                    {topicDisplay}
+                    {fmtTopic(topic)}
                   </div>
                   <div className="flex flex-col gap-[2px]">
                     {inds.map((ind) => {

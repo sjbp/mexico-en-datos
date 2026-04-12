@@ -1,11 +1,10 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Badge from '@/components/ui/Badge';
 import StaleWarningBanner from '@/components/ui/StaleWarningBanner';
 import IndicadorClient from './IndicadorClient';
 import { getIndicator, getIndicatorValues, getLatestValue } from '@/lib/data';
-import { fmtNum } from '@/lib/format';
+import { fmtNum, fmtTopic } from '@/lib/format';
 import { getIndicatorDescription } from '@/lib/indicatorDescriptions';
 
 export default async function IndicadorPage({
@@ -37,9 +36,7 @@ export default async function IndicadorPage({
     ? `${change >= 0 ? '+' : ''}${change.toFixed(2)} pp`
     : `${change >= 0 ? '+' : ''}${fmtNum(change, 1)}`;
 
-  const topicDisplay = indicator.topic
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const topicDisplay = fmtTopic(indicator.topic);
 
   const formattedValue = latestVal != null
     ? isPercent
@@ -63,18 +60,10 @@ export default async function IndicadorPage({
         <Breadcrumb
           items={[
             { label: 'Inicio', href: '/' },
-            { label: 'Explorador', href: '/explorador' },
             { label: topicDisplay, href: `/explorador?topic=${encodeURIComponent(indicator.topic)}` },
-            { label: indicator.name_es },
+            { label: indicator.name_es.replace(/\s*\(.*\)$/, '') },
           ]}
         />
-
-        <Link
-          href="/explorador"
-          className="inline-flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors mb-4"
-        >
-          &larr; Volver al explorador
-        </Link>
 
         <h1 className="text-3xl font-bold tracking-tight text-white mb-3">
           {indicator.name_es.replace(/\s*\(.*\)$/, '')}

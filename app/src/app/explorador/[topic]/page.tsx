@@ -1,6 +1,7 @@
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import ExploradorClient from '../ExploradorClient';
 import { getIndicators, getTopicsWithCounts } from '@/lib/data';
+import { fmtTopic } from '@/lib/format';
 
 export default async function TopicPage({
   params,
@@ -15,9 +16,7 @@ export default async function TopicPage({
   ]);
 
   const topicExists = topics.some((t) => t.topic === topic);
-  const topicDisplay = topic
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const topicDisplay = fmtTopic(topic);
 
   if (!topicExists) {
     return (

@@ -25,3 +25,19 @@ export function fmtCompact(n: number | null | undefined): string {
   if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
   return fmtNum(n);
 }
+
+/** Translate DB topic keys to Spanish display names. */
+const TOPIC_LABELS: Record<string, string> = {
+  prices: 'Precios',
+  economic_activity: 'Actividad econ\u00f3mica',
+  employment: 'Empleo',
+  trade: 'Comercio exterior',
+  confidence: 'Confianza',
+  financial: 'Tipo de cambio y tasas',
+  seguridad: 'Seguridad',
+  health: 'Salud',
+};
+
+export function fmtTopic(topic: string): string {
+  return TOPIC_LABELS[topic] ?? topic.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
