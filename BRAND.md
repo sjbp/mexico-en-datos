@@ -259,10 +259,10 @@ Padding: 2px vertical
 
 ### Tooltip
 
-Follows the cursor on chart hover.
+Follows the cursor on chart hover. Uses `position: absolute` relative to the chart container (not `fixed`, which breaks inside CSS-transformed ancestors like the chat panel).
 
 ```css
-position: fixed;
+position: absolute;
 pointer-events: none;
 background: var(--surface);
 border: 1px solid var(--border);

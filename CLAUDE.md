@@ -2,6 +2,12 @@
 
 This is a public-facing data platform. Every change is visible to real users. Prioritize correctness, simplicity, and visual consistency above all else.
 
+**Key documents:**
+- `BRAND.md` — Design system: colors, typography, spacing, component specs. Follow it for all visual work.
+- `DESIGN.md` — Full architecture, data model, API references, roadmap.
+
+**Next.js version note:** This project uses Next.js 16 which has breaking changes from earlier versions. APIs, conventions, and file structure may differ from training data. When in doubt, read the code before writing new code.
+
 ## Core Principles
 
 1. **Data accuracy is non-negotiable.** Wrong numbers are worse than a broken page. Always validate data after ingestion. Never hardcode values that should come from the DB.
@@ -101,6 +107,50 @@ This is a public-facing data platform. Every change is visible to real users. Pr
 - Instructs Claude to always visualize data, keep text short, cite sources
 - Lists which tools produce which chart types
 - Changes to the system prompt affect all users — be conservative
+
+## Risk Levels
+
+Not all work carries the same risk. Follow the appropriate workflow:
+
+### Low risk (implement directly in a PR)
+- Bug fixes with clear reproduction steps
+- Adding a new series to an existing pipeline (e.g., new Banxico series ID)
+- Updating indicator descriptions or translations
+- CSS/styling fixes
+- Mobile responsiveness improvements
+
+### Medium risk (implement in PR, describe changes clearly for review)
+- New frontend pages or components
+- Changes to existing chart components
+- New AI chat tools
+- Modifications to the system prompt
+- Changes to GitHub Action workflows
+
+### High risk (propose first, implement only after approval)
+- **New data sources** — Requires new pipeline, possibly new DB tables, new frontend. See workflow below.
+- **Database schema changes** — Migration risks, could break existing data
+- **Major architectural changes** — Changing streaming approach, switching dependencies, etc.
+
+### New data source workflow
+When an issue requests data from a source we don't have yet:
+
+1. **Research phase** (comment on the issue, don't write code yet):
+   - What data is available? What API/format?
+   - What DB table structure is needed?
+   - What frontend pages would display it?
+   - What's the update frequency?
+   - Estimate complexity (pipeline + schema + frontend)
+
+2. **Wait for owner approval** on the proposal before proceeding.
+
+3. **Implementation phase** (after approval):
+   - Create DB migration in `db/migrations/`
+   - Write pipeline in `ingest/pipelines/`
+   - Add to GitHub Actions workflow
+   - Add frontend (indicator descriptions, topic labels, etc.)
+   - Follow the full Data Pipeline Checklist below
+
+4. **Open PR** with a thorough description of all changes.
 
 ## What NOT to Do
 
