@@ -1,0 +1,41 @@
+name: Claude Code Agent
+
+on:
+  issues:
+    types: [opened, labeled]
+  issue_comment:
+    types: [created]
+
+jobs:
+  agent:
+    # Only run when:
+    # - Issue has 'agent' label (new issue or just labeled)
+    # - Or a comment is made on an 'agent'-labeled issue by the repo owner
+    if: |
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'agent')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.issue.labels.*.name, 'agent') && github.event.comment.user.login == github.repository_owner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-20250514
+          allowed_tools: |
+            Bash(npm install:*),Bash(npx next build:*),Bash(uv run:*),Bash(git:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(curl:*)
+            Read,Write,Edit,Glob,Grep
+          issue_number: ${{ github.event.issue.number }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BANXICO_API_TOKEN: ${{ secrets.BANXICO_API_TOKEN }}
+          INEGI_API_TOKEN: ${{ secrets.INEGI_API_TOKEN }}
