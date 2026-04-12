@@ -19,9 +19,10 @@ export default function ExploradorClient({ indicators, topics, initialTopic }: E
   const [activeTab, setActiveTab] = useState(initialTopic || 'todos');
 
   const tabs = useMemo(() => {
+    const totalCount = topics.reduce((sum, t) => sum + t.count, 0);
     return [
-      { id: 'todos', label: 'Todos' },
-      ...topics.map((t) => ({ id: t.topic, label: fmtTopic(t.topic) })),
+      { id: 'todos', label: 'Todos', count: totalCount },
+      ...topics.map((t) => ({ id: t.topic, label: fmtTopic(t.topic), count: t.count })),
     ];
   }, [topics]);
 
@@ -71,7 +72,10 @@ export default function ExploradorClient({ indicators, topics, initialTopic }: E
                 : 'bg-transparent text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--accent)]/40 hover:text-[var(--text-secondary)]'
             }`}
           >
-            {tab.label}
+            {tab.label}{' '}
+            <span className={activeTab === tab.id ? 'opacity-60' : 'opacity-40'}>
+              ({tab.count})
+            </span>
           </button>
         ))}
       </div>
