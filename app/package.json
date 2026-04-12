@@ -13,6 +13,7 @@
     "@ai-sdk/react": "^3.0.154",
     "@neondatabase/serverless": "^1.0.2",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "ai": "^6.0.152",
     "autoprefixer": "^10.4.27",
     "next": "^16.2.1",
