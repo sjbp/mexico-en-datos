@@ -316,7 +316,7 @@ export default function ChatPanel() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 max-sm:px-3 space-y-4">
           {messages.length === 0 && !isLoading && (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
               <p className="text-[14px] text-[var(--text-secondary)] mb-1">
@@ -330,7 +330,7 @@ export default function ChatPanel() {
                   <button
                     key={s.text}
                     onClick={() => sendMessage(s.text)}
-                    className="px-3 py-1.5 text-[12px] text-[var(--text-secondary)] bg-white/[0.04] border border-[var(--border)] rounded-full hover:bg-white/[0.08] hover:border-[var(--border-hover)] transition-colors cursor-pointer"
+                    className="px-3 py-1.5 max-sm:px-2.5 max-sm:py-1 text-[12px] max-sm:text-[11px] text-[var(--text-secondary)] bg-white/[0.04] border border-[var(--border)] rounded-full hover:bg-white/[0.08] hover:border-[var(--border-hover)] transition-colors cursor-pointer"
                   >
                     {s.emoji} {s.text}
                   </button>
@@ -495,7 +495,7 @@ export default function ChatPanel() {
         {/* Input */}
         <form
           onSubmit={handleSubmit}
-          className="px-5 py-4 border-t border-[var(--border)]"
+          className="px-5 py-4 max-sm:px-3 max-sm:py-3 border-t border-[var(--border)]"
         >
           <div className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-3 py-2 focus-within:border-[var(--accent)]/40 transition-colors">
             <input

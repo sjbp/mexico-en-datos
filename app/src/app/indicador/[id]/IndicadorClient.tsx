@@ -160,7 +160,7 @@ export default function IndicadorClient({
         <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">
           Datos historicos
         </h3>
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-[400px] max-sm:max-h-[200px] overflow-y-auto">
           <DataTable
             columns={[
               { key: 'period', label: 'Periodo', align: 'left' },

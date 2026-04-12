@@ -116,7 +116,7 @@ export default async function IndicadorPage({
 
         {/* Latest value highlight */}
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5 mb-6 inline-flex items-baseline gap-4">
-          <span className="text-[36px] font-bold tabular-nums text-[var(--accent)] leading-none">
+          <span className="text-[36px] max-sm:text-[28px] font-bold tabular-nums text-[var(--accent)] leading-none">
             {formattedValue}
           </span>
           <span

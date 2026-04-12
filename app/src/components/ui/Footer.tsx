@@ -5,7 +5,7 @@ const linkClass = 'text-[var(--text-muted)] underline decoration-white/15 underl
 export default function Footer() {
   return (
     <div className="pt-12 border-t border-[var(--border)] mx-[var(--pad-page)]">
-      <div className="flex justify-between items-start gap-8 flex-wrap">
+      <div className="flex justify-between items-start gap-8 flex-wrap max-sm:flex-col max-sm:gap-5">
         <div className="max-w-[500px]">
           <p className="text-[13px] text-[var(--text-muted)] leading-relaxed mb-3">
             M&eacute;xico en Datos es un proyecto independiente de datos abiertos.
@@ -18,8 +18,8 @@ export default function Footer() {
             </a>
           </p>
         </div>
-        <div className="flex flex-col gap-2 items-end">
-          <div className="flex gap-6">
+        <div className="flex flex-col gap-2 items-end max-sm:items-start">
+          <div className="flex gap-6 max-sm:gap-4 max-sm:flex-wrap">
             <a href="https://github.com/sjbp/mexico-en-datos" target="_blank" rel="noopener noreferrer" className={linkClass}>GitHub</a>
             <a href="https://github.com/sjbp/mexico-en-datos/issues/new?labels=bug&template=bug_report.md&title=%5BBug%5D+" target="_blank" rel="noopener noreferrer" className={linkClass}>Reportar error</a>
             <Link href="/preguntas-frecuentes" className={linkClass}>FAQ</Link>

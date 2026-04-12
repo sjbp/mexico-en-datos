@@ -27,10 +27,10 @@ export default function Hero() {
   return (
     <div className="pt-16 pb-4 px-[var(--pad-page)] mb-6 flex flex-col items-center text-center">
       {/* Headline */}
-      <h1 className="text-[44px] font-bold tracking-[-0.03em] leading-[1.15] text-white max-sm:text-3xl mb-3 max-w-[700px]">
+      <h1 className="text-[44px] font-bold tracking-[-0.03em] leading-[1.15] text-white max-sm:text-2xl mb-3 max-w-[700px]">
         ¿Qu&eacute; quieres saber sobre M&eacute;xico?
       </h1>
-      <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] max-w-[480px] mb-8">
+      <p className="text-[15px] leading-relaxed text-[var(--text-secondary)] max-w-[480px] mb-8 max-sm:text-sm">
         Datos oficiales de INEGI, Banxico, CONEVAL y m&aacute;s.
       </p>
 
@@ -43,7 +43,7 @@ export default function Hero() {
             onKeyDown={handleKeyDown}
             placeholder="Pregunta sobre M&eacute;xico..."
             rows={1}
-            className="w-full bg-transparent text-[15px] text-white placeholder:text-[var(--text-muted)] px-5 pt-4 pb-2 resize-none outline-none text-left"
+            className="w-full bg-transparent text-[15px] text-white placeholder:text-[var(--text-muted)] px-5 pt-4 pb-2 max-sm:px-3 max-sm:pt-3 resize-none outline-none text-left"
           />
           <div className="flex items-center justify-between px-4 pb-3">
             <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export default function Hero() {
           <button
             key={q}
             onClick={() => { sendMessage?.(q); }}
-            className="text-[12px] text-[var(--text-muted)] border border-[var(--border)] rounded-full px-3 py-1.5 hover:border-[var(--accent)]/40 hover:text-[var(--text-secondary)] transition-all cursor-pointer bg-transparent"
+            className="text-[12px] max-sm:text-[11px] text-[var(--text-muted)] border border-[var(--border)] rounded-full px-3 py-1.5 max-sm:px-2.5 max-sm:py-1 hover:border-[var(--accent)]/40 hover:text-[var(--text-secondary)] transition-all cursor-pointer bg-transparent"
           >
             {q}
           </button>
