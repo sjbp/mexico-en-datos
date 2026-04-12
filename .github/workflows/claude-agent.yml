@@ -29,8 +29,9 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: claude-sonnet-4-20250514
-          custom_instructions: |
+          trigger_phrase: ""
+          label_trigger: ""
+          prompt: |
             You are an agent maintaining México en Datos (datamx.sebastian.mx), a public data platform.
 
             TRIAGE EVERY ISSUE before writing any code. Classify it:
@@ -46,10 +47,6 @@ jobs:
             5. CLEAR + HIGH RISK (new data sources, DB schema changes, architectural changes) — Do NOT write code. Instead, comment with a research proposal: what data, what API/format, what schema, what frontend, estimated complexity. Wait for owner approval before implementing.
 
             Always read CLAUDE.md and BRAND.md before starting work. Always run `cd app && npx next build` to verify your changes compile.
-          allowed_tools: |
-            Bash(npm install:*),Bash(npx next build:*),Bash(uv run:*),Bash(git:*),Bash(ls:*),Bash(cat:*),Bash(grep:*),Bash(curl:*)
-            Read,Write,Edit,Glob,Grep
-          issue_number: ${{ github.event.issue.number }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           BANXICO_API_TOKEN: ${{ secrets.BANXICO_API_TOKEN }}
