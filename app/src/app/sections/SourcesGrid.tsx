@@ -38,7 +38,7 @@ const SOURCES: SourceConfig[] = [
     desc: 'Homicidios y delitos por estado',
     badge: '2 series',
     active: true,
-    href: '/seguridad',
+    href: '/fuentes/sesnsp',
     sourceKey: 'SESNSP',
   },
   {
@@ -47,7 +47,7 @@ const SOURCES: SourceConfig[] = [
     desc: 'Microdatos de empleo, informalidad, salarios',
     badge: '4 trimestres',
     active: true,
-    href: '/empleo',
+    href: '/fuentes/enoe',
     sourceKey: 'ENOE',
   },
   {
@@ -56,7 +56,7 @@ const SOURCES: SourceConfig[] = [
     desc: 'Victimizacion, cifra negra, confianza institucional',
     badge: '3 anos',
     active: true,
-    href: '/seguridad',
+    href: '/fuentes/envipe',
     sourceKey: 'ENVIPE',
   },
   {
@@ -65,7 +65,7 @@ const SOURCES: SourceConfig[] = [
     desc: 'Mortalidad, causas de muerte (CIE-10), CLUES',
     badge: '6 anos',
     active: true,
-    href: '/salud',
+    href: '/fuentes/salud',
     sourceKey: 'Sec. Salud',
   },
   {
@@ -74,7 +74,7 @@ const SOURCES: SourceConfig[] = [
     desc: 'Prevalencia de obesidad, diabetes, hipertension',
     badge: '2022',
     active: true,
-    href: '/salud',
+    href: '/fuentes/ensanut',
     sourceKey: 'ENSANUT',
   },
 ];
