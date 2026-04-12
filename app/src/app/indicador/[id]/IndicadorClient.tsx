@@ -90,8 +90,11 @@ export default function IndicadorClient({
 
   const isPercent = unit.toLowerCase().includes('%') || unit.toLowerCase().includes('porcentaje') || unit.toLowerCase().includes('tasa');
   const yUnit = isPercent ? '%' : '';
+  const minVal = Math.min(...numericValues);
   const maxVal = Math.max(...numericValues, 1);
-  const yStep = maxVal > 200 ? 50 : maxVal > 50 ? 10 : maxVal > 10 ? 5 : 1;
+  const valRange = maxVal - Math.min(minVal, 0);
+  const yStep = valRange > 200 ? 50 : valRange > 50 ? 10 : valRange > 10 ? 5 : valRange > 4 ? 2 : 1;
+  const yMin = minVal < 0 ? Math.floor(minVal / yStep) * yStep : undefined;
   const labelStep = filteredValues.length > 60 ? 12 : filteredValues.length > 24 ? 6 : 3;
 
   const series = [
@@ -146,6 +149,7 @@ export default function IndicadorClient({
           periods={periods}
           yUnit={yUnit}
           yStep={yStep}
+          yMin={yMin}
           labelStep={labelStep}
           valueDecimals={isPercent ? 2 : 1}
         />
