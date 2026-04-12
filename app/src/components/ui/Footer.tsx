@@ -21,6 +21,7 @@ export default function Footer() {
         <div className="flex flex-col gap-2 items-end">
           <div className="flex gap-6">
             <a href="https://github.com/sjbp/mexico-en-datos" target="_blank" rel="noopener noreferrer" className={linkClass}>GitHub</a>
+            <a href="https://github.com/sjbp/mexico-en-datos/issues/new?labels=bug&template=bug_report.md&title=%5BBug%5D+" target="_blank" rel="noopener noreferrer" className={linkClass}>Reportar error</a>
             <Link href="/preguntas-frecuentes" className={linkClass}>FAQ</Link>
           </div>
           <a
