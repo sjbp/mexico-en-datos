@@ -193,6 +193,106 @@ const SUGGESTIONS = [
   { emoji: '\u{1F4B1}', text: 'Tipo de cambio' },
 ];
 
+/** Follow-up suggestions based on what data parts appeared in the last response. */
+const FOLLOW_UPS: Record<string, string[]> = {
+  'data-timeseries': [
+    'Comparar por estado',
+    'Desglose por componente',
+    '\u00bfCu\u00e1l es el valor actual?',
+  ],
+  'data-hbar': [
+    'Evoluci\u00f3n en el tiempo',
+    'Comparar las dos variables',
+    '\u00bfCu\u00e1l es el promedio nacional?',
+  ],
+  'data-scatter': [
+    '\u00bfQu\u00e9 otros factores influyen?',
+    'Ver ranking completo',
+    'Desglosar por g\u00e9nero',
+  ],
+  'data-dotstrip': [
+    '\u00bfCu\u00e1les son los extremos?',
+    'Tendencia en el tiempo',
+    'Comparar con otro indicador',
+  ],
+};
+
+// Topic-specific follow-ups based on keywords in the conversation
+const TOPIC_FOLLOW_UPS: [RegExp, string[]][] = [
+  [/inflaci[oó]n|INPC|precios/i, [
+    'Inflaci\u00f3n subyacente',
+    'Tipo de cambio actual',
+    'Evoluci\u00f3n del PIB',
+  ]],
+  [/empleo|informal|desocupaci[oó]n|salario|ingreso/i, [
+    'Ingreso vs informalidad por sector',
+    'Informalidad por edad',
+    'Tendencia de desempleo',
+  ]],
+  [/homicidio|violento|seguridad|delito|crimen/i, [
+    'Cifra negra por estado',
+    'Prevalencia vs denuncia por delito',
+    '\u00bfQu\u00e9 delitos tienen mayor cifra negra?',
+  ]],
+  [/cifra negra|denuncia|confianza|polic[ií]a|ENVIPE/i, [
+    'Homicidios por estado',
+    'Cifra negra vs confianza policial',
+    'Victimizaci\u00f3n por tipo de delito',
+  ]],
+  [/muerte|mortalidad|causa|defunci[oó]n/i, [
+    'Mortalidad por grupo de edad',
+    'Obesidad y diabetes por estado',
+    'Infraestructura de salud',
+  ]],
+  [/PIB|crecimiento|IGAE|actividad econ[oó]mica/i, [
+    'Inflaci\u00f3n actual',
+    'Tipo de cambio',
+    'Exportaciones e importaciones',
+  ]],
+  [/tipo de cambio|d[oó]lar|USD|MXN/i, [
+    'Tasa de inter\u00e9s de Banxico',
+    'Inflaci\u00f3n actual',
+    'Exportaciones e importaciones',
+  ]],
+];
+
+function getFollowUps(messages: Array<{ role: string; parts: Array<{ type: string; text?: string }> }>): string[] {
+  if (messages.length === 0) return [];
+  const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  if (!lastAssistant) return [];
+
+  // 1. Check data parts for chart-type follow-ups
+  const partTypes = lastAssistant.parts.map((p) => p.type);
+  for (const type of ['data-scatter', 'data-dotstrip', 'data-timeseries', 'data-hbar']) {
+    if (partTypes.includes(type) && FOLLOW_UPS[type]) {
+      return FOLLOW_UPS[type];
+    }
+  }
+
+  // 2. Check user message text for topic-based follow-ups
+  const userText = lastUser?.parts
+    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map((p) => p.text)
+    .join(' ') || '';
+  const assistantText = lastAssistant.parts
+    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map((p) => p.text)
+    .join(' ');
+  const combined = userText + ' ' + assistantText;
+
+  for (const [pattern, followUps] of TOPIC_FOLLOW_UPS) {
+    if (pattern.test(combined)) return followUps;
+  }
+
+  // 3. Generic fallback
+  return [
+    '\u00bfQu\u00e9 otros datos tienes?',
+    'Ingreso vs informalidad',
+    'Tendencia de inflaci\u00f3n',
+  ];
+}
+
 export default function ChatPanel() {
   const { isOpen, close, _registerSubmit, _pendingMessage, _clearPending } = useChatPanel();
   const { messages, sendMessage: chatSendMessage, status } = useChat();
@@ -465,6 +565,21 @@ export default function ChatPanel() {
               )}
             </div>
           ))}
+
+          {/* Follow-up suggestions after assistant response */}
+          {status === 'ready' && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant' && (
+            <div className="flex flex-wrap gap-1.5 pl-1">
+              {getFollowUps(messages as Array<{ role: string; parts: Array<{ type: string; text?: string }> }>).map((text) => (
+                <button
+                  key={text}
+                  onClick={() => sendMessage(text)}
+                  className="px-2.5 py-1 text-[11px] text-[var(--text-muted)] border border-[var(--border)] rounded-full hover:bg-white/[0.06] hover:border-[var(--accent)]/30 hover:text-[var(--text-secondary)] transition-colors cursor-pointer bg-transparent"
+                >
+                  {text}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Loading indicator: show until visible text appears */}
           {(() => {
