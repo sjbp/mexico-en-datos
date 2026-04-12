@@ -1,0 +1,44 @@
+# Mexico en Datos
+
+> Datos oficiales de Mexico en un solo lugar, con graficas interactivas y un asistente de IA.
+
+## About
+
+Mexico en Datos es una plataforma gratuita e independiente que reune indicadores publicos de Mexico de fuentes oficiales: INEGI, Banxico, ENOE, ENVIPE, SESNSP, Secretaria de Salud y ENSANUT. Cubre economia, empleo, seguridad y salud con graficas interactivas y un asistente de IA que responde preguntas en espanol.
+
+## URL
+
+https://datamx.sebastian.mx
+
+## Key Pages
+
+- Homepage: https://datamx.sebastian.mx/
+- Economia (PIB, IGAE, actividad economica): https://datamx.sebastian.mx/economia
+- Empleo (informalidad, salarios, desempleo): https://datamx.sebastian.mx/empleo
+- Seguridad (homicidios, cifra negra, victimizacion): https://datamx.sebastian.mx/seguridad
+- Salud (mortalidad, causas de muerte, infraestructura): https://datamx.sebastian.mx/salud
+- Comercio (exportaciones, importaciones): https://datamx.sebastian.mx/comercio
+- Explorador de indicadores: https://datamx.sebastian.mx/explorador
+- Fuentes de datos: https://datamx.sebastian.mx/fuentes
+- Preguntas frecuentes: https://datamx.sebastian.mx/preguntas-frecuentes
+
+## Data Sources
+
+- INEGI: PIB, IGAE, empleo, comercio, confianza del consumidor
+- Banxico: Inflacion, tipo de cambio, tasa objetivo, TIIE
+- SESNSP: Homicidios dolosos por estado
+- ENOE: Informalidad, salarios, desempleo por sector/edad/genero
+- ENVIPE: Cifra negra, victimizacion, confianza institucional
+- Secretaria de Salud: Mortalidad por causas (CIE-10), CLUES
+- ENSANUT: Obesidad, diabetes, hipertension por estado
+
+## Features
+
+- Graficas interactivas (series de tiempo, barras, scatter plots, distribuciones)
+- Asistente de IA que consulta datos oficiales en tiempo real
+- Datos actualizados automaticamente via APIs oficiales
+- 100% gratuito y open source
+
+## Contact
+
+GitHub: https://github.com/sjbp/mexico-en-datos

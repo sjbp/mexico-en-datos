@@ -53,6 +53,26 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'M\u00e9xico en Datos',
+              url: 'https://datamx.sebastian.mx',
+              description: 'Datos oficiales de M\u00e9xico: econom\u00eda, empleo, seguridad y salud con gr\u00e1ficas interactivas y asistente de IA.',
+              inLanguage: 'es',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: 'https://datamx.sebastian.mx/explorador?search={search_term_string}',
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
+      </head>
       <body>
         <ChatProvider>
           <NavBar />
