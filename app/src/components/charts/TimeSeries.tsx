@@ -24,7 +24,7 @@ interface TimeSeriesProps {
   yUnit?: string;
   yStep?: number;
   yMin?: number;
-  labelStep?: number;
+  labelStep?: number;        // kept for backward compatibility, no longer used for rendering
   valueDecimals?: number;
 }
 
@@ -45,7 +45,6 @@ export default function TimeSeries({
   yUnit = '%',
   yStep = 2,
   yMin: yMinProp,
-  labelStep = 12,
   valueDecimals = 2,
 }: TimeSeriesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -100,21 +99,23 @@ export default function TimeSeries({
       ctx.stroke();
     }
 
-    // X labels (rotated -45°)
+    // X labels (rotated ~36°) — show all non-empty labels, skip if too close to previous
+    const MIN_X_GAP = 36;
+    let lastLabelX = -Infinity;
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.font = '10px Inter, sans-serif';
-    for (let i = 0; i < n; i += labelStep) {
-      if (labels[i]) {
-        const x = xPos(i);
-        const y = h - padB + 8;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(-Math.PI / 5); // ~36° angle
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'top';
-        ctx.fillText(labels[i], 0, 0);
-        ctx.restore();
-      }
+    for (let i = 0; i < n; i++) {
+      if (!labels[i]) continue;
+      const x = xPos(i);
+      if (x - lastLabelX < MIN_X_GAP) continue;
+      ctx.save();
+      ctx.translate(x, h - padB + 8);
+      ctx.rotate(-Math.PI / 5); // ~36° angle
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.fillText(labels[i], 0, 0);
+      ctx.restore();
+      lastLabelX = x;
     }
 
     // Reference band
@@ -188,7 +189,7 @@ export default function TimeSeries({
     });
 
     geoRef.current = { padL, padR, padT, padB, cw, n };
-  }, [series, labels, refBand, yUnit, yStep, labelStep, valueDecimals]);
+  }, [series, labels, refBand, yUnit, yStep, valueDecimals]);
 
   useEffect(() => {
     draw();
