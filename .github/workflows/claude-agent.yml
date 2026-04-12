@@ -5,13 +5,23 @@ on:
     types: [opened]
   issue_comment:
     types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
 
 jobs:
   agent:
-    # Run on every new issue, or owner comments on an issue (not PR)
+    # Trigger on:
+    # - Every new issue
+    # - Owner comments on issues (not PRs — those are handled by PR events)
+    # - Owner comments on PR reviews
+    # - Owner PR review comments (inline)
     if: |
       github.event_name == 'issues' ||
-      (github.event_name == 'issue_comment' && !github.event.issue.pull_request && github.event.comment.user.login == github.repository_owner)
+      (github.event_name == 'issue_comment' && !github.event.issue.pull_request && github.event.comment.user.login == github.repository_owner) ||
+      (github.event_name == 'pull_request_review_comment' && github.event.comment.user.login == github.repository_owner) ||
+      (github.event_name == 'pull_request_review' && github.event.review.user.login == github.repository_owner)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
