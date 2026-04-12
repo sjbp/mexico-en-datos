@@ -47,7 +47,8 @@ export default function InflationSection({ inflationValues }: InflationSectionPr
   // Compute appropriate yStep based on data range
   const maxVal = Math.max(...values);
   const yStep = maxVal > 200 ? 50 : maxVal > 50 ? 10 : maxVal > 10 ? 5 : 2;
-  const labelStep = values.length > 60 ? 12 : values.length > 24 ? 6 : 3;
+  // Labels are sparse (only at year boundaries), so labelStep=1 shows all of them correctly.
+  const labelStep = 1;
 
   // Determine unit based on values (index values are typically > 50)
   const isIndex = maxVal > 50;

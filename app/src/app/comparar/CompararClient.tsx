@@ -193,7 +193,7 @@ export default function CompararClient({ indicators }: CompararClientProps) {
                 labels={chartLabels}
                 yUnit=""
                 yStep={yStep}
-                labelStep={chartLabels.length > 60 ? 12 : chartLabels.length > 24 ? 6 : 3}
+                labelStep={1}
                 valueDecimals={2}
               />
             </div>

@@ -95,7 +95,11 @@ export default function IndicadorClient({
   const valRange = maxVal - Math.min(minVal, 0);
   const yStep = valRange > 200 ? 50 : valRange > 50 ? 10 : valRange > 10 ? 5 : valRange > 4 ? 2 : 1;
   const yMin = minVal < 0 ? Math.floor(minVal / yStep) * yStep : undefined;
-  const labelStep = filteredValues.length > 60 ? 12 : filteredValues.length > 24 ? 6 : 3;
+  // Quarterly labels are dense (every quarter gets a label), so use a step to avoid crowding.
+  // Monthly/biweekly labels are already sparse (only at year boundaries), so labelStep=1 is correct —
+  // using a larger step would skip year labels that don't fall on a multiple of the step.
+  const isQuarterly = filteredValues.some((v) => v.period.includes('Q'));
+  const labelStep = isQuarterly ? Math.max(1, Math.floor(filteredValues.length / 6)) : 1;
 
   const series = [
     {
