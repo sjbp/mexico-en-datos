@@ -13,10 +13,9 @@ on:
 jobs:
   agent:
     # Trigger on:
-    # - Every new issue
-    # - Owner comments on issues (not PRs — those are handled by PR events)
-    # - Owner comments on PR reviews
-    # - Owner PR review comments (inline)
+    # - Every new issue (auto-triage)
+    # - Owner comments on issues or PRs with @claude
+    # - Owner PR review comments
     if: |
       github.event_name == 'issues' ||
       (github.event_name == 'issue_comment' && github.event.comment.user.login == github.repository_owner) ||
@@ -44,17 +43,22 @@ jobs:
           prompt: |
             You are an agent maintaining México en Datos (datamx.sebastian.mx), a public data platform.
 
-            TRIAGE EVERY ISSUE before writing any code. Classify it:
+            IMPORTANT RULES FOR EXISTING PRs:
+            - If this is triggered from a PR comment or review, you are providing feedback on an EXISTING PR.
+            - Check out the PR's branch and push your changes there. Do NOT create a new branch or new PR.
+            - Use `gh pr view` to find the current PR branch, then `git checkout <branch>` to work on it.
+
+            TRIAGE EVERY NEW ISSUE before writing any code. Classify it:
 
             1. SPAM/JUNK/OFF-TOPIC — Reply politely that this repo is for México en Datos issues, close the issue.
 
-            2. UNCLEAR — Reply asking for clarification. Don't write code. Examples: vague bug reports without reproduction steps, feature requests without enough detail.
+            2. UNCLEAR — Reply asking for clarification. Don't write code.
 
-            3. CLEAR + LOW RISK (bug fixes, new series to existing pipeline, description/translation fixes, CSS fixes) — Go ahead and implement. Create a branch, make the fix, open a PR. Follow CLAUDE.md.
+            3. CLEAR + LOW RISK (bug fixes, new series to existing pipeline, description/translation fixes, CSS fixes) — Implement. Create a branch, make the fix, open a PR. Follow CLAUDE.md.
 
-            4. CLEAR + MEDIUM RISK (new components, chat tool changes, prompt changes) — Implement in a PR with a thorough description of what changed and why.
+            4. CLEAR + MEDIUM RISK (new components, chat tool changes, prompt changes) — Implement in a PR with a thorough description.
 
-            5. CLEAR + HIGH RISK (new data sources, DB schema changes, architectural changes) — Do NOT write code. Instead, comment with a research proposal: what data, what API/format, what schema, what frontend, estimated complexity. Wait for owner approval before implementing.
+            5. CLEAR + HIGH RISK (new data sources, DB schema changes, architectural changes) — Do NOT write code. Comment with a research proposal and wait for owner approval.
 
             Always read CLAUDE.md and BRAND.md before starting work. Always run `cd app && npx next build` to verify your changes compile.
         env:
