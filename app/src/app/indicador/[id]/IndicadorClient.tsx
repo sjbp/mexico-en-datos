@@ -58,23 +58,28 @@ export default function IndicadorClient({
 
   const labels = useMemo(() => {
     return filteredValues.map((v, i) => {
-      const p = v.period; // e.g. "2024/Q1", "2024/03"
+      const p = v.period; // e.g. "2024/Q1", "2024/03", "2024"
 
-      // Quarterly: parse from period string (avoids timezone bugs with Date)
+      // Quarterly: show year only at Q1 (or first point) to avoid clutter
       if (p.includes('Q')) {
         const [yr, q] = p.split('/');
-        return `${yr} ${q}`;
+        if (i === 0 || q === 'Q1') return yr;
+        return '';
       }
 
-      // Monthly/biweekly: parse year from period string, show at January
       const yearMatch = p.match(/^(\d{4})/);
       const monthMatch = p.match(/\/(\d{2})$/);
+
+      // Monthly/biweekly: show year at January and at first point
       if (yearMatch && monthMatch) {
         const yr = yearMatch[1];
         const mo = parseInt(monthMatch[1], 10);
         if (i === 0 || mo === 1) return yr;
         return '';
       }
+
+      // Annual (no slash): always show the year
+      if (yearMatch) return yearMatch[1];
 
       // Fallback
       if (i === 0) return p;
@@ -95,7 +100,7 @@ export default function IndicadorClient({
   const valRange = maxVal - Math.min(minVal, 0);
   const yStep = valRange > 200 ? 50 : valRange > 50 ? 10 : valRange > 10 ? 5 : valRange > 4 ? 2 : 1;
   const yMin = minVal < 0 ? Math.floor(minVal / yStep) * yStep : undefined;
-  const labelStep = filteredValues.length > 60 ? 12 : filteredValues.length > 24 ? 6 : 3;
+  const labelStep = 1;
 
   const series = [
     {
