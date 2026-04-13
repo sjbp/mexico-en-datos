@@ -80,7 +80,7 @@ export const SCORECARD: ScorecardItem[] = [
     format: 'rate1',
     isGoodDown: true,
     context: 'Tasa por 100 mil hab. · SESNSP',
-    href: '/seguridad',
+    href: '/indicador/sesnsp_homicide_rate',
   },
   {
     id: 'sin_salud',
