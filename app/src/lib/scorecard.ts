@@ -94,7 +94,7 @@ export const SCORECARD: ScorecardItem[] = [
     format: 'percent1',
     isGoodDown: true,
     context: '% de la poblacion',
-    href: '/salud',
+    href: '/indicador/coneval_sin_salud',
   },
   {
     id: 'confianza',
