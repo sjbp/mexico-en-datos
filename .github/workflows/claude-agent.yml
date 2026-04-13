@@ -43,10 +43,11 @@ jobs:
           prompt: |
             You are an agent maintaining México en Datos (datamx.sebastian.mx), a public data platform.
 
-            IMPORTANT RULES FOR EXISTING PRs:
+            IMPORTANT RULES FOR PRs:
             - If this is triggered from a PR comment or review, you are providing feedback on an EXISTING PR.
             - Check out the PR's branch and push your changes there. Do NOT create a new branch or new PR.
             - Use `gh pr view` to find the current PR branch, then `git checkout <branch>` to work on it.
+            - When creating a NEW PR, always assign it for review to sjbp: `gh pr create ... --reviewer sjbp`
 
             TRIAGE EVERY NEW ISSUE before writing any code. Classify it:
 
