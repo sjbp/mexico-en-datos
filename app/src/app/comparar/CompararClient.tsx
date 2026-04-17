@@ -8,7 +8,7 @@ import type { Indicator, IndicatorValue } from '@/lib/types';
 import { getIndicatorDescription } from '@/lib/indicatorDescriptions';
 import { fmtTopic } from '@/lib/format';
 
-const MAX_SELECTED = 3;
+const MAX_SELECTED = 2;
 
 interface CompararClientProps {
   indicators: Indicator[];
@@ -19,6 +19,7 @@ interface SeriesData {
   name: string;
   values: number[];
   labels: string[];
+  unit: string;
 }
 
 export default function CompararClient({ indicators }: CompararClientProps) {
@@ -51,6 +52,7 @@ export default function CompararClient({ indicators }: CompararClientProps) {
           return {
             id,
             name: ind?.name_es ?? id,
+            unit: ind?.unit ?? '',
             values: values.map((v: IndicatorValue) => (v.value != null ? Number(v.value) : 0)),
             labels: values.map((v: IndicatorValue, i: number) => {
               const date = new Date(v.period_date);
@@ -73,7 +75,7 @@ export default function CompararClient({ indicators }: CompararClientProps) {
   }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Build chart series from selected indicators
-  const { chartSeries, chartLabels } = useMemo(() => {
+  const { chartSeries, chartLabels, dualAxis, rightYUnit } = useMemo(() => {
     const activeSeries = selected
       .map((id, idx) => {
         const data = seriesMap[id];
@@ -83,15 +85,26 @@ export default function CompararClient({ indicators }: CompararClientProps) {
           color: seriesColor(idx),
           label: data.name,
           labels: data.labels,
+          unit: data.unit,
         };
       })
-      .filter(Boolean) as Array<{ values: number[]; color: string; label: string; labels: string[] }>;
+      .filter(Boolean) as Array<{ values: number[]; color: string; label: string; labels: string[]; unit: string }>;
 
     // Use labels from the longest series
     const longest = activeSeries.reduce(
       (max, s) => (s.labels.length > max.length ? s.labels : max),
       [] as string[]
     );
+
+    // Detect radically different scales (>10x difference in max values)
+    let useDual = false;
+    if (activeSeries.length === 2) {
+      const max0 = Math.max(...activeSeries[0].values.filter(isFinite));
+      const max1 = Math.max(...activeSeries[1].values.filter(isFinite));
+      if (max0 > 0 && max1 > 0) {
+        useDual = max0 / max1 > 10 || max1 / max0 > 10;
+      }
+    }
 
     return {
       chartSeries: activeSeries.map((s) => ({
@@ -100,6 +113,8 @@ export default function CompararClient({ indicators }: CompararClientProps) {
         label: s.label,
       })),
       chartLabels: longest,
+      dualAxis: useDual,
+      rightYUnit: activeSeries[1]?.unit ?? '',
     };
   }, [selected, seriesMap]);
 
@@ -113,10 +128,11 @@ export default function CompararClient({ indicators }: CompararClientProps) {
     return groups;
   }, [indicators]);
 
-  const maxVal = chartSeries.length > 0
+  const maxVal = !dualAxis && chartSeries.length > 0
     ? Math.max(...chartSeries.flatMap((s) => s.values))
     : 10;
   const yStep = maxVal > 200 ? 50 : maxVal > 50 ? 10 : maxVal > 10 ? 5 : 2;
+  const leftYUnit = selected.length > 0 ? (seriesMap[selected[0]]?.unit ?? '') : '';
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -191,14 +207,16 @@ export default function CompararClient({ indicators }: CompararClientProps) {
               <TimeSeries
                 series={chartSeries}
                 labels={chartLabels}
-                yUnit=""
+                yUnit={leftYUnit}
                 yStep={yStep}
                 labelStep={chartLabels.length > 60 ? 12 : chartLabels.length > 24 ? 6 : 3}
                 valueDecimals={2}
+                dualAxis={dualAxis}
+                rightYUnit={rightYUnit}
               />
             </div>
             {/* Legend */}
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 items-center">
               {chartSeries.map((s, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <div
@@ -208,6 +226,11 @@ export default function CompararClient({ indicators }: CompararClientProps) {
                   <span className="text-[var(--text-secondary)]">{s.label}</span>
                 </div>
               ))}
+              {dualAxis && (
+                <span className="text-[11px] text-[var(--text-muted)] ml-2">
+                  · Escalas independientes (eje izquierdo / derecho)
+                </span>
+              )}
             </div>
           </>
         )}
