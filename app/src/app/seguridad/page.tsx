@@ -7,6 +7,7 @@ import { getEnvipeStats, getCifraNegra, getCifraNegraByState, getLatestValue, ge
 export const metadata = {
   title: 'Seguridad - Mexico en Datos',
   description: 'Datos de criminalidad, cifra negra y percepcion de seguridad en Mexico. Fuente: ENVIPE, ENSU (INEGI) y SESNSP.',
+  alternates: { canonical: '/seguridad' },
 };
 
 // Human-readable labels for crime types

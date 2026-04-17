@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   title: 'Salud | Mexico en Datos',
   description:
     'Panorama de salud en Mexico: mortalidad por causa y edad, tendencias historicas, crisis de diabetes, infraestructura hospitalaria. Datos de INEGI, ENSANUT e INSP.',
+  alternates: { canonical: '/salud' },
 };
 
 const CAUSE_LABELS: Record<string, string> = {

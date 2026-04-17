@@ -5,6 +5,12 @@ import { getLatestValue, getEmploymentByDimension } from '@/lib/data';
 import { fmtPct } from '@/lib/format';
 import InformalidadClient from './InformalidadClient';
 
+export const metadata = {
+  title: 'Informalidad Laboral | M\u00e9xico en Datos',
+  description: 'An\u00e1lisis de la informalidad laboral en M\u00e9xico por sector, edad y g\u00e9nero. Fuente: ENOE (INEGI).',
+  alternates: { canonical: '/empleo/informalidad' },
+};
+
 export default async function InformalidadPage() {
   const [informality, sectorStats, ageStats, genderStats] = await Promise.all([
     getLatestValue('444619'),

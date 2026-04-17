@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: 'Fuentes de Datos | México en Datos',
   description:
     'Accede directamente a los datos de las principales instituciones estadísticas de México.',
+  alternates: { canonical: '/fuentes' },
 };
 
 export default function FuentesPage() {
