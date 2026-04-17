@@ -1,7 +1,22 @@
+import type { Metadata } from 'next';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import ExploradorClient from '../ExploradorClient';
 import { getIndicators, getTopicsWithCounts } from '@/lib/data';
 import { fmtTopic } from '@/lib/format';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ topic: string }>;
+}): Promise<Metadata> {
+  const { topic } = await params;
+  const topicDisplay = fmtTopic(topic);
+  return {
+    title: `${topicDisplay} | Explorador | M\u00e9xico en Datos`,
+    description: `Indicadores de ${topicDisplay} en M\u00e9xico con datos oficiales y gr\u00e1ficas interactivas.`,
+    alternates: { canonical: `/explorador/${topic}` },
+  };
+}
 
 export default async function TopicPage({
   params,

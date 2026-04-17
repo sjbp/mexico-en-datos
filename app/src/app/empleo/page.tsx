@@ -7,6 +7,12 @@ import { fmtPct, fmtCompact } from '@/lib/format';
 import EmpleoClient from './EmpleoClient';
 import EmpleoTrends from './EmpleoTrends';
 
+export const metadata = {
+  title: 'Empleo | M\u00e9xico en Datos',
+  description: 'Indicadores de empleo en M\u00e9xico: desempleo, informalidad laboral, salarios y estructura del mercado laboral. Fuente: ENOE (INEGI).',
+  alternates: { canonical: '/empleo' },
+};
+
 export default async function EmpleoPage() {
   const [unemployment, informality, underemployment, pea, sectorStats, latestQuarter, trends] = await Promise.all([
     getLatestValue('444612'),
