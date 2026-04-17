@@ -103,6 +103,15 @@ export default function CompararClient({ indicators }: CompararClientProps) {
     };
   }, [selected, seriesMap]);
 
+  // Detect if 2 selected series have radically different scales (ratio > 5x)
+  const hasDualScale = useMemo(() => {
+    if (chartSeries.length !== 2) return false;
+    const max0 = Math.max(...chartSeries[0].values.filter(isFinite));
+    const max1 = Math.max(...chartSeries[1].values.filter(isFinite));
+    if (!isFinite(max0) || !isFinite(max1) || max0 <= 0 || max1 <= 0) return false;
+    return Math.max(max0, max1) / Math.min(max0, max1) > 5;
+  }, [chartSeries]);
+
   // Group indicators by topic
   const grouped = useMemo(() => {
     const groups: Record<string, Indicator[]> = {};
@@ -195,10 +204,11 @@ export default function CompararClient({ indicators }: CompararClientProps) {
                 yStep={yStep}
                 labelStep={chartLabels.length > 60 ? 12 : chartLabels.length > 24 ? 6 : 3}
                 valueDecimals={2}
+                dualYAxis={hasDualScale}
               />
             </div>
             {/* Legend */}
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               {chartSeries.map((s, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <div
@@ -208,6 +218,11 @@ export default function CompararClient({ indicators }: CompararClientProps) {
                   <span className="text-[var(--text-secondary)]">{s.label}</span>
                 </div>
               ))}
+              {hasDualScale && (
+                <span className="text-[11px] text-[var(--text-muted)] ml-auto">
+                  Escalas distintas — ejes Y independientes
+                </span>
+              )}
             </div>
           </>
         )}

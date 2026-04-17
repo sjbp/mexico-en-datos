@@ -26,6 +26,13 @@ interface TimeSeriesProps {
   yMin?: number;
   labelStep?: number;
   valueDecimals?: number;
+  dualYAxis?: boolean;
+}
+
+interface TooltipEntry {
+  value: string;
+  label: string;
+  color: string;
 }
 
 interface TooltipState {
@@ -35,6 +42,30 @@ interface TooltipState {
   title: string;
   value: string;
   detail: string;
+  entries?: TooltipEntry[];
+}
+
+function niceStep(max: number): number {
+  if (max <= 0) return 1;
+  const rawStep = max / 5;
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const norm = rawStep / mag;
+  const factor = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+  return factor * mag;
+}
+
+function fmtAxisVal(v: number, unit: string): string {
+  const abs = Math.abs(v);
+  if (abs >= 1e6) return (v / 1e6).toFixed(1) + 'M' + unit;
+  if (abs >= 1e3) return (v / 1e3).toFixed(1) + 'K' + unit;
+  return v + unit;
+}
+
+function fmtTooltipVal(v: number, decimals: number, unit: string): string {
+  const abs = Math.abs(v);
+  if (abs >= 1e6) return (v / 1e6).toFixed(2) + 'M' + unit;
+  if (abs >= 1e3) return (v / 1e3).toFixed(2) + 'K' + unit;
+  return v.toFixed(decimals) + unit;
 }
 
 export default function TimeSeries({
@@ -47,6 +78,7 @@ export default function TimeSeries({
   yMin: yMinProp,
   labelStep = 12,
   valueDecimals = 2,
+  dualYAxis = false,
 }: TimeSeriesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -73,6 +105,131 @@ export default function TimeSeries({
     const cw = w - padL - padR;
     const ch = h - padT - padB;
 
+    ctx.clearRect(0, 0, w, h);
+
+    // --- DUAL AXIS PATH ---
+    if (dualYAxis && series.length >= 2) {
+      const dPadL = 52, dPadR = 52;
+      const dCw = w - dPadL - dPadR;
+      const n = series[0].values.length;
+
+      const vals0 = series[0].values;
+      const vals1 = series[1].values;
+
+      const max0 = Math.max(...vals0.filter(isFinite));
+      const max1 = Math.max(...vals1.filter(isFinite));
+
+      const step0 = niceStep(max0);
+      const step1 = niceStep(max1);
+
+      const yMax0 = Math.ceil(max0 / step0) * step0 + step0;
+      const yMax1 = Math.ceil(max1 / step1) * step1 + step1;
+      const yMin0 = yMinProp ?? 0;
+      const yMin1 = 0;
+
+      const xPosD = (i: number) => dPadL + (i / (n - 1)) * dCw;
+      const yPosD0 = (v: number) => padT + ch - ((v - yMin0) / (yMax0 - yMin0)) * ch;
+      const yPosD1 = (v: number) => padT + ch - ((v - yMin1) / (yMax1 - yMin1)) * ch;
+
+      ctx.font = '11px Inter, sans-serif';
+
+      // Left Y-axis labels (series[0]) and grid lines
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let v = yMin0; v <= yMax0 + step0 / 2; v += step0) {
+        const y = yPosD0(v);
+        if (y < padT - 4 || y > padT + ch + 4) continue;
+        ctx.fillStyle = series[0].color + '99';
+        ctx.fillText(fmtAxisVal(v, yUnit), dPadL - 8, y);
+        ctx.beginPath();
+        ctx.moveTo(dPadL, y);
+        ctx.lineTo(w - dPadR, y);
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Right Y-axis labels (series[1])
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (let v = yMin1; v <= yMax1 + step1 / 2; v += step1) {
+        const y = yPosD1(v);
+        if (y < padT - 4 || y > padT + ch + 4) continue;
+        ctx.fillStyle = series[1].color + '99';
+        ctx.fillText(fmtAxisVal(v, ''), w - dPadR + 8, y);
+      }
+
+      // X labels (same as single-axis)
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '10px Inter, sans-serif';
+      for (let i = 0; i < n; i += labelStep) {
+        if (labels[i]) {
+          const x = xPosD(i);
+          const y = h - padB + 8;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(-Math.PI / 5);
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'top';
+          ctx.fillText(labels[i], 0, 0);
+          ctx.restore();
+        }
+      }
+
+      // Draw each series with its own Y scale
+      const seriesDefs = [
+        { s: series[0], yPos: yPosD0 },
+        { s: series[1], yPos: yPosD1 },
+      ];
+
+      seriesDefs.forEach(({ s, yPos }) => {
+        const vals = s.values;
+        const vn = Math.min(vals.length, n);
+        if (vn === 0) return;
+        const color = s.color;
+        const xP = (i: number) => dPadL + (i / (n - 1)) * dCw;
+
+        ctx.beginPath();
+        for (let i = 0; i < vn; i++) {
+          i === 0 ? ctx.moveTo(xP(i), yPos(vals[i])) : ctx.lineTo(xP(i), yPos(vals[i]));
+        }
+        ctx.lineTo(xP(vn - 1), padT + ch);
+        ctx.lineTo(dPadL, padT + ch);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, padT, 0, padT + ch);
+        grad.addColorStop(0, color + '25');
+        grad.addColorStop(1, color + '02');
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.beginPath();
+        for (let i = 0; i < vn; i++) {
+          i === 0 ? ctx.moveTo(xP(i), yPos(vals[i])) : ctx.lineTo(xP(i), yPos(vals[i]));
+        }
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        const lastVal = vals[vn - 1];
+        const lx = xP(vn - 1);
+        const ly = yPos(lastVal);
+        ctx.beginPath();
+        ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.font = '600 12px Inter, sans-serif';
+        ctx.fillStyle = color;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(fmtAxisVal(lastVal, yUnit === '%' ? yUnit : ''), lx - 8, ly - 6);
+      });
+
+      geoRef.current = { padL: dPadL, padR: dPadR, padT, padB, cw: dCw, n };
+      return;
+    }
+
+    // --- SINGLE AXIS PATH (existing) ---
     let allVals: number[] = [];
     series.forEach((s) => { allVals = allVals.concat(s.values); });
     const yMin = yMinProp ?? 0;
@@ -81,8 +238,6 @@ export default function TimeSeries({
 
     function xPos(i: number) { return padL + (i / (n - 1)) * cw; }
     function yPos(v: number) { return padT + ch - ((v - yMin) / (yMax - yMin)) * ch; }
-
-    ctx.clearRect(0, 0, w, h);
 
     // Y grid
     ctx.font = '11px Inter, sans-serif';
@@ -188,7 +343,7 @@ export default function TimeSeries({
     });
 
     geoRef.current = { padL, padR, padT, padB, cw, n };
-  }, [series, labels, refBand, yUnit, yStep, labelStep, valueDecimals]);
+  }, [series, labels, refBand, yUnit, yStep, labelStep, valueDecimals, dualYAxis, yMinProp]);
 
   useEffect(() => {
     draw();
@@ -206,14 +361,19 @@ export default function TimeSeries({
     const idx = Math.round(((mx - geo.padL) / geo.cw) * (geo.n - 1));
 
     if (idx >= 0 && idx < geo.n) {
-      const s = series[0];
+      const entries: TooltipEntry[] = series.map((s) => ({
+        value: fmtTooltipVal(s.values[idx] ?? 0, valueDecimals, yUnit),
+        label: s.label,
+        color: s.color,
+      }));
       setTooltip({
         visible: true,
         x: mx,
         y: e.clientY - rect.top,
         title: (periods && periods[idx]) || labels[idx] || '',
-        value: s.values[idx].toFixed(valueDecimals) + yUnit,
-        detail: s.label,
+        value: entries[0]?.value ?? '',
+        detail: entries[0]?.label ?? '',
+        entries: series.length > 1 ? entries : undefined,
       });
     }
   }, [series, labels, periods, valueDecimals, yUnit]);
@@ -232,12 +392,17 @@ export default function TimeSeries({
     const mx = touch.clientX - rect.left;
     const idx = Math.round(((mx - geo.padL) / geo.cw) * (geo.n - 1));
     if (idx >= 0 && idx < geo.n) {
-      const s = series[0];
+      const entries: TooltipEntry[] = series.map((s) => ({
+        value: fmtTooltipVal(s.values[idx] ?? 0, valueDecimals, yUnit),
+        label: s.label,
+        color: s.color,
+      }));
       setTooltip({
         visible: true, x: mx, y: touch.clientY - rect.top,
         title: (periods && periods[idx]) || labels[idx] || '',
-        value: s.values[idx].toFixed(valueDecimals) + yUnit,
-        detail: s.label,
+        value: entries[0]?.value ?? '',
+        detail: entries[0]?.label ?? '',
+        entries: series.length > 1 ? entries : undefined,
       });
     }
   }, [series, labels, periods, valueDecimals, yUnit]);
@@ -263,8 +428,19 @@ export default function TimeSeries({
           }}
         >
           <div className="font-bold text-sm text-white mb-1">{tooltip.title}</div>
-          <div className="text-xl font-bold text-[var(--accent)] mb-[2px] tabular-nums">{tooltip.value}</div>
-          <div className="text-xs text-[var(--text-muted)]">{tooltip.detail}</div>
+          {tooltip.entries ? (
+            tooltip.entries.map((entry, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 mt-[3px]">
+                <span className="text-xs text-[var(--text-muted)] truncate">{entry.label}</span>
+                <span className="text-sm font-bold tabular-nums shrink-0" style={{ color: entry.color }}>{entry.value}</span>
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="text-xl font-bold text-[var(--accent)] mb-[2px] tabular-nums">{tooltip.value}</div>
+              <div className="text-xs text-[var(--text-muted)]">{tooltip.detail}</div>
+            </>
+          )}
         </div>
       )}
     </div>
