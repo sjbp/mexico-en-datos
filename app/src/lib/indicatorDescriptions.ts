@@ -93,7 +93,7 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
   },
   "sesnsp_homicide_count": {
     summary: "Numero mensual de carpetas de investigacion por homicidio doloso, reportadas por las fiscalias estatales al Secretariado Ejecutivo del SESNSP.",
-    context: "Permite dar seguimiento mensual a la tendencia de violencia homicida. Es la fuente oficial mas oportuna para homicidios en Mexico. Los datos se publican con ~2 meses de rezago."
+    context: "Permite dar seguimiento mensual a la tendencia de violencia homicida. Es la fuente oficial mas oportuna para homicidios en Mexico. Los datos se publican con ~2 meses de rezago. Desde enero de 2026 el SESNSP registra con una nueva metodologia, por lo que las comparaciones con periodos anteriores deben tomarse con cautela."
   },
 
   // --- Confidence ---
