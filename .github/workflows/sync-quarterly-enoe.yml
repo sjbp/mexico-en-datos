@@ -2,17 +2,14 @@ name: Quarterly ENOE Employment Microdata
 
 on:
   schedule:
-    # 15th of Mar, Jun, Sep, Dec at 10:00 AM CDMX (16:00 UTC)
-    # INEGI publishes ~2 months after quarter ends, so:
-    # Q4 data → available ~Feb → we check Mar 15
-    # Q1 data → available ~May → we check Jun 15
-    # Q2 data → available ~Aug → we check Sep 15
-    # Q3 data → available ~Nov → we check Dec 15
-    - cron: '0 16 15 3,6,9,12 *'
+    # 15th of every month at 10:00 AM CDMX (16:00 UTC). INEGI publishes each
+    # quarter ~6-8 weeks after it ends, on a date that varies. Checking monthly
+    # picks it up within weeks; months with nothing new exit quickly.
+    - cron: '0 16 15 * *'
   workflow_dispatch:
     inputs:
       quarter:
-        description: 'Quarter to process (e.g., 2025Q2). Leave empty for auto-detect.'
+        description: 'Quarter to process (e.g., 2025Q2). Leave empty to process any missing recent quarter.'
         required: false
         type: string
 
@@ -22,12 +19,10 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      - uses: actions/checkout@v5
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Set up Python
         run: uv python install 3.12
@@ -35,57 +30,48 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Determine quarter to fetch
-        id: quarter
-        run: |
-          if [ -n "${{ inputs.quarter }}" ]; then
-            echo "target=${{ inputs.quarter }}" >> $GITHUB_OUTPUT
-          else
-            # Auto-detect: current month - 2 months lag, previous quarter
-            uv run python3 -c "
-          from datetime import date, timedelta
-          today = date.today()
-          # Go back ~2 months to find the quarter that should be published
-          target = today - timedelta(days=75)
-          q = (target.month - 1) // 3 + 1
-          print(f'{target.year}Q{q}')
-          " > /tmp/quarter.txt
-            echo "target=$(cat /tmp/quarter.txt)" >> $GITHUB_OUTPUT
-          fi
-          echo "Will process quarter: $(cat /tmp/quarter.txt 2>/dev/null || echo ${{ inputs.quarter }})"
-
-      - name: Check if quarter already processed
-        id: check
+      - name: Find quarters to process
+        id: quarters
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          INPUT_QUARTER: ${{ inputs.quarter }}
         run: |
-          QUARTER="${{ steps.quarter.outputs.target }}"
-          EXISTS=$(uv run python3 -c "
-          import psycopg2, os
+          if [ -n "$INPUT_QUARTER" ]; then
+            LIST="$INPUT_QUARTER"
+          else
+            # The last 4 completed quarters that are not in the DB yet
+            LIST=$(uv run python3 -c "
+          import os, psycopg2
+          from datetime import date
+          today = date.today()
+          y, q = today.year, (today.month - 1) // 3 + 1
+          candidates = []
+          for _ in range(4):
+              y, q = (y, q - 1) if q > 1 else (y - 1, 4)
+              candidates.append(f'{y}Q{q}')
           conn = psycopg2.connect(os.environ['DATABASE_URL'])
           cur = conn.cursor()
-          cur.execute('SELECT COUNT(*) FROM employment_stats WHERE quarter = %s', ('${QUARTER}'.replace('Q', '/Q'),))
-          print(cur.fetchone()[0])
+          cur.execute('SELECT DISTINCT quarter FROM employment_stats')
+          have = {r[0].replace('/', '') for r in cur.fetchall()}
           conn.close()
+          print(' '.join(sorted(c for c in candidates if c not in have)))
           ")
-          echo "existing_rows=$EXISTS" >> $GITHUB_OUTPUT
-          if [ "$EXISTS" -gt "0" ]; then
-            echo "Quarter $QUARTER already has $EXISTS rows — skipping"
-          else
-            echo "Quarter $QUARTER not yet processed — will download and process"
           fi
+          echo "Quarters to process: ${LIST:-none}"
+          echo "list=$LIST" >> "$GITHUB_OUTPUT"
 
       - name: Download and process ENOE
-        if: steps.check.outputs.existing_rows == '0'
-        id: process
-        continue-on-error: true
+        if: steps.quarters.outputs.list != ''
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          QUARTERS: ${{ steps.quarters.outputs.list }}
         run: |
-          QUARTER="${{ steps.quarter.outputs.target }}"
-          echo "Processing ENOE $QUARTER"
           mkdir -p data/enoe
-          uv run python -m ingest.pipelines.enoe --quarter "$QUARTER" --data-dir data/enoe
+          for QUARTER in $QUARTERS; do
+            echo "Processing ENOE $QUARTER"
+            uv run python -m ingest.pipelines.enoe --quarter "$QUARTER" --data-dir data/enoe \
+              || echo "::warning::ENOE $QUARTER not processed. It may not be published yet; will retry next month."
+          done
 
       - name: Report results
         env:
@@ -105,9 +91,3 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: uv run python -m ingest.validate
-
-      - name: Fail if processing errored
-        if: steps.process.outcome == 'failure'
-        run: |
-          echo "::warning::ENOE processing failed for quarter ${{ steps.quarter.outputs.target }}. Data may not be available on INEGI yet."
-          echo "This is expected if the quarter hasn't been published. Will retry next scheduled run."
