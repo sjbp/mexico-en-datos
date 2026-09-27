@@ -13,14 +13,6 @@ FREQ_MONTHLY = "monthly"
 FREQ_QUARTERLY = "quarterly"
 FREQ_ANNUAL = "annual"
 
-# Quarter month mapping
-QUARTER_START_MONTH: dict[str, int] = {
-    "01": 1, "02": 1, "03": 1,   # Q1
-    "04": 4, "05": 4, "06": 4,   # Q2
-    "07": 7, "08": 7, "09": 7,   # Q3
-    "10": 10, "11": 10, "12": 10, # Q4
-}
-
 MONTH_TO_QUARTER: dict[int, int] = {
     1: 1, 2: 1, 3: 1,
     4: 2, 5: 2, 6: 2,
@@ -85,10 +77,11 @@ def parse_period(time_period_str: str, frequency: str) -> tuple[str, date]:
     if m:
         year, month = int(m.group(1)), int(m.group(2))
         if frequency == FREQ_QUARTERLY:
-            # Monthly format but quarterly frequency — infer quarter
-            quarter = MONTH_TO_QUARTER.get(month, 1)
-            q_start = QUARTER_START_MONTH.get(f"{month:02d}", 1)
-            return f"{year}/Q{quarter}", date(year, q_start, 1)
+            # INEGI BIE encodes quarters as "YYYY/0N" where N is the quarter
+            # number (1-4), not a month: "2026/02" is Q2 2026.
+            if not 1 <= month <= 4:
+                raise ValueError(f"Invalid quarter number in '{raw}'")
+            return f"{year}/Q{month}", date(year, (month - 1) * 3 + 1, 1)
         return f"{year}/{month:02d}", date(year, month, 1)
 
     # Try annual: "2024"
