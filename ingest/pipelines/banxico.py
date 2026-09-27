@@ -5,7 +5,7 @@ Syncs exchange rate, inflation, and monetary policy data from Banco de México.
 Usage:
     python -m ingest.pipelines.banxico --full
     python -m ingest.pipelines.banxico --series SP30578
-    python -m ingest.pipelines.banxico          # recent (last 30 days)
+    python -m ingest.pipelines.banxico          # recent (last 120 days)
 """
 
 import argparse
@@ -25,6 +25,10 @@ load_dotenv()
 logger = logging.getLogger("ingest.pipelines.banxico")
 
 BASE_URL = "https://www.banxico.org.mx/SieAPIRest/service/v1/series"
+
+# Incremental lookback. Monthly series are dated the 1st of the month but
+# published ~40 days later, so a short window never catches new releases.
+RECENT_WINDOW_DAYS = 120
 
 BANXICO_SERIES = [
     {
@@ -94,7 +98,7 @@ def fetch_series(
         url = f"{BASE_URL}/{series_id}/datos"
     else:
         end = datetime.now()
-        start = end - timedelta(days=30)
+        start = end - timedelta(days=RECENT_WINDOW_DAYS)
         start_str = start.strftime("%Y-%m-%d")
         end_str = end.strftime("%Y-%m-%d")
         url = f"{BASE_URL}/{series_id}/datos/{start_str}/{end_str}"
@@ -217,7 +221,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--full",
         action="store_true",
-        help="Fetch full history (default: recent 30 days only).",
+        help=f"Fetch full history (default: last {RECENT_WINDOW_DAYS} days only).",
     )
     parser.add_argument(
         "--series",
