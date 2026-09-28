@@ -231,6 +231,7 @@ export default function CompararClient({ indicators }: CompararClientProps) {
                 labels={chartLabels}
                 yUnit={leftYUnit}
                 yStep={yStep}
+                labelStep={1}
                 valueDecimals={2}
                 dualAxis={dualAxis}
                 rightYUnit={rightYUnit}
