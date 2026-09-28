@@ -13,6 +13,7 @@ import {
   getHospitalsPerCapita,
   getLatestMortalityYear,
   getIndicatorValues,
+  getEnsanutNationalSummary,
 } from '@/lib/data';
 import { MortalityTrendChart, LifeExpectancyChart, HealthCoverageGapChart } from './SaludClient';
 
@@ -78,6 +79,8 @@ export default async function SaludPage() {
     hospitalsPerCapita,
     healthAccessGap,
     lifeExpectancy,
+    obesity,
+    ensanutRows,
     ...trendResults
   ] = await Promise.all([
     getLeadingCausesOfDeath(year),
@@ -88,8 +91,23 @@ export default async function SaludPage() {
     getHospitalsPerCapita(),
     getIndicatorValues('coneval_sin_salud'),
     getIndicatorValues('esperanza_vida'),
+    getIndicatorValues('ensanut_obesidad'),
+    getEnsanutNationalSummary(),
     ...TREND_CAUSES.map((t) => getMortalityTrend(t.cause)),
   ]);
+
+  // ENSANUT: diagnosed diabetes/hypertension from microdata (latest year),
+  // obesity as published by INSP (latest year with an official figure)
+  const ensanutYear = ensanutRows[0]?.year;
+  const ensanutPct = (condition: string) => {
+    const row = ensanutRows.find((r) => r.year === ensanutYear && r.condition === condition);
+    return row?.prevalence_pct != null ? `${Number(row.prevalence_pct).toFixed(1)}%` : '—';
+  };
+  const obesityLatest = obesity.filter((d) => d.value != null).at(-1);
+  const diabetesShare = Number(
+    ensanutRows.find((r) => r.year === ensanutYear && r.condition === 'diabetes')?.prevalence_pct ?? 0
+  );
+  const obesityPct = obesityLatest ? `${Number(obesityLatest.value).toFixed(1)}%` : '—';
 
   const topCause = causes[0];
   const diabetesEntry = causes.find((c) => c.cause_group === 'diabetes');
@@ -227,7 +245,7 @@ export default async function SaludPage() {
       <div className="px-[var(--pad-page)] mb-8">
         <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[700px]">
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mb-2" style={{ textWrap: 'pretty' }}>
-            Mexico enfrenta una triple crisis de salud: una epidemia de obesidad y diabetes (36% de obesidad, la mas alta de la OCDE), un colapso de cobertura ({gapLatest ? `${Number(gapLatest.value).toFixed(0)}% sin acceso en ${gapLatest.period}` : 'un tercio sin acceso'} tras el desmantelamiento del Seguro Popular), y enfermedades cronicas que matan a personas mas jovenes que en paises comparables.
+            Mexico enfrenta una triple crisis de salud: una epidemia de obesidad y diabetes ({obesityLatest ? `${Number(obesityLatest.value).toFixed(0)}% de obesidad en adultos` : 'mas de un tercio con obesidad'}, entre las mas altas de la OCDE), un colapso de cobertura ({gapLatest ? `${Number(gapLatest.value).toFixed(0)}% sin acceso en ${gapLatest.period}` : 'un tercio sin acceso'} tras el desmantelamiento del Seguro Popular), y enfermedades cronicas que matan a personas mas jovenes que en paises comparables.
           </p>
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
             La diabetes es particularmente critica: es la unica economia grande donde aparece como segunda causa de muerte. El COVID-19 provoco la mayor caida de la esperanza de vida en decadas, y los homicidios siguen entre las 10 primeras causas &mdash; algo inusual en paises de ingreso similar.
@@ -448,7 +466,7 @@ export default async function SaludPage() {
                   ocurrieron entre los 35 y 64 anos en {year}.
                 </p>
                 <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mt-2" style={{ textWrap: 'pretty' }}>
-                  Segun la ENSANUT 2022, 15.6% de los adultos mexicanos tienen diabetes diagnosticada y 36.9% tienen obesidad &mdash; ambas tasas entre las mas altas del mundo.
+                  Segun la ENSANUT, {ensanutPct('diabetes')} de los adultos mexicanos tenian diabetes diagnosticada en {ensanutYear} y {obesityPct} tenian obesidad en {`${obesityLatest?.period ?? ''} — ambas tasas`} entre las mas altas del mundo. La diabetes diagnosticada es solo una parte: el INSP estima que alrededor de un tercio de los adultos con diabetes no lo sabe.
                 </p>
               </div>
             </Card>
@@ -574,7 +592,7 @@ export default async function SaludPage() {
         </>
       )}
 
-      {/* ── 10. ENSANUT prevalence (static context) ────────────────── */}
+      {/* ── 10. ENSANUT prevalence ──────────────────────────────────── */}
       <SectionHeader title="Prevalencia de enfermedades cronicas" />
       <div className="px-[var(--pad-page)] mb-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
@@ -582,33 +600,33 @@ export default async function SaludPage() {
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
               Obesidad en adultos
             </div>
-            <div className="text-2xl font-bold text-white">36.9%</div>
+            <div className="text-2xl font-bold text-white">{obesityPct}</div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              ENSANUT 2022 &middot; IMC &ge; 30
+              {`ENSANUT ${obesityLatest?.period ?? ''} · IMC ≥ 30 · cifra del INSP`}
             </div>
           </Card>
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
               Diabetes diagnosticada
             </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: '#F39C12' }}>15.6%</div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: '#F39C12' }}>{ensanutPct('diabetes')}</div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              ENSANUT 2022 &middot; Adultos 20+
+              {`ENSANUT ${ensanutYear ?? ''} · Adultos 20+ · diagnostico medico`}
             </div>
           </Card>
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
-              Hipertension
+              Hipertension diagnosticada
             </div>
-            <div className="text-2xl font-bold text-white">30.2%</div>
+            <div className="text-2xl font-bold text-white">{ensanutPct('hypertension')}</div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              ENSANUT 2022 &middot; Adultos 20+
+              {`ENSANUT ${ensanutYear ?? ''} · Adultos 20+ · diagnostico medico`}
             </div>
           </Card>
         </div>
         <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[640px]">
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-            La ENSANUT 2022 revela que mas de un tercio de los adultos mexicanos tienen obesidad, y casi 1 de cada 6 tiene diabetes diagnosticada. Estas cifras alimentan directamente las tasas de mortalidad por enfermedades cronicas que se observan arriba. Mexico tiene la mayor tasa de obesidad de la OCDE.
+            Mas de un tercio de los adultos mexicanos vive con obesidad, y {diabetesShare ? `alrededor de 1 de cada ${Math.round(100 / diabetesShare)}` : 'uno de cada diez'} tiene un diagnostico medico de diabetes. Las cifras diagnosticadas subestiman el problema: muchos adultos con diabetes o hipertension no lo saben. Estas enfermedades alimentan directamente las tasas de mortalidad por enfermedades cronicas que se observan arriba. Mexico tiene una de las tasas de obesidad mas altas de la OCDE.
           </p>
         </div>
       </div>
@@ -616,7 +634,7 @@ export default async function SaludPage() {
       {/* ── 11. Attribution ────────────────────────────────────────── */}
       <div className="px-[var(--pad-page)] mb-10">
         <div className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Fuentes: INEGI (Estadisticas de Mortalidad 2018-{year}), ENSANUT 2022 (INSP), Secretaria de Salud (CLUES), CONEVAL (Medicion de Pobreza), CONAPO (Proyecciones de Poblacion)
+          Fuentes: INEGI (Estadisticas de Mortalidad 2018-{year}), ENSANUT {ensanutYear} (INSP), Secretaria de Salud (CLUES), CONEVAL (Medicion de Pobreza), CONAPO (Proyecciones de Poblacion)
         </div>
       </div>
     </>

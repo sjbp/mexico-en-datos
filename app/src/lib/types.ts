@@ -94,7 +94,7 @@ export interface HealthFacility {
 export interface EnsanutStat {
   year: number;
   geo_code: string;
-  condition: string;           // 'obesity', 'overweight', 'diabetes', 'hypertension', 'hypertension_measured'
+  condition: string;           // 'diabetes', 'hypertension' (doctor-diagnosed)
   age_group: string;           // '20+', '20-29', '30-39', etc.
   sex: string;                 // 'M', 'F', 'all'
   prevalence_pct: number | null;

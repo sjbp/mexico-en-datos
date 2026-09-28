@@ -1,4 +1,4 @@
-name: Monthly Health Data Sync (Mortality, CLUES, life expectancy)
+name: Monthly Health Data Sync (Mortality, CLUES, life expectancy, ENSANUT)
 
 on:
   schedule:
@@ -51,6 +51,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: uv run python -m ingest.pipelines.health.life_expectancy
+
+      - name: Refresh ENSANUT (diagnosed diabetes and hypertension)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # Processes every published survey year; new years are picked up automatically
+        run: uv run python -m ingest.pipelines.health.ensanut --all
 
       - name: Refresh CLUES facility catalog
         env:
