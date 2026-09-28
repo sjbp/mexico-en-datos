@@ -11,6 +11,7 @@ import {
   getTotalDeaths,
   getHealthFacilitySummary,
   getHospitalsPerCapita,
+  getIndicatorValues,
 } from '@/lib/data';
 import { MortalityTrendChart, LifeExpectancyChart, HealthCoverageGapChart } from './SaludClient';
 
@@ -71,18 +72,6 @@ const LIFE_EXPECTANCY = [
   { year: 2023, value: 75.1 },  // Near pre-COVID
 ];
 
-// ── CONEVAL "carencia por acceso a salud" ──────────────────────────────
-const HEALTH_ACCESS_GAP = [
-  { year: 2008, value: 38.4 },
-  { year: 2010, value: 29.2 },
-  { year: 2012, value: 21.5 },
-  { year: 2014, value: 18.2 },
-  { year: 2016, value: 15.5 },  // Seguro Popular peak coverage
-  { year: 2018, value: 16.2 },
-  { year: 2020, value: 28.2 },  // INSABI transition begins
-  { year: 2022, value: 39.1 },  // IMSS-Bienestar transition
-];
-
 function formatNumber(n: number): string {
   return n.toLocaleString('es-MX');
 }
@@ -96,6 +85,7 @@ export default async function SaludPage() {
     topCauseByAge,
     facilitySummary,
     hospitalsPerCapita,
+    healthAccessGap,
     ...trendResults
   ] = await Promise.all([
     getLeadingCausesOfDeath(2023),
@@ -104,6 +94,7 @@ export default async function SaludPage() {
     getTopCauseByAge(2023),
     getHealthFacilitySummary(),
     getHospitalsPerCapita(),
+    getIndicatorValues('coneval_sin_salud'),
     ...TREND_CAUSES.map((t) => getMortalityTrend(t.cause)),
   ]);
 
@@ -185,10 +176,18 @@ export default async function SaludPage() {
     values: LIFE_EXPECTANCY.map((d) => d.value),
   };
 
-  // Health coverage gap chart data
+  // Health coverage gap chart data (CONEVAL methodology, biennial)
+  const gapRows = healthAccessGap.filter((d) => d.value != null);
   const coverageGapData = {
-    labels: HEALTH_ACCESS_GAP.map((d) => String(d.year)),
-    values: HEALTH_ACCESS_GAP.map((d) => d.value),
+    labels: gapRows.map((d) => d.period),
+    values: gapRows.map((d) => Number(d.value)),
+  };
+  const gapFirst = gapRows[0];
+  const gapLatest = gapRows[gapRows.length - 1];
+  const gapBy = new Map(gapRows.map((d) => [d.period, Number(d.value)]));
+  const gapPct = (period: string) => {
+    const v = gapBy.get(period);
+    return v != null ? `${v.toFixed(1)}%` : '—';
   };
 
   // Hospitals per capita chart data (top 15 + bottom 5)
@@ -227,7 +226,7 @@ export default async function SaludPage() {
       <div className="px-[var(--pad-page)] mb-8">
         <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[700px]">
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mb-2" style={{ textWrap: 'pretty' }}>
-            Mexico enfrenta una triple crisis de salud: una epidemia de obesidad y diabetes (36% de obesidad, la mas alta de la OCDE), un colapso de cobertura (39% sin acceso tras el desmantelamiento del Seguro Popular), y enfermedades cronicas que matan a personas mas jovenes que en paises comparables.
+            Mexico enfrenta una triple crisis de salud: una epidemia de obesidad y diabetes (36% de obesidad, la mas alta de la OCDE), un colapso de cobertura ({gapLatest ? `${Number(gapLatest.value).toFixed(0)}% sin acceso en ${gapLatest.period}` : 'un tercio sin acceso'} tras el desmantelamiento del Seguro Popular), y enfermedades cronicas que matan a personas mas jovenes que en paises comparables.
           </p>
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
             La diabetes es particularmente critica: es la unica economia grande donde aparece como segunda causa de muerte. El COVID-19 dejo una huella duradera en la esperanza de vida, y los homicidios siguen entre las 10 primeras causas &mdash; algo inusual en paises de ingreso similar.
@@ -285,12 +284,14 @@ export default async function SaludPage() {
               {totalFacilities > 0 ? 'Unidades de salud' : 'Sin acceso a salud'}
             </div>
             <div className="text-2xl font-bold text-white tabular-nums">
-              {totalFacilities > 0 ? formatNumber(totalFacilities) : '39.1%'}
+              {totalFacilities > 0
+                ? formatNumber(totalFacilities)
+                : gapLatest ? `${Number(gapLatest.value).toFixed(1)}%` : '—'}
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
               {totalFacilities > 0
                 ? 'Catalogo CLUES &middot; Sec. Salud'
-                : 'CONEVAL 2024 &middot; Carencia por acceso'}
+                : `Carencia por acceso · ${gapLatest?.period ?? ''}`}
             </div>
           </Card>
         </div>
@@ -353,7 +354,7 @@ export default async function SaludPage() {
               Poblacion sin acceso a servicios de salud
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              % de la poblacion &middot; Nacional &middot; CONEVAL &middot; 2008-2022
+              % de la poblacion &middot; Nacional &middot; CONEVAL / INEGI &middot; {gapFirst?.period}-{gapLatest?.period}
             </div>
           </div>
           <div className="h-[280px]">
@@ -361,11 +362,12 @@ export default async function SaludPage() {
           </div>
           <div className="border-l-2 border-[#EF4444] pl-4 mt-5 max-w-[640px]">
             <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-              El porcentaje de la poblacion sin acceso a servicios de salud bajo de 38% a 15% entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento y la transicion a INSABI y luego IMSS-Bienestar, la carencia se disparo a 39% en 2022 &mdash; peor que en 2008.
+              El porcentaje de la poblacion sin acceso a servicios de salud bajo de {gapPct('2008')} a {gapPct('2016')} entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento y la transicion a INSABI y luego IMSS-Bienestar, la carencia se disparo a {gapPct('2022')} en 2022 &mdash; peor que en 2008.
+              {gapLatest && gapLatest.period !== '2022' && ` En ${gapLatest.period} bajo a ${gapPct(gapLatest.period)}, aun muy por encima del nivel de 2016.`}
             </p>
           </div>
           <div className="text-xs text-[var(--text-muted)] mt-4">
-            Fuente: CONEVAL, Medicion multidimensional de la pobreza.
+            Fuente: CONEVAL (2008-2022) e INEGI (2024 en adelante), Medicion multidimensional de la pobreza.
           </div>
         </Card>
       </div>

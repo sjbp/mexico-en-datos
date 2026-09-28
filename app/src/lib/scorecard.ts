@@ -85,15 +85,12 @@ export const SCORECARD: ScorecardItem[] = [
   {
     id: 'sin_salud',
     label: 'Sin acceso a salud',
-    sourceType: 'static',
-    staticValue: 39.1,
-    staticPeriod: 'CONEVAL · 2022',
-    staticDate: '2022-01-01',
-    sparkIndicatorId: 'coneval_sin_salud',
+    sourceType: 'inegi',
+    indicatorId: 'coneval_sin_salud',
     unit: 'percent',
     format: 'percent1',
     isGoodDown: true,
-    context: '% de la poblacion',
+    context: '% de la poblacion · INEGI (met. CONEVAL)',
     href: '/indicador/coneval_sin_salud',
   },
   {

@@ -131,8 +131,8 @@ export const ENSANUT_DESCRIPTIONS: Record<string, { summary: string; context: st
 
   // --- CONEVAL ---
   "coneval_sin_salud": {
-    summary: "Porcentaje de la poblacion que carece de acceso a servicios de salud segun la medicion multidimensional de pobreza del CONEVAL.",
-    context: "Esta carencia se redujo de 38% a 15% entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento en 2020 y las transiciones a INSABI y luego IMSS-Bienestar, se disparo a 39% en 2022. Es uno de los indicadores mas politizados del pais."
+    summary: "Porcentaje de la poblacion que carece de acceso a servicios de salud segun la medicion multidimensional de pobreza. Desde 2025 la publica el INEGI con la metodologia del CONEVAL.",
+    context: "Esta carencia se redujo de 38% a 16% entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento en 2020 y las transiciones a INSABI y luego IMSS-Bienestar, se disparo a 39% en 2022 y bajo a 34% en 2024. Es uno de los indicadores mas politizados del pais."
   },
 };
 
