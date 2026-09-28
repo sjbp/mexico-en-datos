@@ -56,29 +56,16 @@ export default function IndicadorClient({
     [filteredValues]
   );
 
+  // X-axis labels: the year at the first point of each year, for every
+  // frequency ("2024/Q1", "2024/03", "2024-01-15", "2024"). The very first
+  // point is labelled too, unless a new year starts right after it.
   const labels = useMemo(() => {
-    return filteredValues.map((v, i) => {
-      const p = v.period; // e.g. "2024/Q1", "2024/03"
-
-      // Quarterly: parse from period string (avoids timezone bugs with Date)
-      if (p.includes('Q')) {
-        const [yr, q] = p.split('/');
-        return `${yr} ${q}`;
-      }
-
-      // Monthly/biweekly: parse year from period string, show at January
-      const yearMatch = p.match(/^(\d{4})/);
-      const monthMatch = p.match(/\/(\d{2})$/);
-      if (yearMatch && monthMatch) {
-        const yr = yearMatch[1];
-        const mo = parseInt(monthMatch[1], 10);
-        if (i === 0 || mo === 1) return yr;
-        return '';
-      }
-
-      // Fallback
-      if (i === 0) return p;
-      return '';
+    const years = filteredValues.map((v) => v.period.match(/^(\d{4})/)?.[1] ?? '');
+    const firstChange = years.findIndex((y, i) => i > 0 && y !== years[i - 1]);
+    const labelFirst = firstChange === -1 || firstChange > years.length / 6;
+    return years.map((y, i) => {
+      if (i === 0) return labelFirst ? (y || filteredValues[0].period) : '';
+      return y !== years[i - 1] ? y : '';
     });
   }, [filteredValues]);
 
@@ -95,7 +82,6 @@ export default function IndicadorClient({
   const valRange = maxVal - Math.min(minVal, 0);
   const yStep = valRange > 200 ? 50 : valRange > 50 ? 10 : valRange > 10 ? 5 : valRange > 4 ? 2 : 1;
   const yMin = minVal < 0 ? Math.floor(minVal / yStep) * yStep : undefined;
-  const labelStep = filteredValues.length > 60 ? 12 : filteredValues.length > 24 ? 6 : 3;
 
   const series = [
     {
@@ -150,7 +136,6 @@ export default function IndicadorClient({
           yUnit={yUnit}
           yStep={yStep}
           yMin={yMin}
-          labelStep={labelStep}
           valueDecimals={isPercent ? 2 : 1}
         />
       </div>

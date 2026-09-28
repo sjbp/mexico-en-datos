@@ -24,7 +24,7 @@ interface TimeSeriesProps {
   yUnit?: string;
   yStep?: number;
   yMin?: number;
-  labelStep?: number;
+  labelStep?: number;        // kept for backward compatibility, no longer used for rendering
   valueDecimals?: number;
   dualAxis?: boolean;        // When true, series[1] uses right Y-axis (independent scale)
   rightYUnit?: string;       // Unit label for right Y-axis
@@ -60,7 +60,6 @@ export default function TimeSeries({
   yUnit = '%',
   yStep = 2,
   yMin: yMinProp,
-  labelStep = 12,
   valueDecimals = 2,
   dualAxis = false,
   rightYUnit,
@@ -93,6 +92,26 @@ export default function TimeSeries({
     const n = series[0].values.length;
 
     function xPos(i: number) { return padL + (i / (n - 1)) * cw; }
+
+    // X labels (rotated ~36°): draw every non-empty label, skipping any that
+    // would sit closer than MIN_X_GAP px to the previous one
+    function drawXLabels() {
+      const MIN_X_GAP = 36;
+      let lastX = -Infinity;
+      for (let i = 0; i < n; i++) {
+        if (!labels[i]) continue;
+        const x = xPos(i);
+        if (x - lastX < MIN_X_GAP) continue;
+        ctx!.save();
+        ctx!.translate(x, h - padB + 8);
+        ctx!.rotate(-Math.PI / 5);
+        ctx!.textAlign = 'right';
+        ctx!.textBaseline = 'top';
+        ctx!.fillText(labels[i], 0, 0);
+        ctx!.restore();
+        lastX = x;
+      }
+    }
 
     ctx.clearRect(0, 0, w, h);
 
@@ -145,19 +164,7 @@ export default function TimeSeries({
       // X labels
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.font = '10px Inter, sans-serif';
-      for (let i = 0; i < n; i += labelStep) {
-        if (labels[i]) {
-          const x = xPos(i);
-          const y = h - padB + 8;
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(-Math.PI / 5);
-          ctx.textAlign = 'right';
-          ctx.textBaseline = 'top';
-          ctx.fillText(labels[i], 0, 0);
-          ctx.restore();
-        }
-      }
+      drawXLabels();
 
       // Draw series[0] with left axis
       const drawSeries = (vals: number[], color: string, yPosFn: (v: number) => number, unitLabel: string, labelSide: 'left' | 'right') => {
@@ -227,19 +234,7 @@ export default function TimeSeries({
 
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.font = '10px Inter, sans-serif';
-      for (let i = 0; i < n; i += labelStep) {
-        if (labels[i]) {
-          const x = xPos(i);
-          const y = h - padB + 8;
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(-Math.PI / 5);
-          ctx.textAlign = 'right';
-          ctx.textBaseline = 'top';
-          ctx.fillText(labels[i], 0, 0);
-          ctx.restore();
-        }
-      }
+      drawXLabels();
 
       if (refBand) {
         const y1 = yPos(refBand.max);
@@ -308,7 +303,7 @@ export default function TimeSeries({
     }
 
     geoRef.current = { padL, padR, padT, padB, cw, n };
-  }, [series, labels, refBand, yUnit, rightYUnit, yStep, labelStep, valueDecimals, dualAxis, yMinProp]);
+  }, [series, labels, refBand, yUnit, rightYUnit, yStep, valueDecimals, dualAxis, yMinProp]);
 
   useEffect(() => {
     draw();
