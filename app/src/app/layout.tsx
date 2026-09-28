@@ -9,6 +9,10 @@ import ChatPanel from "@/components/ui/ChatPanel";
 
 const SITE_URL = 'https://datamx.sebastian.mx';
 
+// Pages read from the DB at render time. Without this they are frozen at the
+// last deploy; with it they regenerate at most hourly after data syncs.
+export const revalidate = 3600;
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
