@@ -21,6 +21,7 @@ import {
   getCifraNegra as _getCifraNegra,
   getEnvipeStats as _getEnvipeStats,
   getLeadingCausesOfDeath as _getLeadingCausesOfDeath,
+  getLatestMortalityYear as _getLatestMortalityYear,
 } from '@/lib/data';
 import { cached } from '@/lib/cache';
 
@@ -41,6 +42,7 @@ const getEmploymentTrends = cached(_getEmploymentTrends);
 const getCifraNegra = cached(_getCifraNegra);
 const getEnvipeStats = cached(_getEnvipeStats);
 const getLeadingCausesOfDeath = cached(_getLeadingCausesOfDeath);
+const getLatestMortalityYear = cached(_getLatestMortalityYear);
 
 // ── Pre-warm cache with queries expected from homepage suggestions ───────
 let _warmed = false;
@@ -55,7 +57,7 @@ function ensureWarmed() {
     // "Estado más violento" / "¿Cuál es el estado más violento?"
     getIndicatorValuesByState('homicidios_dolosos', { latest: true }),
     // "Causas de muerte" / "Principales causas de muerte"
-    getLeadingCausesOfDeath(2023, '00'),
+    getLatestMortalityYear().then((y) => getLeadingCausesOfDeath(y, '00')),
     // "Informalidad por sector"
     getEmploymentByDimension('sector', '00'),
     // "¿Qué delitos tienen mayor cifra negra?"
@@ -547,11 +549,11 @@ export async function POST(req: Request) {
             description:
               'Principales causas de muerte en M\u00e9xico con tasas por 100k habitantes.',
             inputSchema: z.object({
-              year: z.number().describe('A\u00f1o. Default: 2023').optional(),
+              year: z.number().describe('A\u00f1o. Default: el m\u00e1s reciente disponible').optional(),
               geo: z.string().describe('C\u00f3digo geogr\u00e1fico. Default: 00').optional(),
             }),
             execute: async ({ year, geo }) => {
-              const rows = await getLeadingCausesOfDeath(year || 2023, geo || '00');
+              const rows = await getLeadingCausesOfDeath(year || (await getLatestMortalityYear()), geo || '00');
               const mapped = rows.map((r) => ({
                 cause_group: r.cause_group,
                 deaths: r.deaths,
@@ -653,7 +655,7 @@ Fuentes y sus campos:
                   break;
                 }
                 case 'mortality': {
-                  const raw = await getLeadingCausesOfDeath(year || 2023, geo || '00');
+                  const raw = await getLeadingCausesOfDeath(year || (await getLatestMortalityYear()), geo || '00');
                   rows = raw.map((r) => ({ cause_group: r.cause_group, deaths: r.deaths, rate_per_100k: r.rate_per_100k }));
                   break;
                 }

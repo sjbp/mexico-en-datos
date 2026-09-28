@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: 'Comercio y Manufactura | México en Datos',
   description:
     'Exportaciones, importaciones, inversión extranjera directa, industria manufacturera y el fenómeno del nearshoring en México.',
+  alternates: { canonical: '/comercio' },
 };
 
 

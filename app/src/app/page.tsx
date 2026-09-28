@@ -1,8 +1,13 @@
+import type { Metadata } from 'next';
 import Hero from './sections/Hero';
 import HeadlineGrid from './sections/HeadlineGrid';
 import TopicsGrid from './sections/TopicsGrid';
 import SourcesGrid from './sections/SourcesGrid';
 import { getHeadlineIndicators } from '@/lib/data';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 export default async function Home() {
   const headlines = await getHeadlineIndicators();

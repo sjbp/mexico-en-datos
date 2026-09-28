@@ -9,6 +9,10 @@ import ChatPanel from "@/components/ui/ChatPanel";
 
 const SITE_URL = 'https://datamx.sebastian.mx';
 
+// Pages read from the DB at render time. Without this they are frozen at the
+// last deploy; with it they regenerate at most hourly after data syncs.
+export const revalidate = 3600;
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -24,7 +28,6 @@ export const metadata: Metadata = {
   description:
     'Explora datos oficiales de INEGI, Banxico, ENOE, ENVIPE y m\u00e1s. Indicadores econ\u00f3micos, empleo, seguridad y salud de M\u00e9xico con gr\u00e1ficas interactivas y un asistente de IA.',
   metadataBase: new URL(SITE_URL),
-  alternates: { canonical: '/' },
   openGraph: {
     title: 'M\u00e9xico en Datos',
     description: 'Datos oficiales de M\u00e9xico: econom\u00eda, empleo, seguridad y salud. Gr\u00e1ficas interactivas y asistente de IA.',

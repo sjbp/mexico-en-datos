@@ -59,8 +59,8 @@ export function LifeExpectancyChart({ data }: { data: SimpleTimeData }) {
       periods={data.labels}
       yUnit=" años"
       yStep={1}
-      yMin={70}
-      labelStep={1}
+      yMin={Math.floor(Math.min(...data.values)) - 1}
+      labelStep={data.labels.length > 10 ? 2 : 1}
       valueDecimals={1}
     />
   );

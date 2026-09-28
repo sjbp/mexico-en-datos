@@ -8,6 +8,7 @@ import { cached } from '@/lib/cache';
 import {
   getEnvipeStats,
   getLeadingCausesOfDeath,
+  getLatestMortalityYear,
   getEmploymentByDimension,
   getLatestValue,
   getIndicatorValues,
@@ -26,6 +27,7 @@ import {
 
 const getEnvipeStatsCached = cached(getEnvipeStats);
 const getLeadingCausesOfDeathCached = cached(getLeadingCausesOfDeath);
+const getLatestMortalityYearCached = cached(getLatestMortalityYear);
 const getEmploymentByDimensionCached = cached(getEmploymentByDimension);
 const getLatestValueCached = cached(getLatestValue);
 const getIndicatorValuesCached = cached(getIndicatorValues);
@@ -113,17 +115,9 @@ async function getTreemapItems(source: TreemapConfig['dataSource']): Promise<{ i
   }
 
   if (source === 'salud_causes') {
-    // Find the most recent year that has data
-    const years = [2023, 2022, 2021, 2020, 2019];
-    let causes: Awaited<ReturnType<typeof getLeadingCausesOfDeath>> = [];
-    let usedYear = years[0];
-    for (const y of years) {
-      causes = await getLeadingCausesOfDeathCached(y);
-      if (causes.length > 0) {
-        usedYear = y;
-        break;
-      }
-    }
+    // Most recent year with mortality data in the DB
+    const usedYear = await getLatestMortalityYearCached();
+    const causes = await getLeadingCausesOfDeathCached(usedYear);
     const top = causes.slice(0, 6);
     const items: TreemapItem[] = top.map((c) => {
       const deaths = Number(c.deaths);
