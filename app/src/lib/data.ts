@@ -451,6 +451,21 @@ export async function getHealthFacilitySummary(): Promise<
   }
 }
 
+// Latest year with mortality microdata loaded (falls back to two years ago,
+// the usual publication lag, if the DB is unreachable)
+export async function getLatestMortalityYear(): Promise<number> {
+  const fallback = new Date().getFullYear() - 2;
+  try {
+    const rows = await query<{ year: number | null }>(
+      `SELECT MAX(year) AS year FROM mortality_stats WHERE geo_code = '00'`
+    );
+    return rows[0]?.year ?? fallback;
+  } catch (error) {
+    console.error('Error fetching latest mortality year:', error);
+    return fallback;
+  }
+}
+
 export async function getLeadingCausesOfDeath(
   year: number,
   geo: string = '00',
