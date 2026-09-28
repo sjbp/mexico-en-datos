@@ -1,2 +1,0 @@
-[    2203ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://www.inegi.org.mx/app/tabulados/interactivos/?px=Mortalidad_09&bd=Mortalidad:0
-[    2975ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://westus2-1.in.applicationinsights.azure.com//v2/track:0
