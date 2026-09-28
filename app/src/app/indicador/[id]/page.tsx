@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Badge from '@/components/ui/Badge';
@@ -6,6 +7,22 @@ import IndicadorClient from './IndicadorClient';
 import { getIndicator, getIndicatorValues, getLatestValue } from '@/lib/data';
 import { fmtNum, fmtTopic } from '@/lib/format';
 import { getIndicatorDescription } from '@/lib/indicatorDescriptions';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const indicator = await getIndicator(id);
+  if (!indicator) return {};
+  const name = indicator.name_es.replace(/\s*\(.*\)$/, '');
+  return {
+    title: `${name} | M\u00e9xico en Datos`,
+    description: `Datos hist\u00f3ricos y \u00faltimo valor de ${name}. Fuente: ${indicator.source ?? 'INEGI/Banxico'}.`,
+    alternates: { canonical: `/indicador/${id}` },
+  };
+}
 
 export default async function IndicadorPage({
   params,

@@ -1,0 +1,462 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e6]:
+        - generic:
+          - navigation:
+            - link "Ir al contenido principal" [ref=e7] [cursor=pointer]:
+              - /url: "#contPrinc"
+          - link [ref=e11] [cursor=pointer]:
+            - /url: /default.html
+            - heading "(INEGI)" [level=2] [ref=e12]
+          - generic [ref=e16]:
+            - link [ref=e17] [cursor=pointer]:
+              - /url: http://www.facebook.com/pages/inegi-informa/180299958681029
+              - img "Inegi informa Facebook" [ref=e18]
+            - link [ref=e19] [cursor=pointer]:
+              - /url: http://twitter.com/inegi_informa
+              - img "Inegi informa Twitter" [ref=e20]
+            - link [ref=e21] [cursor=pointer]:
+              - /url: https://www.youtube.com/user/INEGIInforma
+              - img "Inegi informa Youtube" [ref=e22]
+            - link [ref=e23] [cursor=pointer]:
+              - /url: https://www.instagram.com/inegi_informa/
+              - img "Inegi informa Instagram" [ref=e24]
+            - link [ref=e25] [cursor=pointer]:
+              - /url: /servicios/rss
+              - img "Inegi informa RSS" [ref=e26]
+            - link "Otros idiomas" [ref=e27] [cursor=pointer]:
+              - /url: "#"
+            - link "Contacto" [ref=e28] [cursor=pointer]:
+              - /url: /inegi/contacto.html
+            - link "+A" [ref=e29] [cursor=pointer]:
+              - /url: "#"
+    - generic "Menú del sitio" [ref=e30]:
+      - navigation [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - text: 
+            - navigation:
+              - list [ref=e35]:
+                - listitem [ref=e36]:
+                  - link [aria-hidden] [ref=e37] [cursor=pointer]:
+                    - /url: /default.html
+                - listitem [ref=e38]:
+                  - button "Temas" [ref=e39] [cursor=pointer]
+                - listitem [ref=e40]:
+                  - button "Programas de información" [ref=e41] [cursor=pointer]
+                - listitem [ref=e42]:
+                  - button "Sistemas de Consulta" [ref=e43] [cursor=pointer]
+                - listitem [ref=e44]:
+                  - button "Desarrollo social" [ref=e45] [cursor=pointer]
+                - listitem [ref=e46]:
+                  - button "Infraestructura" [ref=e47] [cursor=pointer]
+                - listitem [ref=e48]:
+                  - button "Acerca del INEGI" [ref=e49] [cursor=pointer]
+          - generic "Buscador" [ref=e50]:
+            - search "Buscador del sitio del INEGI" [ref=e52]:
+              - generic [ref=e53]:
+                - textbox "Buscar Ingresa datos a enviar al buscador" [ref=e54]:
+                  - /placeholder: Buscar...
+                - button "Enviar datos al buscador" [ref=e55] [cursor=pointer]: Buscar
+                - generic: 
+          - text: 
+  - list [ref=e61]:
+    - listitem [ref=e62]:
+      - link "Inicio" [ref=e63] [cursor=pointer]:
+        - /url: /default.html
+    - listitem [ref=e64]: /
+    - listitem [ref=e65]:
+      - link "Temas" [ref=e66] [cursor=pointer]:
+        - /url: /datos/
+    - listitem:
+      - link:
+        - /url: "#"
+  - generic [ref=e73]:
+    - heading "Esperanza de vida al nacimiento por entidad federativa según sexo, serie anual de 2010 a 2026" [level=3] [ref=e75]
+    - generic [ref=e76]:
+      - generic [ref=e78]:
+        - button "" [expanded] [ref=e80] [cursor=pointer]
+        - generic [ref=e83] [cursor=pointer]: 
+      - generic [ref=e86]:
+        - generic [ref=e90]:
+          - link "Seleccionar variables" [ref=e92]:
+            - /url: /filters
+          - link "Ordenar variables" [ref=e94] [cursor=pointer]:
+            - /url: /pivot
+        - separator [ref=e95]
+      - generic [ref=e97]:
+        - generic [ref=e99]:
+          - generic [ref=e100] [cursor=pointer]:
+            - generic [ref=e101]: Entidad federativa
+            - generic [ref=e102]:
+              - text: 33 de 33
+              - generic [ref=e103]: 
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - textbox "Buscar..." [ref=e106]
+              - button "" [ref=e108] [cursor=pointer]
+            - generic [ref=e111] [cursor=pointer]:
+              - checkbox "Todo" [checked] [active] [ref=e112]
+              - text: Todo
+            - generic [ref=e114]:
+              - generic [ref=e115]:
+                - checkbox [checked] [ref=e117]
+                - text: Estados Unidos Mexicanos
+              - generic [ref=e118]:
+                - checkbox [checked] [ref=e120]
+                - text: Aguascalientes
+              - generic [ref=e121]:
+                - checkbox [checked] [ref=e123]
+                - text: Baja California
+              - generic [ref=e124]:
+                - checkbox [checked] [ref=e126]
+                - text: Baja California Sur
+              - generic [ref=e127]:
+                - checkbox [checked] [ref=e129]
+                - text: Campeche
+              - generic [ref=e130]:
+                - checkbox [checked] [ref=e132]
+                - text: Coahuila de Zaragoza
+              - generic [ref=e133]:
+                - checkbox [checked] [ref=e135]
+                - text: Colima
+              - generic [ref=e136]:
+                - checkbox [checked] [ref=e138]
+                - text: Chiapas
+              - generic [ref=e139]:
+                - checkbox [checked] [ref=e141]
+                - text: Chihuahua
+              - generic [ref=e142]:
+                - checkbox [checked] [ref=e144]
+                - text: Ciudad de México
+              - generic [ref=e145]:
+                - checkbox [checked] [ref=e147]
+                - text: Durango
+              - generic [ref=e148]:
+                - checkbox [checked] [ref=e150]
+                - text: Guanajuato
+              - generic [ref=e151]:
+                - checkbox [checked] [ref=e153]
+                - text: Guerrero
+              - generic [ref=e154]:
+                - checkbox [checked] [ref=e156]
+                - text: Hidalgo
+              - generic [ref=e157]:
+                - checkbox [checked] [ref=e159]
+                - text: Jalisco
+              - generic [ref=e160]:
+                - checkbox [checked] [ref=e162]
+                - text: México
+              - generic [ref=e163]:
+                - checkbox [checked] [ref=e165]
+                - text: Michoacán de Ocampo
+              - generic [ref=e166]:
+                - checkbox [checked] [ref=e168]
+                - text: Morelos
+              - generic [ref=e169]:
+                - checkbox [checked] [ref=e171]
+                - text: Nayarit
+              - generic [ref=e172]:
+                - checkbox [checked] [ref=e174]
+                - text: Nuevo León
+              - generic [ref=e175]:
+                - checkbox [checked] [ref=e177]
+                - text: Oaxaca
+              - generic [ref=e178]:
+                - checkbox [checked] [ref=e180]
+                - text: Puebla
+              - generic [ref=e181]:
+                - checkbox [checked] [ref=e183]
+                - text: Querétaro
+              - generic [ref=e184]:
+                - checkbox [checked] [ref=e186]
+                - text: Quintana Roo
+              - generic [ref=e187]:
+                - checkbox [checked] [ref=e189]
+                - text: San Luis Potosí
+              - generic [ref=e190]:
+                - checkbox [checked] [ref=e192]
+                - text: Sinaloa
+              - generic [ref=e193]:
+                - checkbox [checked] [ref=e195]
+                - text: Sonora
+              - generic [ref=e196]:
+                - checkbox [checked] [ref=e198]
+                - text: Tabasco
+              - generic [ref=e199]:
+                - checkbox [checked] [ref=e201]
+                - text: Tamaulipas
+              - generic [ref=e202]:
+                - checkbox [checked] [ref=e204]
+                - text: Tlaxcala
+              - generic [ref=e205]:
+                - checkbox [checked] [ref=e207]
+                - text: Veracruz de Ignacio de la Llave
+              - generic [ref=e208]:
+                - checkbox [checked] [ref=e210]
+                - text: Yucatán
+              - generic [ref=e211]:
+                - checkbox [checked] [ref=e213]
+                - text: Zacatecas
+        - generic [ref=e215]:
+          - generic [ref=e216] [cursor=pointer]:
+            - generic [ref=e217]: Periodo
+            - generic [ref=e218]:
+              - text: 0 de 17
+              - generic [ref=e219]: 
+          - generic [ref=e220]:
+            - generic [ref=e221]:
+              - textbox "Buscar..." [ref=e222]
+              - button "" [ref=e224] [cursor=pointer]
+            - generic [ref=e227] [cursor=pointer]:
+              - checkbox "Todo" [ref=e228]
+              - text: Todo
+            - generic [ref=e230]:
+              - generic [ref=e231]:
+                - checkbox [ref=e233]
+                - text: "2026"
+              - generic [ref=e234]:
+                - checkbox [ref=e236]
+                - text: "2025"
+              - generic [ref=e237]:
+                - checkbox [ref=e239]
+                - text: "2024"
+              - generic [ref=e240]:
+                - checkbox [ref=e242]
+                - text: "2023"
+              - generic [ref=e243]:
+                - checkbox [ref=e245]
+                - text: "2022"
+              - generic [ref=e246]:
+                - checkbox [ref=e248]
+                - text: "2021"
+              - generic [ref=e249]:
+                - checkbox [ref=e251]
+                - text: "2020"
+              - generic [ref=e252]:
+                - checkbox [ref=e254]
+                - text: "2019"
+              - generic [ref=e255]:
+                - checkbox [ref=e257]
+                - text: "2018"
+              - generic [ref=e258]:
+                - checkbox [ref=e260]
+                - text: "2017"
+              - generic [ref=e261]:
+                - checkbox [ref=e263]
+                - text: "2016"
+              - generic [ref=e264]:
+                - checkbox [ref=e266]
+                - text: "2015"
+              - generic [ref=e267]:
+                - checkbox [ref=e269]
+                - text: "2014"
+              - generic [ref=e270]:
+                - checkbox [ref=e272]
+                - text: "2013"
+              - generic [ref=e273]:
+                - checkbox [ref=e275]
+                - text: "2012"
+              - generic [ref=e276]:
+                - checkbox [ref=e278]
+                - text: "2011"
+              - generic [ref=e279]:
+                - checkbox [ref=e281]
+                - text: "2010"
+        - generic [ref=e283]:
+          - generic [ref=e284] [cursor=pointer]:
+            - generic [ref=e285]: Sexo
+            - generic [ref=e286]:
+              - text: 0 de 3
+              - generic [ref=e287]: 
+          - generic [ref=e288]:
+            - generic [ref=e289]:
+              - textbox "Buscar..." [ref=e290]
+              - button "" [ref=e292] [cursor=pointer]
+            - generic [ref=e295] [cursor=pointer]:
+              - checkbox "Todo" [ref=e296]
+              - text: Todo
+            - generic [ref=e298]:
+              - generic [ref=e299]:
+                - checkbox [ref=e301]
+                - text: Total
+              - generic [ref=e302]:
+                - checkbox [ref=e304]
+                - text: Hombres
+              - generic [ref=e305]:
+                - checkbox [ref=e307]
+                - text: Mujeres
+      - generic [ref=e308]:
+        - generic [ref=e310]:
+          - text: "Número de datos seleccionados:"
+          - generic [ref=e311]: "33"
+        - generic [ref=e312] [cursor=pointer]: Consultar
+  - contentinfo [ref=e314]:
+    - generic [ref=e317]:
+      - generic [ref=e319]:
+        - strong [ref=e321]: Contacto
+        - generic [ref=e322]:
+          - img "Siglas de INEGI" [ref=e323]
+          - link "Llámanos al teléfono 800 111 46 34" [ref=e324] [cursor=pointer]:
+            - /url: tel:800 111 46 34
+            - text: 800 111 46 34
+          - link "Chatse abre en nueva ventana" [ref=e325] [cursor=pointer]:
+            - /url: javascript:void(0)
+            - text: Chat
+          - link "atencion.usuarios@inegi.org.mx se abre en nueva ventana" [ref=e326] [cursor=pointer]:
+            - /url: mailto:atencion.usuarios@inegi.org.mx
+            - text: atencion.usuarios@inegi.org.mx
+          - link "Directorio" [ref=e327] [cursor=pointer]:
+            - /url: /inegi/contacto.html#Directorios
+          - link "Solicitud de información" [ref=e328] [cursor=pointer]:
+            - /url: /inegi/contacto.html
+          - generic [ref=e329]:
+            - link [ref=e330] [cursor=pointer]:
+              - /url: http://www.facebook.com/pages/inegi-informa/180299958681029
+              - img "Inegi informa Facebook" [ref=e331]
+            - link [ref=e332] [cursor=pointer]:
+              - /url: http://twitter.com/inegi_informa
+              - img "Inegi informa Twitter" [ref=e333]
+            - link [ref=e334] [cursor=pointer]:
+              - /url: https://www.youtube.com/user/INEGIInforma
+              - img "Inegi informa Youtube" [ref=e335]
+            - link [ref=e336] [cursor=pointer]:
+              - /url: https://www.instagram.com/inegi_informa/
+              - img "Inegi informa Instagram" [ref=e337]
+            - link [ref=e338] [cursor=pointer]:
+              - /url: /servicios/rss
+              - img "Inegi informa RSS" [ref=e339]
+      - generic [ref=e340]:
+        - strong [ref=e342]: Enlaces
+        - generic [ref=e343]:
+          - link "Investigación" [ref=e344] [cursor=pointer]:
+            - /url: /investigacion/
+          - link "Sala de prensa" [ref=e345] [cursor=pointer]:
+            - /url: /app/saladeprensa/
+          - link "Normateca Institucional" [ref=e346] [cursor=pointer]:
+            - /url: /app/normateca/
+          - link "Transparencia" [ref=e347] [cursor=pointer]:
+            - /url: /transparencia/
+          - link "Desarrolladores" [ref=e348] [cursor=pointer]:
+            - /url: /servicios/api_indicadores.html
+          - link "Oportunidades de trabajo" [ref=e349] [cursor=pointer]:
+            - /url: /app/spc/
+          - link "Eventos" [ref=e350] [cursor=pointer]:
+            - /url: /eventos/otros/default.html
+          - link "Véndale al INEGI" [ref=e351] [cursor=pointer]:
+            - /url: /inegi/vendelealinegi/
+          - link "Armonización contable" [ref=e352] [cursor=pointer]:
+            - /url: /inegi/armonizacion/contable/
+          - link "Sistema de Manejo Ambiental" [ref=e353] [cursor=pointer]:
+            - /url: /inegi/sma/politica
+      - generic [ref=e354]:
+        - strong [ref=e356]: Sitios de interés
+        - generic [ref=e357]:
+          - link "SNIEG se abre en nueva ventana" [ref=e358] [cursor=pointer]:
+            - /url: https://snieg.mx/
+            - text: SNIEG
+          - link "Catálogo Nacional de Indicadores se abre en nueva ventana" [ref=e359] [cursor=pointer]:
+            - /url: https://www.snieg.mx/cni/
+            - text: Catálogo Nacional de Indicadores
+          - link "Cuéntame de México se abre en nueva ventana" [ref=e360] [cursor=pointer]:
+            - /url: https://cuentame.inegi.org.mx/
+            - text: Cuéntame de México
+          - link "Objetivos de Desarrollo Sostenible se abre en nueva ventana" [ref=e361] [cursor=pointer]:
+            - /url: https://agenda2030.mx/
+            - text: Objetivos de Desarrollo Sostenible
+          - link "Órgano Interno de Control se abre en nueva ventana" [ref=e362] [cursor=pointer]:
+            - /url: https://ci.inegi.org.mx/
+            - text: Órgano Interno de Control
+          - link "Denuncias se abre en nueva ventana" [ref=e363] [cursor=pointer]:
+            - /url: https://ci.inegi.org.mx/denuncias/DenunciaOICSIPEC.aspx
+            - text: Denuncias
+          - link "Enlaces de interés" [ref=e364] [cursor=pointer]:
+            - /url: /inegi/enlaces.html
+    - generic [ref=e366]:
+      - link "Mapa del sitio" [ref=e367] [cursor=pointer]:
+        - /url: /mapasitio/
+      - text: "|"
+      - link "Términos de uso" [ref=e368] [cursor=pointer]:
+        - /url: /inegi/terminos.html
+      - text: "|"
+      - link "Accesibilidad" [ref=e369] [cursor=pointer]:
+        - /url: /inegi/accesibilidad/
+      - generic [ref=e370]: Derechos reservados © INEGI
+  - generic "Compartir página en redes sociales" [ref=e371]:
+    - generic [ref=e372]:
+      - button "Cerrar" [ref=e374] [cursor=pointer]
+      - list [ref=e375]:
+        - listitem [ref=e376]:
+          - strong [ref=e377]: Compartir
+          - separator [ref=e378]
+        - listitem [ref=e379]:
+          - button "Facebook Comparte esta página nueva ventana" [ref=e380] [cursor=pointer]:
+            - paragraph [ref=e381]: Facebook
+        - listitem [ref=e382]:
+          - button "Twitter Comparte esta página nueva ventana" [ref=e383] [cursor=pointer]:
+            - paragraph [ref=e384]: Twitter
+        - listitem [ref=e385]:
+          - button "Correo Comparte esta página nueva ventana" [ref=e386] [cursor=pointer]:
+            - paragraph [ref=e387]: Email
+        - listitem [ref=e388]:
+          - textbox [ref=e389]
+          - link "Copiar vínculo" [ref=e391] [cursor=pointer]:
+            - /url: javascript:_copTextEnc()
+  - generic [ref=e392]:
+    - button "Compartir" [ref=e395] [cursor=pointer]
+    - link "Chat" [ref=e398] [cursor=pointer]:
+      - /url: javascript:void(0)
+    - list [ref=e400]:
+      - listitem [ref=e401]:
+        - button "Nos interesa conocer tu opinión del Sitio del INEGI" [ref=e402] [cursor=pointer]: Sugerencias
+  - generic [ref=e403]:
+    - button "Cerrar" [ref=e405] [cursor=pointer]
+    - generic [ref=e406]:
+      - strong [ref=e408]: Sugerencias
+      - strong [ref=e410]: Nos interesa conocer tu opinión del Sitio del INEGI
+      - group "*¿Encontraste la información que buscabas?" [ref=e411]:
+        - generic [ref=e413]:
+          - radio "Sí" [ref=e414]
+          - generic [ref=e415]: Sí
+        - generic [ref=e416]:
+          - radio "No" [ref=e417]
+          - generic [ref=e418]: "No"
+        - generic [ref=e419]: ¿Qué información buscaste?
+        - textbox "* Favor de especificar si encontraste la información" [ref=e420]
+      - group "*¿Te fue de utilidad?" [ref=e421]:
+        - generic [ref=e423]:
+          - radio "Sí" [ref=e424]
+          - generic [ref=e425]: Sí
+        - generic [ref=e426]:
+          - radio "No" [ref=e427]
+          - generic [ref=e428]: "No"
+      - group "*¿Cómo calificas tu experiencia el día de hoy?" [ref=e429]:
+        - combobox "¿Cómo calificas tu experiencia el día de hoy?" [ref=e432]:
+          - option "Selecciona..." [disabled] [selected]
+          - option "10"
+          - option "9"
+          - option "8"
+          - option "7"
+          - option "6"
+          - option "5"
+          - option "4"
+          - option "3"
+          - option "2"
+          - option "1"
+          - option "0"
+      - generic [ref=e433]: "Comentarios y sugerencias:"
+      - textbox "Comentarios y sugerencias:" [ref=e434]
+      - generic [ref=e435]: "Correo:"
+      - textbox "Correo:" [ref=e436]:
+        - /placeholder: ejemplo@correo.com
+      - iframe [ref=e440]:
+        - generic [ref=f2e2]:
+          - generic [ref=f2e3]:
+            - checkbox "No soy un robot" [ref=f2e7]
+            - generic [aria-hidden] [ref=f2e11]: No soy un robot
+          - generic [ref=f2e12]: reCAPTCHA
+      - generic [ref=e441]: "*"
+      - text: Los campos marcados con asterisco son obligatorios.
+      - alert
+      - button "Enviar" [ref=e443] [cursor=pointer]
