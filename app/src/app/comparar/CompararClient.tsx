@@ -17,10 +17,13 @@ interface CompararClientProps {
 interface SeriesData {
   id: string;
   name: string;
-  values: number[];
-  labels: string[];
+  // Last observed value of each month, keyed "YYYY-MM", in date order
+  monthly: Map<string, number>;
   unit: string;
 }
+
+// Only percentages get a suffix; other units are in each series' name
+const axisUnit = (unit: string) => (unit === 'percent' ? '%' : '');
 
 export default function CompararClient({ indicators }: CompararClientProps) {
   const [selected, setSelected] = useState<string[]>([]);
@@ -53,12 +56,11 @@ export default function CompararClient({ indicators }: CompararClientProps) {
             id,
             name: ind?.name_es ?? id,
             unit: ind?.unit ?? '',
-            values: values.map((v: IndicatorValue) => (v.value != null ? Number(v.value) : 0)),
-            labels: values.map((v: IndicatorValue, i: number) => {
-              const date = new Date(v.period_date);
-              if (date.getMonth() === 0 || i === 0) return String(date.getFullYear());
-              return '';
-            }),
+            monthly: new Map(
+              values
+                .filter((v: IndicatorValue) => v.value != null)
+                .map((v: IndicatorValue) => [String(v.period_date).slice(0, 7), Number(v.value)] as [string, number])
+            ),
           } as SeriesData;
         } catch {
           return null;
@@ -74,47 +76,59 @@ export default function CompararClient({ indicators }: CompararClientProps) {
     });
   }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Build chart series from selected indicators
-  const { chartSeries, chartLabels, dualAxis, rightYUnit } = useMemo(() => {
-    const activeSeries = selected
-      .map((id, idx) => {
-        const data = seriesMap[id];
-        if (!data) return null;
-        return {
-          values: data.values,
-          color: seriesColor(idx),
-          label: data.name,
-          labels: data.labels,
-          unit: data.unit,
-        };
-      })
-      .filter(Boolean) as Array<{ values: number[]; color: string; label: string; labels: string[]; unit: string }>;
+  // Build chart series from selected indicators. Series can have different
+  // frequencies and date ranges, so align them by month over the period they
+  // share; a lower-frequency series keeps its last value until the next one.
+  const { chartSeries, chartLabels, dualAxis, rightYUnit, commonRange } = useMemo(() => {
+    const active = selected
+      .map((id, idx) => (seriesMap[id] ? { data: seriesMap[id], color: seriesColor(idx) } : null))
+      .filter((s): s is { data: SeriesData; color: string } => s !== null && s.data.monthly.size > 0);
 
-    // Use labels from the longest series
-    const longest = activeSeries.reduce(
-      (max, s) => (s.labels.length > max.length ? s.labels : max),
-      [] as string[]
+    const keysOf = (m: Map<string, number>) => Array.from(m.keys()).sort();
+    const start = active.map((s) => keysOf(s.data.monthly)[0]).sort().at(-1);
+    const end = active.map((s) => keysOf(s.data.monthly).at(-1)!).sort()[0];
+    const months: string[] = [];
+    if (start && end && start <= end) {
+      let [y, m] = start.split('-').map(Number);
+      for (let key = start; key <= end; key = `${y}-${String(m).padStart(2, '0')}`) {
+        months.push(key);
+        m += 1;
+        if (m > 12) { m = 1; y += 1; }
+      }
+    }
+
+    const aligned = active.map(({ data, color }) => {
+      const keys = keysOf(data.monthly);
+      let k = 0;
+      let last = NaN;
+      const values = months.map((month) => {
+        while (k < keys.length && keys[k] <= month) last = data.monthly.get(keys[k++])!;
+        return last;
+      });
+      return { values, color, label: data.name, unit: data.unit };
+    });
+
+    // Year label at the first month of each year
+    const labels = months.map((month, i) =>
+      i === 0 || month.endsWith('-01') ? month.slice(0, 4) : ''
     );
 
     // Detect radically different scales (>10x difference in max values)
     let useDual = false;
-    if (activeSeries.length === 2) {
-      const max0 = Math.max(...activeSeries[0].values.filter(isFinite));
-      const max1 = Math.max(...activeSeries[1].values.filter(isFinite));
+    if (aligned.length === 2) {
+      const max0 = Math.max(...aligned[0].values.filter(isFinite));
+      const max1 = Math.max(...aligned[1].values.filter(isFinite));
       if (max0 > 0 && max1 > 0) {
         useDual = max0 / max1 > 10 || max1 / max0 > 10;
       }
     }
 
     return {
-      chartSeries: activeSeries.map((s) => ({
-        values: s.values,
-        color: s.color,
-        label: s.label,
-      })),
-      chartLabels: longest,
+      chartSeries: aligned.map(({ values, color, label }) => ({ values, color, label })),
+      chartLabels: labels,
       dualAxis: useDual,
-      rightYUnit: activeSeries[1]?.unit ?? '',
+      rightYUnit: axisUnit(aligned[1]?.unit ?? ''),
+      commonRange: months.length > 0 ? { from: months[0], to: months[months.length - 1] } : null,
     };
   }, [selected, seriesMap]);
 
@@ -132,7 +146,9 @@ export default function CompararClient({ indicators }: CompararClientProps) {
     ? Math.max(...chartSeries.flatMap((s) => s.values))
     : 10;
   const yStep = maxVal > 200 ? 50 : maxVal > 50 ? 10 : maxVal > 10 ? 5 : 2;
-  const leftYUnit = selected.length > 0 ? (seriesMap[selected[0]]?.unit ?? '') : '';
+  // On a shared axis the suffix only applies if every series has the same unit
+  const units = selected.map((id) => seriesMap[id]?.unit ?? '');
+  const leftYUnit = dualAxis || units.every((u) => u === units[0]) ? axisUnit(units[0] ?? '') : '';
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -201,6 +217,12 @@ export default function CompararClient({ indicators }: CompararClientProps) {
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-12 text-center">
             <p className="text-[var(--text-muted)]">Cargando datos...</p>
           </div>
+        ) : chartSeries.length > 0 && !commonRange ? (
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-12 text-center">
+            <p className="text-[var(--text-muted)]">
+              Estos indicadores no tienen un periodo en comun para compararlos.
+            </p>
+          </div>
         ) : (
           <>
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 mb-4">
@@ -209,7 +231,6 @@ export default function CompararClient({ indicators }: CompararClientProps) {
                 labels={chartLabels}
                 yUnit={leftYUnit}
                 yStep={yStep}
-                labelStep={chartLabels.length > 60 ? 12 : chartLabels.length > 24 ? 6 : 3}
                 valueDecimals={2}
                 dualAxis={dualAxis}
                 rightYUnit={rightYUnit}
@@ -229,6 +250,11 @@ export default function CompararClient({ indicators }: CompararClientProps) {
               {dualAxis && (
                 <span className="text-[11px] text-[var(--text-muted)] ml-2">
                   · Escalas independientes (eje izquierdo / derecho)
+                </span>
+              )}
+              {commonRange && chartSeries.length > 1 && (
+                <span className="text-[11px] text-[var(--text-muted)] ml-2">
+                  {`· Periodo en comun: ${commonRange.from} a ${commonRange.to} · datos mensuales`}
                 </span>
               )}
             </div>
