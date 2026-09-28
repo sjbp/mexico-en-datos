@@ -1,4 +1,4 @@
-name: Monthly Health Data Sync (Mortality + CLUES)
+name: Monthly Health Data Sync (Mortality, CLUES, life expectancy)
 
 on:
   schedule:
@@ -46,6 +46,11 @@ jobs:
             uv run python -m ingest.pipelines.health.mortality --year "$YEAR" \
               || echo "::warning::Mortality $YEAR not processed. It may not be published yet; will retry next month."
           done
+
+      - name: Refresh life expectancy (CONAPO via INEGI)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: uv run python -m ingest.pipelines.health.life_expectancy
 
       - name: Refresh CLUES facility catalog
         env:

@@ -129,6 +129,12 @@ export const ENSANUT_DESCRIPTIONS: Record<string, { summary: string; context: st
     context: "Esta medicion directa captura tanto casos diagnosticados como no diagnosticados. La diferencia con la hipertension autoreportada revela la brecha de diagnostico. El protocolo usa el promedio de las lecturas 2 y 3 para mayor precision."
   },
 
+  // --- CONAPO ---
+  "esperanza_vida": {
+    summary: "Numero de anos que en promedio se espera que viva una persona al nacer, si la mortalidad se mantuviera como la del ano de referencia. Estimaciones del CONAPO, republicadas por el INEGI.",
+    context: "La pandemia de COVID-19 provoco la mayor caida en decadas: unos 6 anos entre 2019 y 2021. Desde 2022 se recupero por encima del nivel pre-pandemia. Los valores de 2020 en adelante son proyecciones del CONAPO, no mediciones directas."
+  },
+
   // --- CONEVAL ---
   "coneval_sin_salud": {
     summary: "Porcentaje de la poblacion que carece de acceso a servicios de salud segun la medicion multidimensional de pobreza. Desde 2025 la publica el INEGI con la metodologia del CONEVAL.",
