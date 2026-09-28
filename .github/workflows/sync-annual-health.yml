@@ -48,12 +48,9 @@ jobs:
           done
 
       - name: Refresh CLUES facility catalog
-        continue-on-error: true
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          mkdir -p data/clues
-          uv run python -m ingest.pipelines.health.clues
+        run: uv run python -m ingest.pipelines.health.clues
 
       - name: Validate data integrity
         env:
