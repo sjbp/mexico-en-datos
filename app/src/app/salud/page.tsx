@@ -11,6 +11,7 @@ import {
   getTotalDeaths,
   getHealthFacilitySummary,
   getHospitalsPerCapita,
+  getLatestMortalityYear,
 } from '@/lib/data';
 import { MortalityTrendChart, LifeExpectancyChart, HealthCoverageGapChart } from './SaludClient';
 
@@ -88,6 +89,9 @@ function formatNumber(n: number): string {
 }
 
 export default async function SaludPage() {
+  // Most recent year of mortality microdata in the DB
+  const year = await getLatestMortalityYear();
+
   // Fetch all data in parallel
   const [
     causes,
@@ -98,10 +102,10 @@ export default async function SaludPage() {
     hospitalsPerCapita,
     ...trendResults
   ] = await Promise.all([
-    getLeadingCausesOfDeath(2023),
-    getTotalDeaths(2023),
-    getMortalityByAge('diabetes', 2023),
-    getTopCauseByAge(2023),
+    getLeadingCausesOfDeath(year),
+    getTotalDeaths(year),
+    getMortalityByAge('diabetes', year),
+    getTopCauseByAge(year),
     getHealthFacilitySummary(),
     getHospitalsPerCapita(),
     ...TREND_CAUSES.map((t) => getMortalityTrend(t.cause)),
@@ -109,6 +113,7 @@ export default async function SaludPage() {
 
   const topCause = causes[0];
   const diabetesEntry = causes.find((c) => c.cause_group === 'diabetes');
+  const diabetesRank = causes.findIndex((c) => c.cause_group === 'diabetes') + 1;
 
   // Leading causes chart data
   const chartData = causes
@@ -240,13 +245,13 @@ export default async function SaludPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
-              Defunciones registradas 2023
+              Defunciones por causas principales {year}
             </div>
             <div className="text-2xl font-bold text-white tabular-nums">
               {totalDeaths > 0 ? formatNumber(totalDeaths) : '~850,000'}
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              Todas las causas, nivel nacional
+              Suma de las {causes.length} causas analizadas, nivel nacional
             </div>
           </Card>
 
@@ -261,7 +266,7 @@ export default async function SaludPage() {
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
               {topCause?.rate_per_100k != null
-                ? `${Number(topCause.rate_per_100k).toFixed(1)} por 100k hab. (2023)`
+                ? `${Number(topCause.rate_per_100k).toFixed(1)} por 100k hab. (${year})`
                 : '~150 por 100k hab. (2023 est.)'}
             </div>
           </Card>
@@ -276,7 +281,7 @@ export default async function SaludPage() {
                 : '~110,000'}
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              2a causa de muerte &middot; 2023
+              {diabetesRank > 0 ? `${diabetesRank}a causa de muerte · ${year}` : year}
             </div>
           </Card>
 
@@ -305,7 +310,7 @@ export default async function SaludPage() {
               Tasa de mortalidad por causa
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              Tasa por 100 mil habitantes, 2023 &middot; Nacional &middot; Datos hasta: 2023
+              Tasa por 100 mil habitantes, {year} &middot; Nacional &middot; Datos hasta: {year}
             </div>
           </div>
           <HBar
@@ -313,7 +318,7 @@ export default async function SaludPage() {
             valueFmt={(v: number) => v.toFixed(1)}
           />
           <div className="text-xs text-[var(--text-muted)] mt-4">
-            Fuente: Estadisticas de Defunciones Registradas 2023, INEGI / Sec. Salud. Clasificacion CIE-10.
+            Fuente: Estadisticas de Defunciones Registradas {year}, INEGI / Sec. Salud. Clasificacion CIE-10.
           </div>
         </Card>
       </div>
@@ -428,7 +433,7 @@ export default async function SaludPage() {
                   Muertes por diabetes por grupo de edad
                 </div>
                 <div className="text-[13px] text-[var(--text-muted)] mt-1">
-                  Defunciones absolutas, 2023 &middot; Nacional &middot; Datos hasta: 2023
+                  Defunciones absolutas, {year} &middot; Nacional &middot; Datos hasta: {year}
                 </div>
               </div>
               <HBar
@@ -440,7 +445,7 @@ export default async function SaludPage() {
                   La diabetes mata a {diabetesEntry ? formatNumber(diabetesEntry.deaths) : '110,000'} personas al ano en Mexico.
                   A diferencia de otros paises, afecta desproporcionadamente a personas en edad productiva:
                   {' '}{formatNumber(diabetesAgeData.filter((d) => ['35-44 anos', '45-54 anos', '55-64 anos'].includes(d.label)).reduce((s, d) => s + d.value, 0))} muertes
-                  ocurrieron entre los 35 y 64 anos en 2023.
+                  ocurrieron entre los 35 y 64 anos en {year}.
                 </p>
                 <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mt-2" style={{ textWrap: 'pretty' }}>
                   Segun la ENSANUT 2022, 15.6% de los adultos mexicanos tienen diabetes diagnosticada y 36.9% tienen obesidad &mdash; ambas tasas entre las mas altas del mundo.
@@ -462,7 +467,7 @@ export default async function SaludPage() {
                   Principal causa de muerte por grupo de edad
                 </div>
                 <div className="text-[13px] text-[var(--text-muted)] mt-1">
-                  Nacional, 2023 &middot; Datos hasta: 2023
+                  Nacional, {year} &middot; Datos hasta: {year}
                 </div>
               </div>
               <div className="flex flex-col gap-3">
@@ -611,7 +616,7 @@ export default async function SaludPage() {
       {/* ── 11. Attribution ────────────────────────────────────────── */}
       <div className="px-[var(--pad-page)] mb-10">
         <div className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Fuentes: INEGI (Estadisticas de Mortalidad 2018-2023), ENSANUT 2022 (INSP), Secretaria de Salud (CLUES), CONEVAL (Medicion de Pobreza), CONAPO (Proyecciones de Poblacion)
+          Fuentes: INEGI (Estadisticas de Mortalidad 2018-{year}), ENSANUT 2022 (INSP), Secretaria de Salud (CLUES), CONEVAL (Medicion de Pobreza), CONAPO (Proyecciones de Poblacion)
         </div>
       </div>
     </>
