@@ -60,19 +60,6 @@ const TREND_CAUSES = [
 // Sort age groups in natural order
 const AGE_ORDER = ['15-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75+'];
 
-// ── Hardcoded CONAPO life expectancy data ──────────────────────────────
-const LIFE_EXPECTANCY = [
-  { year: 2015, value: 75.0 },
-  { year: 2016, value: 75.1 },
-  { year: 2017, value: 75.1 },
-  { year: 2018, value: 75.0 },
-  { year: 2019, value: 75.4 },
-  { year: 2020, value: 73.1 },  // COVID
-  { year: 2021, value: 71.5 },  // COVID peak
-  { year: 2022, value: 74.0 },  // Recovery
-  { year: 2023, value: 75.1 },  // Near pre-COVID
-];
-
 function formatNumber(n: number): string {
   return n.toLocaleString('es-MX');
 }
@@ -90,6 +77,7 @@ export default async function SaludPage() {
     facilitySummary,
     hospitalsPerCapita,
     healthAccessGap,
+    lifeExpectancy,
     ...trendResults
   ] = await Promise.all([
     getLeadingCausesOfDeath(year),
@@ -99,6 +87,7 @@ export default async function SaludPage() {
     getHealthFacilitySummary(),
     getHospitalsPerCapita(),
     getIndicatorValues('coneval_sin_salud'),
+    getIndicatorValues('esperanza_vida'),
     ...TREND_CAUSES.map((t) => getMortalityTrend(t.cause)),
   ]);
 
@@ -175,11 +164,18 @@ export default async function SaludPage() {
     color: '#FF9F43',
   }));
 
-  // Life expectancy chart data
+  // Life expectancy chart data (CONAPO; 2020+ are projections)
+  const lifeRows = lifeExpectancy.filter((d) => d.value != null);
   const lifeExpData = {
-    labels: LIFE_EXPECTANCY.map((d) => String(d.year)),
-    values: LIFE_EXPECTANCY.map((d) => d.value),
+    labels: lifeRows.map((d) => d.period),
+    values: lifeRows.map((d) => Number(d.value)),
   };
+  const lifeFirst = lifeRows[0];
+  const lifeLatest = lifeRows[lifeRows.length - 1];
+  const lifePre = lifeRows.find((d) => d.period === '2019');
+  const lifeTrough = lifeRows
+    .filter((d) => d.period === '2020' || d.period === '2021')
+    .sort((a, b) => Number(a.value) - Number(b.value))[0];
 
   // Health coverage gap chart data (CONEVAL methodology, biennial)
   const gapRows = healthAccessGap.filter((d) => d.value != null);
@@ -234,7 +230,7 @@ export default async function SaludPage() {
             Mexico enfrenta una triple crisis de salud: una epidemia de obesidad y diabetes (36% de obesidad, la mas alta de la OCDE), un colapso de cobertura ({gapLatest ? `${Number(gapLatest.value).toFixed(0)}% sin acceso en ${gapLatest.period}` : 'un tercio sin acceso'} tras el desmantelamiento del Seguro Popular), y enfermedades cronicas que matan a personas mas jovenes que en paises comparables.
           </p>
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-            La diabetes es particularmente critica: es la unica economia grande donde aparece como segunda causa de muerte. El COVID-19 dejo una huella duradera en la esperanza de vida, y los homicidios siguen entre las 10 primeras causas &mdash; algo inusual en paises de ingreso similar.
+            La diabetes es particularmente critica: es la unica economia grande donde aparece como segunda causa de muerte. El COVID-19 provoco la mayor caida de la esperanza de vida en decadas, y los homicidios siguen entre las 10 primeras causas &mdash; algo inusual en paises de ingreso similar.
           </p>
         </div>
       </div>
@@ -333,7 +329,7 @@ export default async function SaludPage() {
               Esperanza de vida al nacer
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              Anos &middot; Nacional &middot; CONAPO &middot; 2015-2023
+              Anos &middot; Nacional &middot; CONAPO &middot; {`${lifeFirst?.period}-${lifeLatest?.period} · 2020 en adelante son proyecciones`}
             </div>
           </div>
           <div className="h-[280px]">
@@ -341,11 +337,13 @@ export default async function SaludPage() {
           </div>
           <div className="border-l-2 border-[var(--accent)] pl-4 mt-5 max-w-[640px]">
             <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-              La esperanza de vida cayo de 75.4 a 71.5 anos durante la pandemia de COVID-19 (2019-2021), una perdida de casi 4 anos. Para 2023 se ha recuperado a niveles pre-pandemia.
+              {lifePre && lifeTrough && lifeLatest
+                ? `La esperanza de vida cayo de ${Number(lifePre.value).toFixed(1)} a ${Number(lifeTrough.value).toFixed(1)} anos durante la pandemia de COVID-19 (2019-${lifeTrough.period}), una perdida de ${(Number(lifePre.value) - Number(lifeTrough.value)).toFixed(1)} anos. Para ${lifeLatest.period} CONAPO la estima en ${Number(lifeLatest.value).toFixed(1)} anos, ${Number(lifeLatest.value) >= Number(lifePre.value) ? 'por encima' : 'todavia por debajo'} del nivel pre-pandemia.`
+                : 'La pandemia de COVID-19 redujo la esperanza de vida en Mexico entre 2020 y 2021.'}
             </p>
           </div>
           <div className="text-xs text-[var(--text-muted)] mt-4">
-            Fuente: CONAPO, Proyecciones de la Poblacion de Mexico y de las Entidades Federativas.
+            Fuente: CONAPO, Conciliacion Demografica 1950-2019 y Proyecciones de la Poblacion de Mexico y de las Entidades Federativas 2020-2070 (via INEGI).
           </div>
         </Card>
       </div>
