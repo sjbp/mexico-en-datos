@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${source.name}`,
     description: source.description,
+    alternates: { canonical: `/fuentes/${slug}` },
   };
 }
 

@@ -56,34 +56,16 @@ export default function IndicadorClient({
     [filteredValues]
   );
 
+  // X-axis labels: the year at the first point of each year, for every
+  // frequency ("2024/Q1", "2024/03", "2024-01-15", "2024"). The very first
+  // point is labelled too, unless a new year starts right after it.
   const labels = useMemo(() => {
-    return filteredValues.map((v, i) => {
-      const p = v.period; // e.g. "2024/Q1", "2024/03", "2024-01-15"
-
-      // Quarterly: "YYYY/QN" — label every quarter (TimeSeries handles spacing)
-      if (p.includes('Q')) {
-        const [yr, q] = p.split('/');
-        return `${yr} ${q}`;
-      }
-
-      // Monthly/biweekly: "YYYY/MM" (INEGI format)
-      const slashMonth = p.match(/^(\d{4})\/(\d{2})$/);
-      if (slashMonth) {
-        const yr = slashMonth[1];
-        const mo = parseInt(slashMonth[2], 10);
-        return (i === 0 || mo === 1) ? yr : '';
-      }
-
-      // Daily: "YYYY-MM-DD" (Banxico ISO format)
-      const isoDate = p.match(/^(\d{4})-(\d{2})-\d{2}$/);
-      if (isoDate) {
-        const yr = isoDate[1];
-        const mo = parseInt(isoDate[2], 10);
-        return (i === 0 || mo === 1) ? yr : '';
-      }
-
-      // Fallback
-      return i === 0 ? p : '';
+    const years = filteredValues.map((v) => v.period.match(/^(\d{4})/)?.[1] ?? '');
+    const firstChange = years.findIndex((y, i) => i > 0 && y !== years[i - 1]);
+    const labelFirst = firstChange === -1 || firstChange > years.length / 6;
+    return years.map((y, i) => {
+      if (i === 0) return labelFirst ? (y || filteredValues[0].period) : '';
+      return y !== years[i - 1] ? y : '';
     });
   }, [filteredValues]);
 
@@ -100,7 +82,6 @@ export default function IndicadorClient({
   const valRange = maxVal - Math.min(minVal, 0);
   const yStep = valRange > 200 ? 50 : valRange > 50 ? 10 : valRange > 10 ? 5 : valRange > 4 ? 2 : 1;
   const yMin = minVal < 0 ? Math.floor(minVal / yStep) * yStep : undefined;
-  const labelStep = filteredValues.length > 60 ? 12 : filteredValues.length > 24 ? 6 : 3;
 
   const series = [
     {
@@ -155,7 +136,6 @@ export default function IndicadorClient({
           yUnit={yUnit}
           yStep={yStep}
           yMin={yMin}
-          labelStep={labelStep}
           valueDecimals={isPercent ? 2 : 1}
         />
       </div>

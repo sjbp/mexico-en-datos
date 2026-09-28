@@ -12,12 +12,10 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      - uses: actions/checkout@v5
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Set up Python
         run: uv python install 3.12
@@ -41,3 +39,20 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: uv run python -m ingest.validate
+
+  keepalive:
+    # GitHub disables scheduled workflows after 60 days without repository
+    # activity. Re-enabling them through the API resets that timer, so the
+    # syncs keep running even when nobody pushes to the repo.
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Keep scheduled workflows enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for wf in sync-daily.yml sync-monthly.yml sync-quarterly-enoe.yml sync-annual-health.yml; do
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$wf/enable"
+            echo "Enabled $wf"
+          done

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BugReportLink from './BugReportLink';
 
 const linkClass = 'text-[var(--text-muted)] underline decoration-white/15 underline-offset-[2.5px] hover:text-[var(--accent)] hover:decoration-[var(--accent)] transition-colors text-sm';
 
@@ -21,7 +22,7 @@ export default function Footer() {
         <div className="flex flex-col gap-2 items-end max-sm:items-start">
           <div className="flex gap-6 max-sm:gap-4 max-sm:flex-wrap">
             <a href="https://github.com/sjbp/mexico-en-datos" target="_blank" rel="noopener noreferrer" className={linkClass}>GitHub</a>
-            <a href="https://github.com/sjbp/mexico-en-datos/issues/new?labels=bug&template=bug_report.md&title=%5BBug%5D+&body=Describe%20el%20error%3A%0A%0A" target="_blank" rel="noopener noreferrer" className={linkClass}>Reportar error</a>
+            <BugReportLink className={linkClass} />
             <Link href="/preguntas-frecuentes" className={linkClass}>FAQ</Link>
           </div>
           <a

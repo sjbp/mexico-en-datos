@@ -4,6 +4,12 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import { getEmploymentByDimension } from '@/lib/data';
 import SalariosClient from './SalariosClient';
 
+export const metadata = {
+  title: 'Salarios | M\u00e9xico en Datos',
+  description: 'Distribuci\u00f3n salarial en M\u00e9xico por sector, nivel educativo y g\u00e9nero. Fuente: ENOE (INEGI).',
+  alternates: { canonical: '/empleo/salarios' },
+};
+
 export default async function SalariosPage() {
   const [sectorStats, educationStats, genderStats] = await Promise.all([
     getEmploymentByDimension('sector'),

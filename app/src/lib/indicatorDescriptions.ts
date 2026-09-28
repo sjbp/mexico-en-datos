@@ -93,13 +93,31 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
   },
   "sesnsp_homicide_count": {
     summary: "Numero mensual de carpetas de investigacion por homicidio doloso, reportadas por las fiscalias estatales al Secretariado Ejecutivo del SESNSP.",
-    context: "Permite dar seguimiento mensual a la tendencia de violencia homicida. Es la fuente oficial mas oportuna para homicidios en Mexico. Los datos se publican con ~2 meses de rezago."
+    context: "Permite dar seguimiento mensual a la tendencia de violencia homicida. Es la fuente oficial mas oportuna para homicidios en Mexico. Los datos se publican con ~2 meses de rezago. Desde enero de 2026 el SESNSP registra con una nueva metodologia, por lo que las comparaciones con periodos anteriores deben tomarse con cautela."
   },
 
   // --- Confidence ---
   "454168": {
     summary: "Indice compuesto que mide la percepcion de los consumidores sobre la situacion economica actual y futura del pais y del hogar.",
     context: "Basado en la Encuesta Nacional sobre Confianza del Consumidor (ENCO). Valores por encima de 50 indican optimismo. Es un indicador adelantado del consumo privado."
+  },
+
+  // --- ENSANUT (published by INSP) ---
+  "ensanut_obesidad": {
+    summary: "Porcentaje de adultos de 20 anos o mas con indice de masa corporal (IMC) de 30 o mas, segun las cifras publicadas por el INSP con la ENSANUT.",
+    context: "La ENSANUT mide peso y talla directamente, no por autorreporte. La obesidad en adultos paso de 30.4% en 2006 a 38.9% en 2023. Es factor de riesgo para diabetes, hipertension y enfermedades cardiovasculares."
+  },
+
+  // --- CONAPO ---
+  "esperanza_vida": {
+    summary: "Numero de anos que en promedio se espera que viva una persona al nacer, si la mortalidad se mantuviera como la del ano de referencia. Estimaciones del CONAPO, republicadas por el INEGI.",
+    context: "La pandemia de COVID-19 provoco la mayor caida en decadas: unos 6 anos entre 2019 y 2021. Desde 2022 se recupero por encima del nivel pre-pandemia. Los valores de 2020 en adelante son proyecciones del CONAPO, no mediciones directas."
+  },
+
+  // --- CONEVAL ---
+  "coneval_sin_salud": {
+    summary: "Porcentaje de la poblacion que carece de acceso a servicios de salud segun la medicion multidimensional de pobreza. Desde 2025 la publica el INEGI con la metodologia del CONEVAL.",
+    context: "Esta carencia se redujo de 38% a 16% entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento en 2020 y las transiciones a INSABI y luego IMSS-Bienestar, se disparo a 39% en 2022 y bajo a 34% en 2024. Es uno de los indicadores mas politizados del pais."
   },
 };
 
@@ -108,31 +126,13 @@ export const INDICATOR_DESCRIPTIONS: Record<string, { summary: string; context: 
 // ENSANUT-derived prevalence data shown in health dashboards.
 
 export const ENSANUT_DESCRIPTIONS: Record<string, { summary: string; context: string }> = {
-  "obesity": {
-    summary: "Porcentaje de adultos (20+) con indice de masa corporal (IMC) >= 30, basado en mediciones antropometricas directas de la ENSANUT.",
-    context: "Mexico tiene una de las tasas de obesidad mas altas del mundo. La ENSANUT mide peso y talla directamente (no autoreportado), lo que la hace la fuente mas confiable. La obesidad es factor de riesgo para diabetes, hipertension y enfermedades cardiovasculares."
-  },
-  "overweight": {
-    summary: "Porcentaje de adultos (20+) con IMC entre 25 y 29.9, basado en mediciones antropometricas de la ENSANUT.",
-    context: "Combinado con obesidad, mas del 75% de los adultos mexicanos tienen sobrepeso u obesidad. El sobrepeso es la antesala de la obesidad y ya implica riesgos metabolicos elevados."
-  },
   "diabetes": {
     summary: "Porcentaje de adultos (20+) que reportan haber sido diagnosticados con diabetes por un medico, segun la ENSANUT.",
     context: "Es prevalencia diagnosticada (autoreportada), no total. Se estima que entre 30-50% de los casos de diabetes en Mexico no estan diagnosticados. Mexico tiene ~12 millones de adultos con diabetes, una de las principales causas de muerte y discapacidad."
   },
   "hypertension": {
     summary: "Porcentaje de adultos (20+) que reportan diagnostico medico de hipertension arterial, segun la ENSANUT.",
-    context: "Al igual que diabetes, solo captura casos diagnosticados. La ENSANUT tambien mide la presion arterial directamente (ver hypertension_measured), lo que revela una prevalencia mayor al incluir casos no diagnosticados."
-  },
-  "hypertension_measured": {
-    summary: "Porcentaje de adultos (20+) con presion arterial >= 140/90 mmHg, medida directamente durante la encuesta ENSANUT (promedio de segunda y tercera lecturas).",
-    context: "Esta medicion directa captura tanto casos diagnosticados como no diagnosticados. La diferencia con la hipertension autoreportada revela la brecha de diagnostico. El protocolo usa el promedio de las lecturas 2 y 3 para mayor precision."
-  },
-
-  // --- CONEVAL ---
-  "coneval_sin_salud": {
-    summary: "Porcentaje de la poblacion que carece de acceso a servicios de salud segun la medicion multidimensional de pobreza del CONEVAL.",
-    context: "Esta carencia se redujo de 38% a 15% entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento en 2020 y las transiciones a INSABI y luego IMSS-Bienestar, se disparo a 39% en 2022. Es uno de los indicadores mas politizados del pais."
+    context: "Al igual que diabetes, solo captura casos diagnosticados. Segun el INSP, casi la mitad de los adultos con hipertension no sabe que la tiene, por lo que la prevalencia total es mucho mayor."
   },
 };
 
