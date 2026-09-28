@@ -7,6 +7,10 @@ Usage:
     python -m ingest.pipelines.sesnsp --full
     python -m ingest.pipelines.sesnsp --year 2024
 
+Since Jan 2026 SESNSP publishes under a new methodology in a separate
+file (estatal_n.csv upstream). Run the pipeline once per file; the two
+files cover disjoint years.
+
 Data source:
     https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva
 
@@ -35,6 +39,7 @@ import logging
 import os
 import sys
 import tempfile
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +52,7 @@ load_dotenv()
 logger = logging.getLogger("ingest.pipelines.sesnsp")
 
 # Available years — SESNSP publishes data from 2015 onward
-AVAILABLE_YEARS = list(range(2015, 2026))
+AVAILABLE_YEARS = list(range(2015, date.today().year + 1))
 
 # The SESNSP data portal URL — files are manually downloadable or
 # available via a direct link that changes with each publication.
@@ -170,7 +175,8 @@ def process_incidence(
     logger.info("Processing SESNSP CSV: %s (filter: %s)", csv_path, crime_filter)
 
     # Try common encodings for Mexican government data
-    for encoding in ("utf-8", "latin-1", "cp1252"):
+    # utf-8-sig strips the BOM that the 2026+ file starts with.
+    for encoding in ("utf-8-sig", "latin-1", "cp1252"):
         try:
             with open(csv_path, "r", encoding=encoding) as f:
                 reader = csv.DictReader(f)
@@ -249,6 +255,33 @@ def aggregate_national(
     ]
 
 
+def drop_unpublished_months(
+    records: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Drop months that SESNSP has not published yet.
+
+    The CSV has all 12 month columns for the current year, with 0 for
+    months not yet published. A month is unpublished if the national
+    total for it and every later month of that year is 0.
+    """
+    from collections import defaultdict
+
+    national: dict[tuple[int, int], int] = defaultdict(int)
+    for rec in records:
+        national[(rec["year"], rec["month"])] += rec["count"]
+
+    last_month: dict[int, int] = {}
+    for (yr, mo), cnt in national.items():
+        if cnt > 0:
+            last_month[yr] = max(last_month.get(yr, 0), mo)
+
+    kept = [r for r in records if r["month"] <= last_month.get(r["year"], 0)]
+    dropped = len(records) - len(kept)
+    if dropped:
+        logger.info("Dropped %d records for unpublished months", dropped)
+    return kept
+
+
 def compute_rate(
     homicides: int,
     population: int,
@@ -309,10 +342,15 @@ def build_indicator_rows(
     from collections import defaultdict
 
     annual: dict[tuple[int, str], int] = defaultdict(int)
+    months: dict[tuple[int, str], set[int]] = defaultdict(set)
     for rec in records:
         annual[(rec["year"], rec["geo_code"])] += rec["count"]
+        months[(rec["year"], rec["geo_code"])].add(rec["month"])
 
     for (yr, geo), total_count in sorted(annual.items()):
+        # A partial year would understate the annual rate
+        if len(months[(yr, geo)]) < 12:
+            continue
         pop = population.get(geo)
         if not pop:
             logger.warning("No population data for geo_code=%s, skipping rate", geo)
@@ -409,6 +447,7 @@ def process_full(
     """
     # 1. Parse and filter for homicidio doloso
     state_records = process_incidence(csv_path, year=year, crime_filter="Homicidio doloso")
+    state_records = drop_unpublished_months(state_records)
     if not state_records:
         logger.warning("No homicide records found in CSV")
         return 0

@@ -3,7 +3,8 @@ import { getIndicators } from '@/lib/data';
 
 export const metadata = {
   title: 'Comparar Indicadores — Mexico en Datos',
-  description: 'Compara hasta 3 indicadores macroeconomicos en una misma grafica.',
+  description: 'Compara dos indicadores de Mexico en una misma grafica, con ejes independientes cuando sus escalas son distintas.',
+  alternates: { canonical: '/comparar' },
 };
 
 export default async function CompararPage() {
@@ -16,7 +17,7 @@ export default async function CompararPage() {
           Comparar Indicadores
         </h1>
         <p className="text-[var(--text-secondary)] text-sm leading-relaxed max-w-[600px]">
-          Selecciona hasta 3 indicadores para comparar en una misma grafica.
+          Selecciona hasta 2 indicadores para comparar en una misma grafica. Si sus escalas son muy distintas, cada uno usa su propio eje.
         </p>
       </div>
       <div className="px-[var(--pad-page)]">

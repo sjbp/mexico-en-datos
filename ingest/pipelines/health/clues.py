@@ -38,6 +38,7 @@ import argparse
 import csv
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -49,8 +50,14 @@ load_dotenv()
 
 logger = logging.getLogger("ingest.pipelines.health.clues")
 
-CLUES_URL = "http://www.dgis.salud.gob.mx/descargas/datosabiertos/recursosSalud/CLUES_2024.csv"
+# DGIS publishes one catalog per year (CLUES_2025.csv, ...). We try the most
+# recent years first and fall back to the generic file.
+CLUES_URL_BY_YEAR = "http://www.dgis.salud.gob.mx/descargas/datosabiertos/recursosSalud/CLUES_{year}.csv"
 CLUES_URL_ALT = "http://www.dgis.salud.gob.mx/descargas/csv/clues.csv"
+
+# A full catalog has ~40K active facilities. Below this, treat the file as
+# partial and skip removing facilities that are missing from it.
+MIN_FULL_CATALOG = 30_000
 
 # Map CLAVE DE LA INSTITUCION codes to readable names
 INSTITUTION_MAP: dict[str, str] = {
@@ -102,11 +109,12 @@ def download_clues(cache_dir: Path | None = None) -> Path | None:
     """Download CLUES CSV catalog.
 
     Returns path to downloaded CSV, or None if download fails.
-    Tries primary URL first, then alternative. Also checks for
-    a pre-downloaded file at data/clues/CLUES_2024.csv.
+    Tries the yearly catalogs from the current year back two years, then
+    the generic file. Always downloads so each run uses the latest release.
     """
     import ssl
     import urllib.request
+    from datetime import date
 
     if cache_dir is None:
         cache_dir = Path("data/cache/clues")
@@ -114,22 +122,16 @@ def download_clues(cache_dir: Path | None = None) -> Path | None:
 
     csv_path = cache_dir / "clues.csv"
 
-    # Check for pre-downloaded file
-    predownloaded = Path("data/clues/CLUES_2024.csv")
-    if predownloaded.exists():
-        logger.info("Using pre-downloaded CLUES CSV: %s", predownloaded)
-        return predownloaded
-
-    if csv_path.exists():
-        logger.info("Using cached CLUES CSV: %s", csv_path)
-        return csv_path
-
     # DGIS server often has SSL cert issues — use unverified context
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
 
-    for url in [CLUES_URL, CLUES_URL_ALT]:
+    this_year = date.today().year
+    urls = [CLUES_URL_BY_YEAR.format(year=y) for y in range(this_year, this_year - 3, -1)]
+    urls.append(CLUES_URL_ALT)
+
+    for url in urls:
         try:
             logger.info("Downloading CLUES catalog from %s", url)
             req = urllib.request.Request(url)
@@ -146,7 +148,7 @@ def download_clues(cache_dir: Path | None = None) -> Path | None:
 def process_clues(csv_path: Path) -> list[dict[str, Any]]:
     """Parse CLUES CSV and return list of health_facilities rows.
 
-    CSV columns (2024 format):
+    CSV columns (2024 and 2025 format):
         CLUES, NOMBRE DE LA ENTIDAD, CLAVE DE LA ENTIDAD,
         NOMBRE DEL MUNICIPIO, CLAVE DEL MUNICIPIO,
         NOMBRE DE LA LOCALIDAD, CLAVE DE LA LOCALIDAD,
@@ -230,6 +232,29 @@ def upsert_facilities(conn: Any, rows: list[dict[str, Any]]) -> int:
     return len(rows)
 
 
+def remove_closed_facilities(conn: Any, rows: list[dict[str, Any]]) -> int:
+    """Delete facilities that are no longer active in the latest catalog.
+
+    Without this, facilities that closed stay in the table forever and the
+    counts keep growing. Skipped when the catalog looks partial.
+    """
+    if len(rows) < MIN_FULL_CATALOG:
+        logger.warning(
+            "Catalog has only %d active facilities; not removing missing ones", len(rows)
+        )
+        return 0
+    active_ids = [r["clues_id"] for r in rows]
+    with conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM health_facilities WHERE NOT (clues_id = ANY(%s))",
+            (active_ids,),
+        )
+        removed = cur.rowcount
+    conn.commit()
+    logger.info("Removed %d facilities no longer in operation", removed)
+    return removed
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Import CLUES health facility catalog into the database."
@@ -251,14 +276,17 @@ def main(argv: list[str] | None = None) -> None:
         csv_path = Path(args.csv)
         if not csv_path.exists():
             logger.error("CSV file not found: %s", csv_path)
-            return
+            sys.exit(1)
     else:
         csv_path = download_clues()
         if csv_path is None:
             logger.error("No CLUES data available.")
-            return
+            sys.exit(1)
 
     rows = process_clues(csv_path)
+    if not rows:
+        logger.error("CLUES file has no active facilities; format may have changed.")
+        sys.exit(1)
 
     if args.dry_run:
         logger.info("[DRY RUN] Would upsert %d facilities", len(rows))
@@ -268,6 +296,7 @@ def main(argv: list[str] | None = None) -> None:
     conn = psycopg2.connect(db_url)
     try:
         upsert_facilities(conn, rows)
+        remove_closed_facilities(conn, rows)
     finally:
         conn.close()
 

@@ -38,6 +38,7 @@ import logging
 import os
 import re
 import zipfile
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -196,7 +197,8 @@ BASE_URL_DGIS = "http://www.dgis.salud.gob.mx/descargas/datosabiertos/defuncione
 # Fallback: INEGI direct (URL may break when they reorganise).
 BASE_URL_INEGI = "https://www.inegi.org.mx/contenidos/programas/mortalidad/{year}/microdatos/defunciones_base_datos_{year}_csv.zip"
 
-AVAILABLE_YEARS = list(range(2010, 2025))  # 2010-2024
+# Through last year; the most recent year may not be published yet.
+AVAILABLE_YEARS = list(range(2010, date.today().year))
 
 
 def download_microdata(year: int, cache_dir: Path | None = None) -> Path:
@@ -416,7 +418,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--full",
         action="store_true",
-        help="Process all available years (2010-2023).",
+        help="Process all available years (2010 to last year).",
     )
     parser.add_argument(
         "--dry-run",

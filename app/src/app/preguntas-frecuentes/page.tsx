@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'Preguntas Frecuentes | M\u00e9xico en Datos',
   description:
     'Resuelve tus dudas sobre M\u00e9xico en Datos: fuentes oficiales, metodolog\u00eda, actualizaci\u00f3n de datos, asistente de IA y m\u00e1s.',
+  alternates: { canonical: '/preguntas-frecuentes' },
 };
 
 interface FAQ {

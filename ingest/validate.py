@@ -179,9 +179,33 @@ FRESHNESS_CHECKS = [
         "message": "INEGI IGAE data is stale",
     },
     {
+        # Monthly values are dated the 1st and published ~40 days later
+        "name": "Inflation freshness",
+        "query": "SELECT MAX(period_date) FROM indicator_values WHERE indicator_id = 'SP30578'",
+        "max_age_days": 80,
+        "message": "Banxico inflation data is stale",
+    },
+    {
+        # Quarters are dated to their first day and published ~5 months later
+        "name": "GDP freshness",
+        "query": "SELECT MAX(period_date) FROM indicator_values WHERE indicator_id = '735904'",
+        "max_age_days": 250,
+        "message": "INEGI GDP data is stale",
+    },
+    {
+        "name": "SESNSP freshness",
+        "query": (
+            "SELECT MAX(period_date) FROM indicator_values "
+            "WHERE indicator_id = 'sesnsp_homicide_count' AND geo_code = '00'"
+        ),
+        "max_age_days": 105,
+        "message": "SESNSP homicide data is stale",
+    },
+    {
+        # Quarters are dated to their first day and published ~4.5 months later
         "name": "ENOE freshness",
         "query": "SELECT MAX(quarter_date) FROM employment_stats",
-        "max_age_days": 365,
+        "max_age_days": 270,
         "message": "ENOE employment data is stale (no recent quarter)",
     },
 ]

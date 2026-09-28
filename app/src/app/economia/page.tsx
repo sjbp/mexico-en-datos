@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: 'Econom\u00eda | M\u00e9xico en Datos',
   description:
     'Panorama de la actividad econ\u00f3mica de M\u00e9xico: crecimiento, producci\u00f3n, precios y comercio exterior.',
+  alternates: { canonical: '/economia' },
 };
 
 export default async function EconomiaPage() {
