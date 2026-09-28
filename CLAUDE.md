@@ -61,6 +61,7 @@ This is a public-facing data platform. Every change is visible to real users. Pr
 6. **Topic label** — If a new topic key is introduced, add it to `fmtTopic()` in `app/src/lib/format.ts`
 7. **Cache pre-warm** — If relevant to homepage suggestions, add to `ensureWarmed()` in the chat route
 8. **Sitemap** — Auto-generated from DB, no manual step needed
+9. **SEO / Social** — OG image is automatic for new indicator IDs. New topic pages, static pages, or changes to the homepage scorecard have extra steps — see the "SEO / Social Sharing" section below.
 
 ## Frontend Conventions
 
@@ -86,6 +87,81 @@ This is a public-facing data platform. Every change is visible to real users. Pr
 - Format numbers: `fmtNum`, `fmtPct`, `fmtCurrency`, `fmtCompact` from `lib/format.ts`
 - State code → name: `stateName(code)` in the chat route, or `STATE_NAMES` lookup
 - Indicator name cleanup: `.replace(/\s*\(.*\)$/, '')` to strip parenthetical in display
+
+## SEO / Social Sharing
+
+Every user-facing page must be both indexable (Google returns it with a page-specific title and description) and shareable (Slack/WhatsApp/Twitter show a rich preview card). Same metadata, same mental model — treat them together.
+
+### Per-page metadata
+
+Every `page.tsx` exports `metadata` (or `generateMetadata` for dynamic routes) with:
+- `title` — page-specific, not the site-wide default
+- `description` — ~150 chars, Spanish, describes the page's actual content
+- `alternates.canonical` for non-root routes
+
+Root `layout.tsx` sets site-wide `openGraph` + `twitter` defaults. Page-level metadata inherits and overrides title/description. Never leave a new page on the site-wide default — every page has its own story.
+
+### OG image system
+
+All OG infrastructure lives in `app/src/lib/og/`:
+- `fonts.ts` — bundled Inter TTFs (`loadInter()`)
+- `tokens.ts` — brand colors + `OG_SIZE` (1200×630)
+- `sparkline.ts` — SVG path builder
+- `render.tsx` — three reusable templates (treemap, editorial, dramatic)
+- `topics.ts` — per-topic config (`TOPIC_DEFAULTS`) + manual override map (`TOPIC_OVERRIDES`)
+
+Per-route `opengraph-image.tsx` conventions in the repo today:
+- `/` → template B (dashboard grid of 4 headline indicators)
+- `/indicador/[id]` → template A (hero number + sparkline) — fully dynamic, works for any new indicator
+- Topic routes → template picked via `TOPIC_DEFAULTS` in `lib/og/topics.ts`
+
+**Satori constraint:** `ImageResponse` from `next/og` uses Satori, which renders only a flexbox-CSS subset. CSS Grid, some positioning tricks, and many CSS properties don't work. Inline `<svg>` is supported for sparklines and simple paths. Start from the existing templates — don't write raw CSS from scratch.
+
+All OG routes must export `runtime = 'nodejs'` + `dynamic = 'force-dynamic'`. Data comes from cached wrappers (`cached(getX)`), never raw imports.
+
+### Structured data (JSON-LD)
+
+Root `page.tsx` emits Schema.org Dataset markup for Google Dataset Search. Add topic- or indicator-level structured data only when it would materially improve search visibility — don't ship it for every new page reflexively.
+
+### Sitemap
+
+`app/src/app/sitemap.ts` auto-regenerates from the DB — new indicator IDs appear automatically. Routes not derived from DB content (new topic pages, new static pages) need a manual entry.
+
+### When adding...
+
+**A new indicator ID (via ingest pipeline):**
+- OG image is automatic via `/indicador/[id]/opengraph-image.tsx`
+- Sitemap is automatic
+- Must add `indicatorDescriptions.ts` entry (the `summary` doubles as the page SEO description)
+
+**A new topic page (e.g. `/educacion`):**
+1. `page.tsx` exports `metadata` with a Spanish title + description
+2. Add `opengraph-image.tsx` in the route folder: `export default async function OGImage() { return renderTopicOG('educacion'); }`
+3. Add the topic to `TopicKey` + `TOPIC_DEFAULTS` in `lib/og/topics.ts` — pick `treemap` if there's a top-N categorical dataset, otherwise `editorial`
+4. If treemap, add a `dataSource` branch in `getTreemapItems()` in `lib/og/render.tsx`
+5. Add the topic label to `fmtTopic()` in `lib/format.ts`
+6. Add a manual sitemap entry if the route isn't auto-discovered
+
+**A new static page (e.g. `/metodologia`):**
+- Export `metadata` with page-specific Spanish title + description
+- Add `opengraph-image.tsx` only if the page deserves a custom preview; otherwise it inherits the root OG
+
+**A new indicator joining the homepage scorecard:**
+- Added via `SCORECARD` in `lib/scorecard.ts`
+- Consider whether it should displace one of the 4 hardcoded cards in the root OG — see `CARD_IDS` in `app/src/app/opengraph-image.tsx`. Only swap if the new indicator is more iconic than an existing one.
+
+**A social campaign with a featured fact:**
+- Populate `TOPIC_OVERRIDES` in `lib/og/topics.ts` with a `DramaticConfig` for the target topic. That topic's preview flips to the op-ed / newspaper-style cover until the override is removed.
+
+### Spanish-first
+
+All OG text (labels, titles, footers) and metadata copy must be Spanish. Topic keys in the DB are English — always use `fmtTopic()` for display. Never expose raw English DB values in user-facing text, including metadata and OG images.
+
+### Verifying
+
+- `cd app && npx next build` — confirms all OG routes compile
+- `npx next start -p 3000` then `curl -o /tmp/og.png http://localhost:3000/<route>/opengraph-image` — renders the PNG locally
+- On the preview deployment, paste the URL into Slack / WhatsApp to confirm the real preview card
 
 ## AI Chat Conventions
 
@@ -177,6 +253,7 @@ When an issue requests data from a source we don't have yet:
 | Indicator descriptions | `app/src/lib/indicatorDescriptions.ts` |
 | Source definitions | `app/src/lib/sources.ts` |
 | Scorecard config | `app/src/lib/scorecard.ts` |
+| OG image templates + per-topic config | `app/src/lib/og/render.tsx`, `app/src/lib/og/topics.ts` |
 | Chart color palette | `app/src/lib/colors.ts` |
 | Canvas utilities | `app/src/lib/canvas.ts` |
 | Banxico pipeline | `ingest/pipelines/banxico.py` |
