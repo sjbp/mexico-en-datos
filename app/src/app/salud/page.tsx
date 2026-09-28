@@ -11,6 +11,9 @@ import {
   getTotalDeaths,
   getHealthFacilitySummary,
   getHospitalsPerCapita,
+  getLatestMortalityYear,
+  getIndicatorValues,
+  getEnsanutNationalSummary,
 } from '@/lib/data';
 import { MortalityTrendChart, LifeExpectancyChart, HealthCoverageGapChart } from './SaludClient';
 
@@ -18,6 +21,7 @@ export const metadata: Metadata = {
   title: 'Salud | Mexico en Datos',
   description:
     'Panorama de salud en Mexico: mortalidad por causa y edad, tendencias historicas, crisis de diabetes, infraestructura hospitalaria. Datos de INEGI, ENSANUT e INSP.',
+  alternates: { canonical: '/salud' },
 };
 
 const CAUSE_LABELS: Record<string, string> = {
@@ -57,36 +61,14 @@ const TREND_CAUSES = [
 // Sort age groups in natural order
 const AGE_ORDER = ['15-24', '25-34', '35-44', '45-54', '55-64', '65-74', '75+'];
 
-// ── Hardcoded CONAPO life expectancy data ──────────────────────────────
-const LIFE_EXPECTANCY = [
-  { year: 2015, value: 75.0 },
-  { year: 2016, value: 75.1 },
-  { year: 2017, value: 75.1 },
-  { year: 2018, value: 75.0 },
-  { year: 2019, value: 75.4 },
-  { year: 2020, value: 73.1 },  // COVID
-  { year: 2021, value: 71.5 },  // COVID peak
-  { year: 2022, value: 74.0 },  // Recovery
-  { year: 2023, value: 75.1 },  // Near pre-COVID
-];
-
-// ── CONEVAL "carencia por acceso a salud" ──────────────────────────────
-const HEALTH_ACCESS_GAP = [
-  { year: 2008, value: 38.4 },
-  { year: 2010, value: 29.2 },
-  { year: 2012, value: 21.5 },
-  { year: 2014, value: 18.2 },
-  { year: 2016, value: 15.5 },  // Seguro Popular peak coverage
-  { year: 2018, value: 16.2 },
-  { year: 2020, value: 28.2 },  // INSABI transition begins
-  { year: 2022, value: 39.1 },  // IMSS-Bienestar transition
-];
-
 function formatNumber(n: number): string {
   return n.toLocaleString('es-MX');
 }
 
 export default async function SaludPage() {
+  // Most recent year of mortality microdata in the DB
+  const year = await getLatestMortalityYear();
+
   // Fetch all data in parallel
   const [
     causes,
@@ -95,19 +77,41 @@ export default async function SaludPage() {
     topCauseByAge,
     facilitySummary,
     hospitalsPerCapita,
+    healthAccessGap,
+    lifeExpectancy,
+    obesity,
+    ensanutRows,
     ...trendResults
   ] = await Promise.all([
-    getLeadingCausesOfDeath(2023),
-    getTotalDeaths(2023),
-    getMortalityByAge('diabetes', 2023),
-    getTopCauseByAge(2023),
+    getLeadingCausesOfDeath(year),
+    getTotalDeaths(year),
+    getMortalityByAge('diabetes', year),
+    getTopCauseByAge(year),
     getHealthFacilitySummary(),
     getHospitalsPerCapita(),
+    getIndicatorValues('coneval_sin_salud'),
+    getIndicatorValues('esperanza_vida'),
+    getIndicatorValues('ensanut_obesidad'),
+    getEnsanutNationalSummary(),
     ...TREND_CAUSES.map((t) => getMortalityTrend(t.cause)),
   ]);
 
+  // ENSANUT: diagnosed diabetes/hypertension from microdata (latest year),
+  // obesity as published by INSP (latest year with an official figure)
+  const ensanutYear = ensanutRows[0]?.year;
+  const ensanutPct = (condition: string) => {
+    const row = ensanutRows.find((r) => r.year === ensanutYear && r.condition === condition);
+    return row?.prevalence_pct != null ? `${Number(row.prevalence_pct).toFixed(1)}%` : '—';
+  };
+  const obesityLatest = obesity.filter((d) => d.value != null).at(-1);
+  const diabetesShare = Number(
+    ensanutRows.find((r) => r.year === ensanutYear && r.condition === 'diabetes')?.prevalence_pct ?? 0
+  );
+  const obesityPct = obesityLatest ? `${Number(obesityLatest.value).toFixed(1)}%` : '—';
+
   const topCause = causes[0];
   const diabetesEntry = causes.find((c) => c.cause_group === 'diabetes');
+  const diabetesRank = causes.findIndex((c) => c.cause_group === 'diabetes') + 1;
 
   // Leading causes chart data
   const chartData = causes
@@ -178,16 +182,31 @@ export default async function SaludPage() {
     color: '#FF9F43',
   }));
 
-  // Life expectancy chart data
+  // Life expectancy chart data (CONAPO; 2020+ are projections)
+  const lifeRows = lifeExpectancy.filter((d) => d.value != null);
   const lifeExpData = {
-    labels: LIFE_EXPECTANCY.map((d) => String(d.year)),
-    values: LIFE_EXPECTANCY.map((d) => d.value),
+    labels: lifeRows.map((d) => d.period),
+    values: lifeRows.map((d) => Number(d.value)),
   };
+  const lifeFirst = lifeRows[0];
+  const lifeLatest = lifeRows[lifeRows.length - 1];
+  const lifePre = lifeRows.find((d) => d.period === '2019');
+  const lifeTrough = lifeRows
+    .filter((d) => d.period === '2020' || d.period === '2021')
+    .sort((a, b) => Number(a.value) - Number(b.value))[0];
 
-  // Health coverage gap chart data
+  // Health coverage gap chart data (CONEVAL methodology, biennial)
+  const gapRows = healthAccessGap.filter((d) => d.value != null);
   const coverageGapData = {
-    labels: HEALTH_ACCESS_GAP.map((d) => String(d.year)),
-    values: HEALTH_ACCESS_GAP.map((d) => d.value),
+    labels: gapRows.map((d) => d.period),
+    values: gapRows.map((d) => Number(d.value)),
+  };
+  const gapFirst = gapRows[0];
+  const gapLatest = gapRows[gapRows.length - 1];
+  const gapBy = new Map(gapRows.map((d) => [d.period, Number(d.value)]));
+  const gapPct = (period: string) => {
+    const v = gapBy.get(period);
+    return v != null ? `${v.toFixed(1)}%` : '—';
   };
 
   // Hospitals per capita chart data (top 15 + bottom 5)
@@ -226,10 +245,10 @@ export default async function SaludPage() {
       <div className="px-[var(--pad-page)] mb-8">
         <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[700px]">
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mb-2" style={{ textWrap: 'pretty' }}>
-            Mexico enfrenta una triple crisis de salud: una epidemia de obesidad y diabetes (36% de obesidad, la mas alta de la OCDE), un colapso de cobertura (39% sin acceso tras el desmantelamiento del Seguro Popular), y enfermedades cronicas que matan a personas mas jovenes que en paises comparables.
+            Mexico enfrenta una triple crisis de salud: una epidemia de obesidad y diabetes ({obesityLatest ? `${Number(obesityLatest.value).toFixed(0)}% de obesidad en adultos` : 'mas de un tercio con obesidad'}, entre las mas altas de la OCDE), un colapso de cobertura ({gapLatest ? `${Number(gapLatest.value).toFixed(0)}% sin acceso en ${gapLatest.period}` : 'un tercio sin acceso'} tras el desmantelamiento del Seguro Popular), y enfermedades cronicas que matan a personas mas jovenes que en paises comparables.
           </p>
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-            La diabetes es particularmente critica: es la unica economia grande donde aparece como segunda causa de muerte. El COVID-19 dejo una huella duradera en la esperanza de vida, y los homicidios siguen entre las 10 primeras causas &mdash; algo inusual en paises de ingreso similar.
+            La diabetes es particularmente critica: es la unica economia grande donde aparece como segunda causa de muerte. El COVID-19 provoco la mayor caida de la esperanza de vida en decadas, y los homicidios siguen entre las 10 primeras causas &mdash; algo inusual en paises de ingreso similar.
           </p>
         </div>
       </div>
@@ -239,13 +258,13 @@ export default async function SaludPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
-              Defunciones registradas 2023
+              Defunciones por causas principales {year}
             </div>
             <div className="text-2xl font-bold text-white tabular-nums">
               {totalDeaths > 0 ? formatNumber(totalDeaths) : '~850,000'}
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              Todas las causas, nivel nacional
+              Suma de las {causes.length} causas analizadas, nivel nacional
             </div>
           </Card>
 
@@ -260,7 +279,7 @@ export default async function SaludPage() {
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
               {topCause?.rate_per_100k != null
-                ? `${Number(topCause.rate_per_100k).toFixed(1)} por 100k hab. (2023)`
+                ? `${Number(topCause.rate_per_100k).toFixed(1)} por 100k hab. (${year})`
                 : '~150 por 100k hab. (2023 est.)'}
             </div>
           </Card>
@@ -275,7 +294,7 @@ export default async function SaludPage() {
                 : '~110,000'}
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              2a causa de muerte &middot; 2023
+              {diabetesRank > 0 ? `${diabetesRank}a causa de muerte · ${year}` : year}
             </div>
           </Card>
 
@@ -284,12 +303,14 @@ export default async function SaludPage() {
               {totalFacilities > 0 ? 'Unidades de salud' : 'Sin acceso a salud'}
             </div>
             <div className="text-2xl font-bold text-white tabular-nums">
-              {totalFacilities > 0 ? formatNumber(totalFacilities) : '39.1%'}
+              {totalFacilities > 0
+                ? formatNumber(totalFacilities)
+                : gapLatest ? `${Number(gapLatest.value).toFixed(1)}%` : '—'}
             </div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
               {totalFacilities > 0
                 ? 'Catalogo CLUES &middot; Sec. Salud'
-                : 'CONEVAL 2024 &middot; Carencia por acceso'}
+                : `Carencia por acceso · ${gapLatest?.period ?? ''}`}
             </div>
           </Card>
         </div>
@@ -304,7 +325,7 @@ export default async function SaludPage() {
               Tasa de mortalidad por causa
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              Tasa por 100 mil habitantes, 2023 &middot; Nacional &middot; Datos hasta: 2023
+              Tasa por 100 mil habitantes, {year} &middot; Nacional &middot; Datos hasta: {year}
             </div>
           </div>
           <HBar
@@ -312,7 +333,7 @@ export default async function SaludPage() {
             valueFmt={(v: number) => v.toFixed(1)}
           />
           <div className="text-xs text-[var(--text-muted)] mt-4">
-            Fuente: Estadisticas de Defunciones Registradas 2023, INEGI / Sec. Salud. Clasificacion CIE-10.
+            Fuente: Estadisticas de Defunciones Registradas {year}, INEGI / Sec. Salud. Clasificacion CIE-10.
           </div>
         </Card>
       </div>
@@ -326,7 +347,7 @@ export default async function SaludPage() {
               Esperanza de vida al nacer
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              Anos &middot; Nacional &middot; CONAPO &middot; 2015-2023
+              Anos &middot; Nacional &middot; CONAPO &middot; {`${lifeFirst?.period}-${lifeLatest?.period} · 2020 en adelante son proyecciones`}
             </div>
           </div>
           <div className="h-[280px]">
@@ -334,11 +355,13 @@ export default async function SaludPage() {
           </div>
           <div className="border-l-2 border-[var(--accent)] pl-4 mt-5 max-w-[640px]">
             <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-              La esperanza de vida cayo de 75.4 a 71.5 anos durante la pandemia de COVID-19 (2019-2021), una perdida de casi 4 anos. Para 2023 se ha recuperado a niveles pre-pandemia.
+              {lifePre && lifeTrough && lifeLatest
+                ? `La esperanza de vida cayo de ${Number(lifePre.value).toFixed(1)} a ${Number(lifeTrough.value).toFixed(1)} anos durante la pandemia de COVID-19 (2019-${lifeTrough.period}), una perdida de ${(Number(lifePre.value) - Number(lifeTrough.value)).toFixed(1)} anos. Para ${lifeLatest.period} CONAPO la estima en ${Number(lifeLatest.value).toFixed(1)} anos, ${Number(lifeLatest.value) >= Number(lifePre.value) ? 'por encima' : 'todavia por debajo'} del nivel pre-pandemia.`
+                : 'La pandemia de COVID-19 redujo la esperanza de vida en Mexico entre 2020 y 2021.'}
             </p>
           </div>
           <div className="text-xs text-[var(--text-muted)] mt-4">
-            Fuente: CONAPO, Proyecciones de la Poblacion de Mexico y de las Entidades Federativas.
+            Fuente: CONAPO, Conciliacion Demografica 1950-2019 y Proyecciones de la Poblacion de Mexico y de las Entidades Federativas 2020-2070 (via INEGI).
           </div>
         </Card>
       </div>
@@ -352,7 +375,7 @@ export default async function SaludPage() {
               Poblacion sin acceso a servicios de salud
             </div>
             <div className="text-[13px] text-[var(--text-muted)] mt-1">
-              % de la poblacion &middot; Nacional &middot; CONEVAL &middot; 2008-2022
+              % de la poblacion &middot; Nacional &middot; CONEVAL / INEGI &middot; {gapFirst?.period}-{gapLatest?.period}
             </div>
           </div>
           <div className="h-[280px]">
@@ -360,11 +383,12 @@ export default async function SaludPage() {
           </div>
           <div className="border-l-2 border-[#EF4444] pl-4 mt-5 max-w-[640px]">
             <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-              El porcentaje de la poblacion sin acceso a servicios de salud bajo de 38% a 15% entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento y la transicion a INSABI y luego IMSS-Bienestar, la carencia se disparo a 39% en 2022 &mdash; peor que en 2008.
+              El porcentaje de la poblacion sin acceso a servicios de salud bajo de {gapPct('2008')} a {gapPct('2016')} entre 2008-2016 gracias al Seguro Popular. Tras su desmantelamiento y la transicion a INSABI y luego IMSS-Bienestar, la carencia se disparo a {gapPct('2022')} en 2022 &mdash; peor que en 2008.
+              {gapLatest && gapLatest.period !== '2022' && ` En ${gapLatest.period} bajo a ${gapPct(gapLatest.period)}, aun muy por encima del nivel de 2016.`}
             </p>
           </div>
           <div className="text-xs text-[var(--text-muted)] mt-4">
-            Fuente: CONEVAL, Medicion multidimensional de la pobreza.
+            Fuente: CONEVAL (2008-2022) e INEGI (2024 en adelante), Medicion multidimensional de la pobreza.
           </div>
         </Card>
       </div>
@@ -427,7 +451,7 @@ export default async function SaludPage() {
                   Muertes por diabetes por grupo de edad
                 </div>
                 <div className="text-[13px] text-[var(--text-muted)] mt-1">
-                  Defunciones absolutas, 2023 &middot; Nacional &middot; Datos hasta: 2023
+                  Defunciones absolutas, {year} &middot; Nacional &middot; Datos hasta: {year}
                 </div>
               </div>
               <HBar
@@ -439,10 +463,10 @@ export default async function SaludPage() {
                   La diabetes mata a {diabetesEntry ? formatNumber(diabetesEntry.deaths) : '110,000'} personas al ano en Mexico.
                   A diferencia de otros paises, afecta desproporcionadamente a personas en edad productiva:
                   {' '}{formatNumber(diabetesAgeData.filter((d) => ['35-44 anos', '45-54 anos', '55-64 anos'].includes(d.label)).reduce((s, d) => s + d.value, 0))} muertes
-                  ocurrieron entre los 35 y 64 anos en 2023.
+                  ocurrieron entre los 35 y 64 anos en {year}.
                 </p>
                 <p className="text-[13px] leading-relaxed text-[var(--text-muted)] mt-2" style={{ textWrap: 'pretty' }}>
-                  Segun la ENSANUT 2022, 15.6% de los adultos mexicanos tienen diabetes diagnosticada y 36.9% tienen obesidad &mdash; ambas tasas entre las mas altas del mundo.
+                  Segun la ENSANUT, {ensanutPct('diabetes')} de los adultos mexicanos tenian diabetes diagnosticada en {ensanutYear} y {obesityPct} tenian obesidad en {`${obesityLatest?.period ?? ''} — ambas tasas`} entre las mas altas del mundo. La diabetes diagnosticada es solo una parte: el INSP estima que alrededor de un tercio de los adultos con diabetes no lo sabe.
                 </p>
               </div>
             </Card>
@@ -461,7 +485,7 @@ export default async function SaludPage() {
                   Principal causa de muerte por grupo de edad
                 </div>
                 <div className="text-[13px] text-[var(--text-muted)] mt-1">
-                  Nacional, 2023 &middot; Datos hasta: 2023
+                  Nacional, {year} &middot; Datos hasta: {year}
                 </div>
               </div>
               <div className="flex flex-col gap-3">
@@ -568,7 +592,7 @@ export default async function SaludPage() {
         </>
       )}
 
-      {/* ── 10. ENSANUT prevalence (static context) ────────────────── */}
+      {/* ── 10. ENSANUT prevalence ──────────────────────────────────── */}
       <SectionHeader title="Prevalencia de enfermedades cronicas" />
       <div className="px-[var(--pad-page)] mb-12">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
@@ -576,33 +600,33 @@ export default async function SaludPage() {
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
               Obesidad en adultos
             </div>
-            <div className="text-2xl font-bold text-white">36.9%</div>
+            <div className="text-2xl font-bold text-white">{obesityPct}</div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              ENSANUT 2022 &middot; IMC &ge; 30
+              {`ENSANUT ${obesityLatest?.period ?? ''} · IMC ≥ 30 · cifra del INSP`}
             </div>
           </Card>
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
               Diabetes diagnosticada
             </div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: '#F39C12' }}>15.6%</div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: '#F39C12' }}>{ensanutPct('diabetes')}</div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              ENSANUT 2022 &middot; Adultos 20+
+              {`ENSANUT ${ensanutYear ?? ''} · Adultos 20+ · diagnostico medico`}
             </div>
           </Card>
           <Card>
             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)] mb-2">
-              Hipertension
+              Hipertension diagnosticada
             </div>
-            <div className="text-2xl font-bold text-white">30.2%</div>
+            <div className="text-2xl font-bold text-white">{ensanutPct('hypertension')}</div>
             <div className="text-xs text-[var(--text-muted)] mt-1">
-              ENSANUT 2022 &middot; Adultos 20+
+              {`ENSANUT ${ensanutYear ?? ''} · Adultos 20+ · diagnostico medico`}
             </div>
           </Card>
         </div>
         <div className="border-l-2 border-[var(--accent)] pl-4 max-w-[640px]">
           <p className="text-[13px] leading-relaxed text-[var(--text-muted)]" style={{ textWrap: 'pretty' }}>
-            La ENSANUT 2022 revela que mas de un tercio de los adultos mexicanos tienen obesidad, y casi 1 de cada 6 tiene diabetes diagnosticada. Estas cifras alimentan directamente las tasas de mortalidad por enfermedades cronicas que se observan arriba. Mexico tiene la mayor tasa de obesidad de la OCDE.
+            Mas de un tercio de los adultos mexicanos vive con obesidad, y {diabetesShare ? `alrededor de 1 de cada ${Math.round(100 / diabetesShare)}` : 'uno de cada diez'} tiene un diagnostico medico de diabetes. Las cifras diagnosticadas subestiman el problema: muchos adultos con diabetes o hipertension no lo saben. Estas enfermedades alimentan directamente las tasas de mortalidad por enfermedades cronicas que se observan arriba. Mexico tiene una de las tasas de obesidad mas altas de la OCDE.
           </p>
         </div>
       </div>
@@ -610,7 +634,7 @@ export default async function SaludPage() {
       {/* ── 11. Attribution ────────────────────────────────────────── */}
       <div className="px-[var(--pad-page)] mb-10">
         <div className="text-xs text-[var(--text-muted)] leading-relaxed">
-          Fuentes: INEGI (Estadisticas de Mortalidad 2018-2023), ENSANUT 2022 (INSP), Secretaria de Salud (CLUES), CONEVAL (Medicion de Pobreza), CONAPO (Proyecciones de Poblacion)
+          Fuentes: INEGI (Estadisticas de Mortalidad 2018-{year}), ENSANUT {ensanutYear} (INSP), Secretaria de Salud (CLUES), CONEVAL (Medicion de Pobreza), CONAPO (Proyecciones de Poblacion)
         </div>
       </div>
     </>

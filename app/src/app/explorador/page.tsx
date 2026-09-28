@@ -4,6 +4,7 @@ import { getIndicators, getTopicsWithCounts } from '@/lib/data';
 export const metadata = {
   title: 'Explorador de Indicadores',
   description: 'Cat\u00e1logo completo de indicadores macroecon\u00f3micos de M\u00e9xico.',
+  alternates: { canonical: '/explorador' },
 };
 
 export default async function ExploradorPage({
